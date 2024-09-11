@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { DatePicker, Table, Button, FloatButton, Modal } from 'antd'; // Import komponen yang diperlukan
 import 'antd/dist/reset.css'; // Pastikan Anda mengimpor CSS Ant Design
+import * as XLSX from 'xlsx'; // Import library XLSX untuk export ke Excel
 
 const { RangePicker } = DatePicker; // Gunakan RangePicker dari DatePicker
 
@@ -31,7 +32,6 @@ const RiwayatTransaksiPage = () => {
 
   // Data dummy untuk tabel riwayat transaksi
   const data = [
-    // Tambahkan lebih banyak data untuk pagination
     { key: '1', tanggal: '2024-09-05 14:30', jumlahItem: 5, metodePembayaran: 'Tunai', totalPembayaran: 'Rp 150.000' },
     { key: '2', tanggal: '2024-09-06 15:00', jumlahItem: 3, metodePembayaran: 'QRIS', totalPembayaran: 'Rp 100.000' },
     { key: '3', tanggal: '2024-09-07 16:00', jumlahItem: 7, metodePembayaran: 'Tunai', totalPembayaran: 'Rp 200.000' },
@@ -83,6 +83,14 @@ const RiwayatTransaksiPage = () => {
   // Menghitung data yang ditampilkan berdasarkan halaman saat ini
   const paginatedData = data.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
+  // Fungsi untuk mengekspor data ke file Excel
+  const exportToExcel = () => {
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Riwayat Transaksi');
+    XLSX.writeFile(wb, 'Riwayat_Transaksi.xlsx');
+  };
+
   return (
     <div className="pt-1 pl-5 pb-5">
       <div className="flex items-center justify-between mb-4">
@@ -93,8 +101,9 @@ const RiwayatTransaksiPage = () => {
         </div>
         {/* FloatButton */}
         <FloatButton 
-          tooltip={<div>Buka dengan Excel</div>} 
-          style={{ position: 'relative', top: 0, right: 0}} 
+          tooltip={<div>Export to Excel</div>} 
+          style={{ position: 'relative', top: 0, right: 0 }} 
+          onClick={exportToExcel} // Panggil fungsi export saat FloatButton diklik
         />
       </div>
       {/* Tabel riwayat transaksi */}
