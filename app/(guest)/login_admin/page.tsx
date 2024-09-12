@@ -34,7 +34,7 @@ const LoginPage = () => {
       localStorage.setItem('userEmail', email);
       
       // Redirect ke halaman dashboard setelah login berhasil
-      router.push('/dashboard');
+      router.push('/admin/dashboard');
     } catch (err) {
       setError('Login failed. Please check your credentials and try again.');
     } finally {

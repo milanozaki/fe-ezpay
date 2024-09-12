@@ -68,12 +68,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   );
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden"> {/* Tambahkan overflow-hidden untuk menghindari scroll pada container utama */}
       {/* Sidebar */}
       <div
         className={`bg-white text-black w-60 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
         md:translate-x-0 transition-transform duration-300 md:block shadow-lg flex flex-col justify-center items-center 
-        fixed md:relative z-50`}
+        fixed h-full z-50`} 
       >
         <div className="flex justify-center items-center mb-6 mt-4">
           <Image 
@@ -110,9 +110,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           onClick={() => setIsSidebarOpen(false)} // Tutup sidebar jika overlay diklik
         ></div>
       )}
+
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <header className="bg-[#257691] shadow-md p-4 flex justify-between items-center text-white relative">
+        <header className="bg-[#257691] shadow-md p-4 flex justify-between items-center text-white sticky top-0 z-10"> {/* Menambahkan sticky dan top-0 */}
           <button
             className="md:hidden text-white text-2xl"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)} // Toggle sidebar ketika tombol hamburger diklik
@@ -130,7 +131,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             />
           </Dropdown>
         </header>
-        <main className="flex-1 p-6 bg-gray-100">
+
+        {/* Content yang bisa di-scroll */}
+        <main className="flex-1 p-6 bg-gray-100 overflow-y-auto"> {/* Tambahkan overflow-y-auto agar konten bisa di-scroll */}
           {children}
         </main>
       </div>

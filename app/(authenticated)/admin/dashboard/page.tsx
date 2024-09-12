@@ -41,7 +41,6 @@ const DashboardPage = () => {
 
   return (
     <div className="p-6">
-      {/* Baris pertama */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mr-5 ml-5">
         <div className="w-full h-[200px] bg-white p-6 shadow-lg rounded-lg relative">
           <h2 className="text-xl font-semibold text-center text-white p-2 absolute top-0 left-0 right-0 rounded-t-lg"
@@ -107,7 +106,6 @@ const DashboardPage = () => {
           </div>
         </div>
       </div>
-
       {/* Baris kedua */}
       <div className="grid grid-cols-1 md:grid-cols-1 gap-10 mr-5 ml-5 mt-10">
         <div className="w-full h-[200px] bg-white p-6 shadow-lg rounded-lg relative">

@@ -95,7 +95,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       )}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <header className="bg-[#257691] shadow-md p-4 flex justify-between items-center text-white relative">
+        <header className="bg-[#257691] shadow-md p-4 flex justify-between items-center text-white relative md:px-8 md:py-6">
           <h1 className="text-xl font-semibold">{selectedMenu}</h1> {/* Menampilkan item yang dipilih */}
           {/* Avatar di pojok kanan */}
           <Dropdown overlay={avatarMenu} trigger={['click']} placement="bottomRight">
@@ -106,7 +106,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             />
           </Dropdown>
         </header>
-        <main className="flex-1 p-6 bg-gray-100">
+        <main className="flex-1 p-6 bg-gray-100 md:p-10">
           {children}
         </main>
       </div>
