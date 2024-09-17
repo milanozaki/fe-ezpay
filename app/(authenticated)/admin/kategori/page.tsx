@@ -1,7 +1,7 @@
 'use client'; // Menandakan komponen ini sebagai Client Component
 
 import React, { useEffect, useState } from 'react';
-import { Button, Modal, Input, Form } from 'antd'; // Import komponen Modal, Input, dan Form dari Ant Design
+import { Button, Modal, Input, Form, notification } from 'antd'; // Import notification dari Ant Design
 import { PlusOutlined } from '@ant-design/icons'; // Import icon Plus dari Ant Design
 import 'antd/dist/reset.css'; // Pastikan Anda mengimpor CSS Ant Design
 import axios from 'axios'; // Import Axios
@@ -19,7 +19,7 @@ const KategoriPage = () => {
     axios.get('http://localhost:3222/kategori')
       .then((response) => {
         // Asumsi data yang diterima adalah array dengan objek yang memiliki nama kategori
-        setKategori(response.data.data || []); 
+        setKategori(response.data.data || []);
         setLoading(false); // Set loading menjadi false setelah data diterima
       })
       .catch((error) => {
@@ -51,6 +51,13 @@ const KategoriPage = () => {
               )
             );
             setIsModalVisible(false); // Sembunyikan modal setelah berhasil
+            
+            // Tampilkan notifikasi setelah edit berhasil
+            notification.success({
+              message: 'Berhasil',
+              description: 'Kategori berhasil diedit.',
+              duration: 3, // Durasi dalam detik
+            });
           })
           .catch((error) => {
             console.error('Error updating data:', error.response?.data || error.message);
@@ -60,7 +67,7 @@ const KategoriPage = () => {
         console.log('Validate Failed:', info);
       });
   };
-  
+
   const handleOkAdd = () => {
     // Kirim data kategori baru ke API
     form.validateFields()
@@ -69,6 +76,13 @@ const KategoriPage = () => {
           .then((response) => {
             setKategori((prevKategori) => [...prevKategori, response.data]);
             setIsAddModalVisible(false); // Sembunyikan modal setelah berhasil
+            
+            // Tampilkan notifikasi setelah tambah berhasil
+            notification.success({
+              message: 'Berhasil',
+              description: 'Kategori berhasil ditambahkan.',
+              duration: 3, // Durasi dalam detik
+            });
           })
           .catch((error) => {
             console.error('Error adding data:', error);
@@ -89,22 +103,22 @@ const KategoriPage = () => {
   }
 
   return (
-    <div className="mt-3 flex justify-center">
+    <div className="mt-3 flex justify-center mr-20 ml-64">
       <div className="relative w-full max-w-7xl">
         {/* Button Tambah */}
-        <div className="flex justify-start mt-2"> {/* Ubah justify-end menjadi justify-start */}
+        <div className="flex justify-start mt-2">
           <Button 
             type="primary" 
             icon={<PlusOutlined />} 
             className="flex items-center gap-1"
-            onClick={handleAddClick} // Tampilkan modal tambah saat diklik
+            onClick={handleAddClick}
             style={{
-              backgroundColor: '#3B8394', // Warna latar belakang
-              borderColor: '#3B8394', // Warna border
-              color: '#fff', // Warna teks
-              borderRadius: '12px', // Radius border
-              padding: '10px 20px', // Padding
-              transition: 'background-color 0.1s, border-color 0.3s', // Transisi
+              backgroundColor: '#3B8394',
+              borderColor: '#3B8394',
+              color: '#fff',
+              borderRadius: '12px',
+              padding: '10px 20px',
+              transition: 'background-color 0.1s, border-color 0.3s',
             }}
           >
             Tambah
@@ -113,42 +127,41 @@ const KategoriPage = () => {
 
         {/* Tabel Kategori */}
         <div className="mt-5 overflow-x-auto">
-  <table className="min-w-full bg-white border-collapse border border-gray-300 rounded-lg shadow-md">
-    <thead>
-      <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-        <th className="py-3 px-6 text-left font-semibold border border-gray-300 w-16">No</th> {/* Mengatur lebar kolom No */}
-        <th className="py-3 px-6 text-left font-semibold border border-gray-300">Nama Kategori</th>
-        <th className="py-3 px-6 text-left font-semibold border border-gray-300">Aksi</th>
-      </tr>
-    </thead>
-    <tbody className="text-gray-700 text-sm">
-      {kategori.length > 0 ? (
-        kategori.map((item, index) => (
-          <tr key={index} className="hover:bg-gray-100 transition duration-200">
-            <td className="py-3 px-6 text-left border border-gray-300 w-16">{index + 1}</td> {/* Menyesuaikan juga pada tbody */}
-            <td className="py-3 px-6 text-left border border-gray-300">{item.nama}</td>
-            <td className="py-3 px-6 text-left border border-gray-300">
-              <a
-                href="#"
-                onClick={() => handleEditClick(item.nama)}
-                className="text-blue-500 hover:text-blue-700 underline"
-              >
-                Edit
-              </a>
-            </td>
-          </tr>
-        ))
-      ) : (
-        <tr>
-          <td colSpan={3} className="py-3 px-6 text-center text-gray-500">
-            Tidak ada data
-          </td>
-        </tr>
-      )}
-    </tbody>
-  </table>
-</div>
-
+          <table className="min-w-full bg-white border-collapse border border-gray-300 rounded-lg shadow-md">
+            <thead>
+              <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                <th className="py-3 px-6 text-left font-semibold border border-gray-300 w-16">No</th>
+                <th className="py-3 px-6 text-left font-semibold border border-gray-300">Nama Kategori</th>
+                <th className="py-3 px-6 text-left font-semibold border border-gray-300">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="text-gray-700 text-sm">
+              {kategori.length > 0 ? (
+                kategori.map((item, index) => (
+                  <tr key={index} className="hover:bg-gray-100 transition duration-200">
+                    <td className="py-3 px-6 text-left border border-gray-300 w-16">{index + 1}</td>
+                    <td className="py-3 px-6 text-left border border-gray-300">{item.nama}</td>
+                    <td className="py-3 px-6 text-left border border-gray-300">
+                      <a
+                        href="#"
+                        onClick={() => handleEditClick(item.nama)}
+                        className="text-blue-500 hover:text-blue-700 underline"
+                      >
+                        Edit
+                      </a>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={3} className="py-3 px-6 text-center text-gray-500">
+                    Tidak ada data
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
 
         {/* Modal Edit Kategori */}
         <Modal
@@ -160,15 +173,15 @@ const KategoriPage = () => {
           cancelText="Batal"
           okButtonProps={{
             style: {
-              backgroundColor: '#3B8394', // Warna latar belakang tombol "Simpan"
-              borderColor: '#3B8394', // Warna border tombol "Simpan"
-              color: '#fff', // Warna teks tombol "Simpan"
+              backgroundColor: '#3B8394',
+              borderColor: '#3B8394',
+              color: '#fff',
             },
           }}
           cancelButtonProps={{
             style: {
-              borderColor: '#3B8394', // Warna border tombol "Batal"
-              color: '#000', // Warna teks tombol "Batal"
+              borderColor: '#3B8394',
+              color: '#000',
             },
           }}
         >
@@ -197,15 +210,15 @@ const KategoriPage = () => {
           cancelText="Batal"
           okButtonProps={{
             style: {
-              backgroundColor: '#3B8394', // Warna latar belakang tombol "Simpan"
-              borderColor: '#3B8394', // Warna border tombol "Simpan"
-              color: '#fff', // Warna teks tombol "Simpan"
+              backgroundColor: '#3B8394',
+              borderColor: '#3B8394',
+              color: '#fff',
             },
           }}
           cancelButtonProps={{
             style: {
-              borderColor: '#d9d9d9', // Warna border tombol "Batal"
-              color: '#000', // Warna teks tombol "Batal"
+              borderColor: '#d9d9d9',
+              color: '#000',
             },
           }}
         >

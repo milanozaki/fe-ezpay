@@ -1,6 +1,6 @@
-'use client'; // Menandakan komponen ini sebagai Client Component
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link'; // Import Link dari next/link
+"use client"; // Menandakan komponen ini sebagai Client Component
+import React, { useState, useEffect } from "react";
+import Link from "next/link"; // Import Link dari next/link
 import {
   HistoryOutlined,
   AppstoreOutlined,
@@ -8,20 +8,20 @@ import {
 } from "@ant-design/icons";
 import { IoBagHandleOutline } from "react-icons/io5";
 import { AiOutlineProfile } from "react-icons/ai";
-import { Avatar, Dropdown, Button, Divider } from 'antd'; // Import Avatar, Dropdown, Button, dan Divider dari Ant Design
-import { useRouter } from 'next/navigation';
-import Image from 'next/image'; // Import Image dari next/image
+import { Avatar, Dropdown, Button, Divider } from "antd"; // Import Avatar, Dropdown, Button, dan Divider dari Ant Design
+import { useRouter } from "next/navigation";
+import Image from "next/image"; // Import Image dari next/image
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false); // Default sidebar tertutup di mobile
-  const [selectedMenu, setSelectedMenu] = useState<string>('Dashboard'); // State untuk menyimpan item yang dipilih
-  const [userEmail, setUserEmail] = useState<string>('user@example.com'); // State untuk email pengguna
+  const [selectedMenu, setSelectedMenu] = useState<string>("Dashboard"); // State untuk menyimpan item yang dipilih
+  const [userEmail, setUserEmail] = useState<string>("user@example.com"); // State untuk email pengguna
   const router = useRouter(); // Inisialisasi router
 
   useEffect(() => {
     // Mengambil email dari localStorage setelah komponen di-mount
     if (typeof window !== "undefined") {
-      const storedEmail = localStorage.getItem('userEmail');
+      const storedEmail = localStorage.getItem("userEmail");
       if (storedEmail) {
         setUserEmail(storedEmail);
       }
@@ -29,15 +29,20 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const authenticatedMenu = [
-    { name: 'Dashboard', path: '/admin/dashboard', icon: <AppstoreOutlined /> },
-    { name: 'Riwayat Transaksi', path: '/admin/riwayat_transaksi', icon: <HistoryOutlined /> },
-    { name: 'Kategori', path: '/admin/kategori', icon: <AiOutlineProfile /> },
-    { name: 'Produk', path: '/admin/produk', icon: <IoBagHandleOutline /> },
-    { name: 'Kasir', path: '/admin/kasir', icon: <SettingOutlined /> },
+    { name: "Dashboard", path: "/admin/dashboard", icon: <AppstoreOutlined /> },
+    {
+      name: "Riwayat Transaksi",
+      path: "/admin/riwayat_transaksi",
+      icon: <HistoryOutlined />,
+    },
+    { name: "Kategori", path: "/admin/kategori", icon: <AiOutlineProfile /> },
+    { name: "Produk", path: "/admin/produk", icon: <IoBagHandleOutline /> },
+    { name: "Kasir", path: "/admin/kasir", icon: <SettingOutlined /> },
   ];
 
-  const avatarUrl = 'https://mir-s3-cdn-cf.behance.net/project_modules/disp/414d9011889067.5625411b2afd2.png';
-  const userRole = 'Admin'; // Role bisa diubah menjadi Kasir atau lainnya sesuai kebutuhan
+  const avatarUrl =
+    "https://mir-s3-cdn-cf.behance.net/project_modules/disp/414d9011889067.5625411b2afd2.png";
+  const userRole = "Admin"; // Role bisa diubah menjadi Kasir atau lainnya sesuai kebutuhan
 
   // Menu untuk dropdown avatar dengan ukuran persegi panjang dan background
   const avatarMenu = (
@@ -50,7 +55,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <div className="text-gray-500 text-center">{userRole}</div>
 
       {/* Garis pemisah */}
-      <Divider className='mt-3'/>
+      <Divider className="mt-3" />
 
       {/* Button Logout */}
       <Button
@@ -58,8 +63,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         danger
         className="w-full -mt-4"
         onClick={() => {
-          localStorage.removeItem('userEmail'); // Hapus email dari localStorage
-          router.push('/login_admin'); // Arahkan ke halaman login
+          localStorage.removeItem("userEmail"); // Hapus email dari localStorage
+          router.push("/login_admin"); // Arahkan ke halaman login
         }}
       >
         Keluar
@@ -68,15 +73,19 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden"> {/* Tambahkan overflow-hidden untuk menghindari scroll pada container utama */}
+    <div className="flex h-screen overflow-hidden">
+      {" "}
+      {/* Tambahkan overflow-hidden untuk menghindari scroll pada container utama */}
       {/* Sidebar */}
       <div
-        className={`bg-white text-black w-60 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+        className={`bg-white text-black w-60 transform ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } 
         md:translate-x-0 transition-transform duration-300 md:block shadow-lg flex flex-col justify-center items-center 
-        fixed h-full z-50`} 
+        fixed h-full z-50`}
       >
         <div className="flex justify-center items-center mb-6 mt-4">
-          <Image 
+          <Image
             src="/images/logoEzpay.png"
             alt="Sidebar Image"
             width={80}
@@ -86,14 +95,16 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         </div>
         <ul className="w-full">
           {authenticatedMenu.map((item) => (
-            <li 
-              key={item.name} 
+            <li
+              key={item.name}
               className="pt-3 pb-3 pr-4 pl-7 hover:bg-[#257691] mr-3 ml-2 rounded-lg"
             >
-              <Link 
-                href={item.path} 
+              <Link
+                href={item.path}
                 onClick={() => setSelectedMenu(item.name)} // Perbarui state ketika item diklik
-                className={`flex items-center text-[#4998b3] hover:text-white ${selectedMenu === item.name ? 'font-bold' : ''}`}
+                className={`flex items-center text-[#4998b3] hover:text-white ${
+                  selectedMenu === item.name ? "font-bold" : ""
+                }`}
               >
                 <span className="text-sm mr-3">{item.icon}</span>
                 {item.name}
@@ -102,38 +113,44 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           ))}
         </ul>
       </div>
-
       {/* Overlay untuk close sidebar di mobile */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black opacity-50 md:hidden"
           onClick={() => setIsSidebarOpen(false)} // Tutup sidebar jika overlay diklik
         ></div>
       )}
-
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <header className="bg-[#257691] shadow-md p-4 flex justify-between items-center text-white sticky top-0 z-10"> {/* Menambahkan sticky dan top-0 */}
+        <header className="bg-[#257691] shadow-md p-4 flex justify-between items-center text-white sticky top-0 z-10">
+          {" "}
+          {/* Menambahkan sticky dan top-0 */}
           <button
             className="md:hidden text-white text-2xl"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)} // Toggle sidebar ketika tombol hamburger diklik
           >
             ☰
           </button>
-          <h1 className="text-xl font-semibold">{selectedMenu}</h1> {/* Menampilkan item yang dipilih */}
-          
+          <h1 className="text-xl font-semibold ml-72 mb-0">{selectedMenu}</h1>{" "}
+          {/* Menampilkan item yang dipilih */}
           {/* Avatar di pojok kanan */}
-          <Dropdown overlay={avatarMenu} trigger={['click']} placement="bottomRight">
+          <Dropdown
+            overlay={avatarMenu}
+            trigger={["click"]}
+            placement="bottomRight"
+          >
             <Avatar
               size="large"
-              style={{ cursor: 'pointer' }}
+              style={{ cursor: "pointer" }}
               src={avatarUrl} // Ganti dengan URL gambar avatar
             />
           </Dropdown>
         </header>
 
         {/* Content yang bisa di-scroll */}
-        <main className="flex-1 p-6 bg-gray-100 overflow-y-auto"> {/* Tambahkan overflow-y-auto agar konten bisa di-scroll */}
+        <main className="flex-1 p-6 bg-gray-100 overflow-y-auto">
+          {" "}
+          {/* Tambahkan overflow-y-auto agar konten bisa di-scroll */}
           {children}
         </main>
       </div>
