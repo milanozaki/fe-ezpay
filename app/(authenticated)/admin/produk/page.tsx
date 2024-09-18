@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
 import {
+  Upload,
   Button,
   Form,
   Modal,
@@ -12,6 +13,8 @@ import {
   Image,
   Dropdown,
   Menu,
+  Row,
+  Col,
 } from "antd";
 import {
   PlusOutlined,
@@ -19,6 +22,7 @@ import {
   EditOutlined,
   FilterOutlined,
 } from "@ant-design/icons";
+import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { debounce } from "lodash";
 
@@ -146,11 +150,33 @@ const ProdukPage: React.FC = () => {
     setIsAddModalVisible(true);
   };
 
-  const handleOk = () => {
-    form.validateFields().then((values) => {
-      console.log("Form values:", values);
+  const handleOk = async () => {
+    try {
+      const values = await form.validateFields();
+      const formData = new FormData();
+      Object.keys(values).forEach((key) => {
+        formData.append(key, values[key]);
+      });
+      if (values.gambar_produk && values.gambar_produk.length > 0) {
+        formData.append("file", values.gambar_produk[0].originFileObj);
+      }
+
+      await axios.post("http://localhost:3222/produk", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      message.success("Produk berhasil ditambahkan");
       setIsAddModalVisible(false);
-    });
+      form.resetFields();
+    } catch (error) {
+      message.error("Gagal menambahkan produk");
+      console.error("Error adding product:", error);
+    }
+  };
+
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat("id-ID").format(amount);
   };
 
   const handleCancel = () => {
@@ -246,7 +272,11 @@ const ProdukPage: React.FC = () => {
             >
               <Card.Meta
                 title={item.nama_produk}
-                description={`${item.harga_produk} USD`}
+                description={
+                  <span style={{ color: "black" }}>
+                    Rp {formatCurrency(item.harga_produk)}
+                  </span>
+                } // Apply inline style here
               />
             </Card>
           ))
@@ -285,24 +315,99 @@ const ProdukPage: React.FC = () => {
         ]}
       >
         <Form form={form} layout="vertical">
-          <Form.Item
-            name="nama_produk"
-            label="Nama Produk"
-            rules={[
-              { required: true, message: "Silakan masukkan nama produk!" },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="stok"
-            label="Stok"
-            rules={[
-              { required: true, message: "Silakan masukkan stok produk!" },
-            ]}
-          >
-            <Input />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="nama_produk"
+                label="Nama Produk"
+                rules={[
+                  { required: true, message: "Silakan masukkan nama produk!" },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="stok"
+                label="Stok"
+                rules={[
+                  { required: true, message: "Silakan masukkan stok produk!" },
+                ]}
+              >
+                <Input type="number" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="kategori"
+                label="Kategori"
+                rules={[{ required: true, message: "Silakan pilih kategori!" }]}
+              >
+                <Select>
+                  {categories.map((category) => (
+                    <Select.Option key={category} value={category}>
+                      {category}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="harga_produk"
+                label="Harga"
+                rules={[
+                  { required: true, message: "Silakan masukkan harga produk!" },
+                ]}
+              >
+                <Input type="number" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="gambar_produk"
+                label="Gambar Produk"
+                valuePropName="fileList"
+                getValueFromEvent={({ fileList }: any) => fileList}
+                rules={[
+                  { required: true, message: "Silakan unggah gambar produk!" },
+                ]}
+              >
+                <Upload
+                  name="gambar_produk"
+                  listType="picture"
+                  beforeUpload={() => false} // Prevent automatic upload
+                  showUploadList={{ showRemoveIcon: true }}
+                  accept="image/*"
+                  customRequest={({ file, onSuccess }: any) => {
+                    // File will be handled by form submission
+                    onSuccess && onSuccess(null, file);
+                  }}
+                >
+                  <Button icon={<UploadOutlined />}>Unggah Gambar</Button>
+                </Upload>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="satuan_produk"
+                label="Satuan"
+                rules={[
+                  {
+                    required: true,
+                    message: "Silakan masukkan satuan produk!",
+                  },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+          </Row>
         </Form>
       </Modal>
     </div>
