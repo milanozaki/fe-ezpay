@@ -14,7 +14,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   const menuItems = [
     { name: 'Inbox', path: '/superadmin/inbox', icon: <InboxOutlined /> },
-    { name: 'Daftar Toko', path: '/superadmin/kelola', icon: <UserOutlined /> },
+    { name: 'Daftar Toko', path: '/superadmin/daftar_toko', icon: <UserOutlined /> },
   ];
 
   // Mengambil email dari localStorage setelah komponen di-mount
