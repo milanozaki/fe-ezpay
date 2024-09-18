@@ -9,13 +9,15 @@ import {
 import { IoBagHandleOutline } from "react-icons/io5";
 import { AiOutlineProfile } from "react-icons/ai";
 import { Avatar, Dropdown, Button, Divider } from "antd"; // Import Avatar, Dropdown, Button, dan Divider dari Ant Design
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation"; // Import useRouter dan usePathname dari next/navigation
 import Image from "next/image"; // Import Image dari next/image
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false); // Default sidebar tertutup di mobile
-  const [selectedMenu, setSelectedMenu] = useState<string>("TokoMu"); // State untuk menyimpan item yang dipilih
+  const [selectedMenu, setSelectedMenu] = useState<string>(""); // State untuk menyimpan item yang dipilih
   const [userEmail, setUserEmail] = useState<string>("user@example.com"); // State untuk email pengguna
+  const pathname = usePathname(); // Mendapatkan path saat ini
+
   const router = useRouter(); // Inisialisasi router
 
   useEffect(() => {
@@ -26,7 +28,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         setUserEmail(storedEmail);
       }
     }
-  }, []);
+
+    // Set selectedMenu berdasarkan URL saat ini
+    const activeMenuItem = authenticatedMenu.find(item => pathname?.startsWith(item.path));
+    if (activeMenuItem) {
+      setSelectedMenu(activeMenuItem.name);
+    }
+  }, [pathname]);
 
   const authenticatedMenu = [
     { name: "Dashboard", path: "/admin/dashboard", icon: <AppstoreOutlined /> },
@@ -74,7 +82,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {" "}
       {/* Tambahkan overflow-hidden untuk menghindari scroll pada container utama */}
       {/* Sidebar */}
       <div
@@ -123,7 +130,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <header className="bg-[#257691] shadow-md p-4 flex justify-between items-center text-white sticky top-0 z-10">
-          {" "}
           {/* Menambahkan sticky dan top-0 */}
           <button
             className="md:hidden text-white text-2xl"
@@ -131,8 +137,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           >
             ☰
           </button>
-          <h1 className="text-xl font-semibold ml-72 mb-0">{selectedMenu}</h1>{" "}
-          {/* Menampilkan item yang dipilih */}
+          <h1 className="text-xl font-semibold ml-72 mb-0">{selectedMenu}</h1> {/* Menampilkan item yang dipilih */}
           {/* Avatar di pojok kanan */}
           <Dropdown
             overlay={avatarMenu}
@@ -149,7 +154,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
         {/* Content yang bisa di-scroll */}
         <main className="flex-1 p-6 bg-gray-100 overflow-y-auto">
-          {" "}
           {/* Tambahkan overflow-y-auto agar konten bisa di-scroll */}
           {children}
         </main>

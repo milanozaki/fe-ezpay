@@ -1,5 +1,5 @@
 'use client'; // Menandakan komponen ini sebagai Client Component
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link'; // Import Link dari next/link
 import {
   HistoryOutlined,
@@ -8,10 +8,12 @@ import {
 import { IoFastFoodOutline } from "react-icons/io5";
 import { Avatar, Dropdown, Button, Divider } from 'antd'; // Import Avatar, Dropdown, Button, dan Divider dari Ant Design
 import Image from 'next/image'; // Import Image dari next/image
+import { usePathname } from 'next/navigation'; // Import usePathname dari next/navigation
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false); // Default sidebar tertutup di mobile
-  const [selectedMenu, setSelectedMenu] = useState<string>('Kasir Page'); // State untuk menyimpan item yang dipilih dengan default 'Menu'
+  const [selectedMenu, setSelectedMenu] = useState<string>(''); // State untuk menyimpan item yang dipilih dengan default ''
+  const pathname = usePathname(); // Mendapatkan path saat ini
 
   const authenticatedMenu = [
     { name: 'Menu', path: '/kasirapp/menu', icon: <IoFastFoodOutline /> },
@@ -33,7 +35,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <div className="text-gray-500 text-center">{userRole}</div>
 
       {/* Garis pemisah */}
-      <Divider className='mt-3'/>
+      <Divider className='mt-3' />
 
       {/* Button Logout */}
       <Button
@@ -49,6 +51,14 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       </Button>
     </div>
   );
+
+  useEffect(() => {
+    // Set selectedMenu berdasarkan URL saat ini
+    const activeMenuItem = authenticatedMenu.find(item => pathname?.startsWith(item.path));
+    if (activeMenuItem) {
+      setSelectedMenu(activeMenuItem.name);
+    }
+  }, [pathname]);
 
   return (
     <div className="flex min-h-screen">
