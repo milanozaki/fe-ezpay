@@ -16,7 +16,7 @@ const LoginPage = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:3222/auth/login/toko', { // Ganti dengan URL endpoint login yang sesuai
+      const response = await fetch('http://localhost:3222/auth/login/superadmin', { // Ganti dengan URL endpoint login yang sesuai
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -34,7 +34,7 @@ const LoginPage = () => {
       localStorage.setItem('userEmail', email);
       
       // Redirect ke halaman dashboard setelah login berhasil
-      router.push('/admin/dashboard');
+      router.push('/superadmin/inbox');
     } catch (err) {
       setError('Login failed. Please check your credentials and try again.');
     } finally {

@@ -14,7 +14,7 @@ import Image from "next/image"; // Import Image dari next/image
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false); // Default sidebar tertutup di mobile
-  const [selectedMenu, setSelectedMenu] = useState<string>("Dashboard"); // State untuk menyimpan item yang dipilih
+  const [selectedMenu, setSelectedMenu] = useState<string>("TokoMu"); // State untuk menyimpan item yang dipilih
   const [userEmail, setUserEmail] = useState<string>("user@example.com"); // State untuk email pengguna
   const router = useRouter(); // Inisialisasi router
 
