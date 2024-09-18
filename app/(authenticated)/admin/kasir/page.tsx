@@ -1,16 +1,24 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Button, message } from "antd";
+import { Button, message, Form, Input, Modal, Select } from "antd";
 import axios from "axios";
+
+// Define the enum
+enum StatusEnum {
+  ACTIVE = 'aktif',
+  INACTIVE = 'tidak aktif'
+}
 
 interface Kasir {
   id_kasir: string;
   nama_kasir: string;
-  status: string; // Menambahkan status
+  status: StatusEnum;
 }
 
 const KasirPage: React.FC = () => {
   const [kasirList, setKasirList] = useState<Kasir[]>([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [form] = Form.useForm();
 
   useEffect(() => {
     // Fetch kasir list from API
@@ -24,9 +32,25 @@ const KasirPage: React.FC = () => {
       });
   }, []);
 
-  const handleAddKasir = () => {
-    // Implement the logic to add a new kasir
-    message.success("Fitur tambah kasir akan ditambahkan nanti!");
+  const handleAddKasir = (values: any) => {
+    // Make POST request to add a new kasir
+    axios
+      .post("http://localhost:3222/users/tambah-kasir", values)
+      .then((response) => {
+        message.success("Kasir berhasil ditambahkan!");
+        // Close the modal and reset the form
+        setIsModalVisible(false);
+        form.resetFields();
+        // Optionally refetch the list to include the newly added kasir
+        return axios.get("http://localhost:3222/users/kasir");
+      })
+      .then((response) => {
+        setKasirList(response.data.data);
+      })
+      .catch((error) => {
+        console.error("Error adding kasir:", error);
+        message.error("Terjadi kesalahan saat menambahkan kasir.");
+      });
   };
 
   const handleEditKasir = (id_kasir: string) => {
@@ -41,7 +65,7 @@ const KasirPage: React.FC = () => {
       <div className="flex justify-between items-center mb-4">
         <Button
           type="primary"
-          onClick={handleAddKasir}
+          onClick={() => setIsModalVisible(true)}
           className="bg-blue-500 text-white"
         >
           Tambah Kasir
@@ -64,7 +88,7 @@ const KasirPage: React.FC = () => {
               <td className="py-3 px-20 text-left">{kasir.nama_kasir}</td>
               <td
                 className={`py-3 px-16 text-left ${
-                  kasir.status === "aktif" ? "text-green-600" : ""
+                  kasir.status === StatusEnum.ACTIVE ? "text-green-600" : ""
                 }`}
               >
                 {kasir.status}
@@ -81,6 +105,53 @@ const KasirPage: React.FC = () => {
           ))}
         </tbody>
       </table>
+
+      {/* Modal for Adding Kasir */}
+      <Modal
+        title="Tambah Kasir"
+        visible={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        footer={null}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleAddKasir}
+        >
+          <Form.Item
+            name="nama"
+            label="Nama"
+            rules={[{ required: true, message: 'Nama kasir harus diisi!' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[{ required: true, message: 'Email kasir harus diisi!' }, { type: 'email', message: 'Email tidak valid!' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="status"
+            label="Status"
+            rules={[{ required: true, message: 'Status kasir harus diisi!' }]}
+          >
+            <Select>
+              {Object.entries(StatusEnum).map(([key, value]) => (
+                <Select.Option key={key} value={value}>
+                  {key}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Tambah
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };
