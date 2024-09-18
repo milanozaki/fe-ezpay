@@ -97,12 +97,11 @@ const InboxPage = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          // Tidak ada body karena API tidak membutuhkannya
         });
   
-        console.log('Response status for approve request:', response.status); // Debugging
-        const responseBody = await response.text(); // Mengambil response body untuk debugging
-        console.log('Response body for approve request:', responseBody); // Debugging
+        // console.log('Response status for approve request:', response.status); // Debugging
+        // const responseBody = await response.text(); // Mengambil response body untuk debugging
+        // console.log('Response body for approve request:', responseBody); // Debugging
   
         if (!response.ok) {
           throw new Error(`Terima request failed: ${response.statusText}`);

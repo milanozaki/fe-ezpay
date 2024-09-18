@@ -1,21 +1,43 @@
 'use client'; // Menandakan komponen ini sebagai Client Component
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link'; // Import Link dari next/link
 import { InboxOutlined, UserOutlined } from "@ant-design/icons";
 import { Avatar, Dropdown, Button, Divider } from 'antd'; // Import Avatar, Dropdown, Button, dan Divider dari Ant Design
 import Image from 'next/image'; // Import Image dari next/image
+import { usePathname } from "next/navigation"; // Import usePathname dari next/navigation
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false); // Default sidebar tertutup di mobile
-  const [selectedMenu, setSelectedMenu] = useState<string>(''); // State untuk menyimpan item yang dipilih dengan default 'Menu'
+  const [selectedMenu, setSelectedMenu] = useState<string>(''); // State untuk menyimpan item yang dipilih dengan default ''
+  const [userEmail, setUserEmail] = useState<string>("user@example.com"); // State untuk email pengguna
+  const pathname = usePathname(); // Mendapatkan path saat ini
 
   const menuItems = [
     { name: 'Inbox', path: '/superadmin/inbox', icon: <InboxOutlined /> },
     { name: 'Daftar Toko', path: '/superadmin/kelola', icon: <UserOutlined /> },
   ];
 
+  // Mengambil email dari localStorage setelah komponen di-mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedEmail = localStorage.getItem("userEmail");
+      if (storedEmail) {
+        setUserEmail(storedEmail);
+      }
+    }
+  }, []);
+
+  // Set selectedMenu berdasarkan URL saat ini
+  useEffect(() => {
+    if (pathname) {
+      const activeMenuItem = menuItems.find(item => pathname.includes(item.path));
+      if (activeMenuItem) {
+        setSelectedMenu(activeMenuItem.name);
+      }
+    }
+  }, [pathname]); // Gunakan pathname alih-alih asPath
+
   const avatarUrl = 'https://mir-s3-cdn-cf.behance.net/project_modules/disp/414d9011889067.5625411b2afd2.png';
-  const userEmail = 'user@example.com'; // Dummy email untuk ditampilkan
   const userRole = 'Superadmin'; // Role bisa diubah sesuai kebutuhan
 
   // Menu untuk dropdown avatar dengan ukuran persegi panjang dan background
@@ -37,8 +59,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         danger
         className="w-full -mt-4"
         onClick={() => {
-          // Logout logic (di sini bisa ditambahkan action yang sesuai)
-          console.log('Logout button clicked');
+          localStorage.removeItem("userEmail"); // Hapus email dari localStorage
+          window.location.href = "/login_superadmin"; // Arahkan ke halaman login
         }}
       >
         Keluar
