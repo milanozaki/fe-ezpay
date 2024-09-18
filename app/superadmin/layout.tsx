@@ -1,26 +1,22 @@
 'use client'; // Menandakan komponen ini sebagai Client Component
 import React, { useState } from 'react';
 import Link from 'next/link'; // Import Link dari next/link
-import {
-  HistoryOutlined,
-  AppstoreOutlined,
-} from "@ant-design/icons";
-import { IoFastFoodOutline } from "react-icons/io5";
+import { InboxOutlined, UserOutlined } from "@ant-design/icons";
 import { Avatar, Dropdown, Button, Divider } from 'antd'; // Import Avatar, Dropdown, Button, dan Divider dari Ant Design
 import Image from 'next/image'; // Import Image dari next/image
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false); // Default sidebar tertutup di mobile
-  const [selectedMenu, setSelectedMenu] = useState<string>('Kasir Page'); // State untuk menyimpan item yang dipilih dengan default 'Menu'
+  const [selectedMenu, setSelectedMenu] = useState<string>(''); // State untuk menyimpan item yang dipilih dengan default 'Menu'
 
-  const authenticatedMenu = [
-    { name: 'Menu', path: '/kasirapp/menu', icon: <IoFastFoodOutline /> },
-    { name: 'Riwayat Transaksi', path: '/kasirapp/riwayat', icon: <HistoryOutlined /> },
+  const menuItems = [
+    { name: 'Inbox', path: '/superadmin/inbox', icon: <InboxOutlined /> },
+    { name: 'Daftar Toko', path: '/superadmin/kelola', icon: <UserOutlined /> },
   ];
 
   const avatarUrl = 'https://mir-s3-cdn-cf.behance.net/project_modules/disp/414d9011889067.5625411b2afd2.png';
   const userEmail = 'user@example.com'; // Dummy email untuk ditampilkan
-  const userRole = 'Kasir'; // Role bisa diubah sesuai kebutuhan
+  const userRole = 'Superadmin'; // Role bisa diubah sesuai kebutuhan
 
   // Menu untuk dropdown avatar dengan ukuran persegi panjang dan background
   const avatarMenu = (
@@ -33,7 +29,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <div className="text-gray-500 text-center">{userRole}</div>
 
       {/* Garis pemisah */}
-      <Divider className='mt-3'/>
+      <Divider className='mt-3' />
 
       {/* Button Logout */}
       <Button
@@ -68,7 +64,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           />
         </div>
         <ul className="w-full">
-          {authenticatedMenu.map((item) => (
+          {menuItems.map((item) => (
             <li 
               key={item.name} 
               className="pt-3 pb-3 pr-4 pl-7 hover:bg-[#257691] mr-3 ml-2 rounded-lg"
