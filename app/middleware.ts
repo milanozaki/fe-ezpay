@@ -15,7 +15,7 @@
 //   ) {
 //     // Jika tidak ada token, arahkan user ke halaman login
 //     if (!token) {
-//       return NextResponse.redirect(new URL('/login', req.url));
+//       return NextResponse.redirect(new URL('/login_admin', req.url));
 //     }
 //   }
 

@@ -15,7 +15,7 @@
     "@types/react": "18.2.14",
     "@types/react-dom": "18.2.6",
     "@types/superagent": "^4.1.18",
-    "antd": "^5.7.0",
+    "antd": "^5.20.6",
     "ants": "^0.0.3-alpha",
     "axios": "^1.7.7",
     "chart.js": "^4.4.4",
