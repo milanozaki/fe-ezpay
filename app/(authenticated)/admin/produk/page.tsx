@@ -9,8 +9,16 @@ import {
   Card,
   Pagination,
   message,
+  Image,
+  Dropdown,
+  Menu,
 } from "antd";
-import { PlusOutlined, SearchOutlined, EditOutlined } from "@ant-design/icons";
+import {
+  PlusOutlined,
+  SearchOutlined,
+  EditOutlined,
+  FilterOutlined,
+} from "@ant-design/icons";
 import axios from "axios";
 import { debounce } from "lodash";
 
@@ -34,8 +42,10 @@ const ProdukPage: React.FC = () => {
   const [pageSize] = useState<number>(8);
   const [totalProduk, setTotalProduk] = useState<number>(0);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("ASC");
 
   useEffect(() => {
+    // Fetch kategori dan produk
     axios
       .get("http://localhost:3222/kategori")
       .then((response) => {
@@ -77,17 +87,16 @@ const ProdukPage: React.FC = () => {
     }
   };
 
-  const fetchProdukByHarga = async (sortOrder: "ASC" | "DESC") => {
-    let url = `http://localhost:3222/produk/by-harga?sort=${sortOrder}`;
-    
+  const fetchProdukByHarga = async (order: "ASC" | "DESC") => {
+    let url = `http://localhost:3222/produk/by-harga?sort=${order}`;
+
     if (selectedCategory) {
       url += `&kategori=${selectedCategory}`;
     }
-    
+
     try {
       const response = await axios.get(url);
       const sortedProduk = response.data;
-      console.log("Produk sorted by price:", sortedProduk); // Debugging log
       setFilteredProduk(sortedProduk);
       setTotalProduk(sortedProduk.length);
     } catch (error) {
@@ -132,10 +141,10 @@ const ProdukPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  function handleAddClick() {
+  const handleAddClick = () => {
     form.resetFields();
     setIsAddModalVisible(true);
-  }
+  };
 
   const handleOk = () => {
     form.validateFields().then((values) => {
@@ -152,11 +161,21 @@ const ProdukPage: React.FC = () => {
     setCurrentPage(page);
   };
 
-  // Menghitung indeks produk yang harus ditampilkan pada halaman saat ini
+  const handleSortOrderChange = ({ key }: { key: string }) => {
+    const order = key === "harga-asc" ? "ASC" : "DESC";
+    setSortOrder(order);
+    fetchProdukByHarga(order);
+  };
+
+  const menu = (
+    <Menu onClick={handleSortOrderChange}>
+      <Menu.Item key="harga-asc">Harga Terendah</Menu.Item>
+      <Menu.Item key="harga-desc">Harga Tertinggi</Menu.Item>
+    </Menu>
+  );
+
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
-
-  // Pastikan filteredProduk adalah array sebelum memanggil slice
   const paginatedProduk = Array.isArray(filteredProduk)
     ? filteredProduk.slice(startIndex, endIndex)
     : [];
@@ -176,17 +195,28 @@ const ProdukPage: React.FC = () => {
         >
           Tambah
         </Button>
+
         <div className="flex items-center">
+          <Dropdown overlay={menu} trigger={["click"]}>
+            <Button icon={<FilterOutlined />} style={{ marginRight: 5 }}>
+              {sortOrder === null
+                ? "Filter"
+                : sortOrder === "ASC"
+                ? "Harga Terendah"
+                : "Harga Tertinggi"}
+            </Button>
+          </Dropdown>
+
           <Input
             placeholder="Cari..."
             prefix={<SearchOutlined />}
-            style={{ width: 250, marginRight: 10 }}
+            style={{ width: 250, marginRight: 5 }}
             value={searchQuery}
             onChange={handleSearchChange}
           />
           <Select
             defaultValue="semua"
-            style={{ width: 150, marginRight: 10 }}
+            style={{ width: 150, marginRight: 5 }}
             onChange={(value) => handleFilterByCategory(value)}
           >
             <Select.Option value="semua">Semua</Select.Option>
@@ -195,17 +225,6 @@ const ProdukPage: React.FC = () => {
                 {category}
               </Select.Option>
             ))}
-          </Select>
-          <Select
-            defaultValue="harga-asc"
-            style={{ width: 150 }}
-            onChange={(value) => {
-              const sortOrder = value === "harga-asc" ? "ASC" : "DESC";
-              fetchProdukByHarga(sortOrder);
-            }}
-          >
-            <Select.Option value="harga-asc">Harga Terendah</Select.Option>
-            <Select.Option value="harga-desc">Harga Tertinggi</Select.Option>
           </Select>
         </div>
       </div>
@@ -217,7 +236,7 @@ const ProdukPage: React.FC = () => {
           paginatedProduk.map((item) => (
             <Card
               key={item.id_produk}
-              cover={<img alt={item.nama_produk} src={item.gambar_produk} />}
+              cover={<Image alt={item.nama_produk} src={item.gambar_produk} />}
               actions={[
                 <EditOutlined
                   key="edit"
@@ -280,39 +299,6 @@ const ProdukPage: React.FC = () => {
             label="Stok"
             rules={[
               { required: true, message: "Silakan masukkan stok produk!" },
-            ]}
-          >
-            <Input type="number" />
-          </Form.Item>
-          <Form.Item
-            name="harga_produk"
-            label="Harga Produk"
-            rules={[
-              { required: true, message: "Silakan masukkan harga produk!" },
-            ]}
-          >
-            <Input type="number" />
-          </Form.Item>
-          <Form.Item
-            name="kategori"
-            label="Kategori"
-            rules={[
-              { required: true, message: "Silakan pilih kategori!" },
-            ]}
-          >
-            <Select>
-              {categories.map((category) => (
-                <Select.Option key={category} value={category}>
-                  {category}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item
-            name="gambar_produk"
-            label="Gambar Produk"
-            rules={[
-              { required: true, message: "Silakan masukkan URL gambar produk!" },
             ]}
           >
             <Input />
