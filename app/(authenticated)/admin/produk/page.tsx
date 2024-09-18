@@ -263,7 +263,7 @@ const ProdukPage: React.FC = () => {
         />
       )}
 
-      <Modal
+<Modal
         title="Tambah Produk"
         visible={isAddModalVisible}
         onCancel={handleCancel}
@@ -299,6 +299,40 @@ const ProdukPage: React.FC = () => {
             label="Stok"
             rules={[
               { required: true, message: "Silakan masukkan stok produk!" },
+            ]}
+          >
+            <Input type="number" />
+          </Form.Item>
+          <Form.Item
+            name="harga_produk"
+            label="Harga Produk"
+            rules={[
+              { required: true, message: "Silakan masukkan harga produk!" },
+            ]}
+          >
+            <Input type="number" />
+          </Form.Item>
+          <Form.Item
+            name="kategori"
+            label="Kategori"
+            rules={[{ required: true, message: "Silakan pilih kategori!" }]}
+          >
+            <Select>
+              {categories.map((category) => (
+                <Select.Option key={category} value={category}>
+                  {category}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="gambar_produk"
+            label="Gambar Produk"
+            rules={[
+              {
+                required: true,
+                message: "Silakan masukkan URL gambar produk!",
+              },
             ]}
           >
             <Input />
