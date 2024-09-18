@@ -1,74 +1,62 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { Button, Form, Modal, Input, Select, Card, Pagination } from "antd";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Button,
+  Form,
+  Modal,
+  Input,
+  Select,
+  Card,
+  Pagination,
+  message,
+} from "antd";
 import { PlusOutlined, SearchOutlined, EditOutlined } from "@ant-design/icons";
 import axios from "axios";
+import { debounce } from "lodash";
 
-// Custom style for the Save button
-const saveButtonStyle = {
-  backgroundColor: "#3B8394", // Ganti dengan warna yang diinginkan
-  borderColor: "#3B8394", // Ganti dengan warna border yang diinginkan
-  color: "#fff", // Warna teks
-  borderRadius: "4px", // Radius border
-};
+interface Produk {
+  id_produk: string;
+  nama_produk: string;
+  harga_produk: number;
+  gambar_produk: string;
+  status_produk: string;
+  satuan_produk: string;
+}
 
-// Custom style for the Cancel button
-const cancelButtonStyle = {
-  backgroundColor: "#fff", // Ganti dengan warna yang diinginkan
-  borderColor: "#3B8394", // Ganti dengan warna border yang diinginkan
-  color: "#3B8394", // Warna teks
-  borderRadius: "4px", // Radius border
-};
-
-// Custom style for the Add button
-const addButtonStyle = {
-  backgroundColor: "#3B8394", // Warna latar belakang
-  borderColor: "#3B8394", // Warna border
-  color: "#fff", // Warna teks
-  borderRadius: "12px", // Radius border
-  padding: "10px 20px", // Padding
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  transition: "background-color 0.1s, border-color 0.3s", // Transisi
-};
-
-const ProdukPage = () => {
-  const [isAddModalVisible, setIsAddModalVisible] = useState<boolean>(false); // State untuk visibilitas modal tambah
-  const [form] = Form.useForm(); // Form instance dari Ant Design
-  const [categories, setCategories] = useState<string[]>([]); // State untuk kategori
-  const [produk, setProduk] = useState<any[]>([]); // State untuk produk
-  const [currentPage, setCurrentPage] = useState<number>(1); // State untuk halaman saat ini
+const ProdukPage: React.FC = () => {
+  const [isAddModalVisible, setIsAddModalVisible] = useState<boolean>(false);
+  const [form] = Form.useForm();
+  const [categories, setCategories] = useState<string[]>([]);
+  const [produk, setProduk] = useState<Produk[]>([]);
+  const [filteredProduk, setFilteredProduk] = useState<Produk[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize] = useState<number>(8);
+  const [totalProduk, setTotalProduk] = useState<number>(0);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fetch categories from API
     axios
-      .get("http://localhost:3222/kategori") // Ganti dengan endpoint API yang sesuai
+      .get("http://localhost:3222/kategori")
       .then((response) => {
-        // Asumsi response.data adalah array dari objek dengan properti "nama"
         const categoryData = response.data.data;
         if (Array.isArray(categoryData)) {
           const categoryNames = categoryData.map((item) => item.nama);
           setCategories(categoryNames);
-        } else {
-          console.error("Data from API is not in expected format:", response.data);
         }
       })
       .catch((error) => {
         console.error("Error fetching categories:", error);
       });
 
-    // Fetch produk from API
     axios
-      .get("http://localhost:3222/produk/all") // Ganti dengan endpoint API yang sesuai
+      .get("http://localhost:3222/produk/all")
       .then((response) => {
-        // Asumsi response.data adalah array dari objek produk
         const produkData = response.data.data;
-        console.log("Produk data:", produkData); // Debugging log
         if (Array.isArray(produkData)) {
           setProduk(produkData);
-        } else {
-          console.error("Data from API is not in expected format:", response.data);
+          setFilteredProduk(produkData);
+          setTotalProduk(produkData.length);
         }
       })
       .catch((error) => {
@@ -76,54 +64,131 @@ const ProdukPage = () => {
       });
   }, []);
 
-  const handleAddClick = () => {
-    form.resetFields(); // Reset form
-    setIsAddModalVisible(true); // Tampilkan modal tambah
+  const fetchProduk = async (value: string) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3222/produk/search?nama_produk=${value}`
+      );
+      const searchResult = response.data;
+      setFilteredProduk(searchResult);
+      setTotalProduk(searchResult.length);
+    } catch (error) {
+      console.error("Error searching products:", error);
+    }
   };
 
+  const fetchProdukByHarga = async (sortOrder: "ASC" | "DESC") => {
+    let url = `http://localhost:3222/produk/by-harga?sort=${sortOrder}`;
+    
+    if (selectedCategory) {
+      url += `&kategori=${selectedCategory}`;
+    }
+    
+    try {
+      const response = await axios.get(url);
+      const sortedProduk = response.data;
+      console.log("Produk sorted by price:", sortedProduk); // Debugging log
+      setFilteredProduk(sortedProduk);
+      setTotalProduk(sortedProduk.length);
+    } catch (error) {
+      console.error("Error fetching products by price:", error);
+    }
+  };
+
+  const debouncedSearch = useCallback(
+    debounce((value) => {
+      fetchProduk(value);
+    }, 250),
+    []
+  );
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    debouncedSearch(value);
+  };
+
+  const handleFilterByCategory = async (namaKategori: string) => {
+    if (namaKategori === "semua") {
+      setSelectedCategory(null);
+      setFilteredProduk(produk);
+      setTotalProduk(produk.length);
+    } else {
+      try {
+        const response = await axios.get(
+          `http://localhost:3222/kategori/produk/${namaKategori}`
+        );
+        const filteredData = response.data;
+        if (filteredData.length === 0) {
+          message.error("Tidak ada produk tersedia di kategori ini");
+        }
+        setSelectedCategory(namaKategori);
+        setFilteredProduk(filteredData);
+        setTotalProduk(filteredData.length);
+      } catch (error) {
+        console.error("Error filtering products by category:", error);
+      }
+    }
+    setCurrentPage(1);
+  };
+
+  function handleAddClick() {
+    form.resetFields();
+    setIsAddModalVisible(true);
+  }
+
   const handleOk = () => {
-    form
-      .validateFields()
-      .then((values) => {
-        console.log("Form values:", values);
-        // Handle form submission
-        setIsAddModalVisible(false); // Sembunyikan modal setelah submit
-      })
-      .catch((info) => {
-        console.log("Validate Failed:", info);
-      });
+    form.validateFields().then((values) => {
+      console.log("Form values:", values);
+      setIsAddModalVisible(false);
+    });
   };
 
   const handleCancel = () => {
-    setIsAddModalVisible(false); // Sembunyikan modal
+    setIsAddModalVisible(false);
   };
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page); // Ubah halaman saat ini
+    setCurrentPage(page);
   };
+
+  // Menghitung indeks produk yang harus ditampilkan pada halaman saat ini
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+
+  // Pastikan filteredProduk adalah array sebelum memanggil slice
+  const paginatedProduk = Array.isArray(filteredProduk)
+    ? filteredProduk.slice(startIndex, endIndex)
+    : [];
 
   return (
     <div className="p-4 mr-20 ml-64">
-      {/* Container for button, search bar, and dropdown */}
       <div className="flex justify-between items-center mb-4">
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          onClick={handleAddClick} // Tampilkan modal tambah saat diklik
-          style={addButtonStyle}
+          onClick={handleAddClick}
+          style={{
+            backgroundColor: "#3B8394",
+            color: "#fff",
+            borderRadius: "12px",
+          }}
         >
           Tambah
         </Button>
         <div className="flex items-center">
-          {/* Search Bar */}
           <Input
             placeholder="Cari..."
             prefix={<SearchOutlined />}
             style={{ width: 250, marginRight: 10 }}
+            value={searchQuery}
+            onChange={handleSearchChange}
           />
-
-          {/* Dropdown */}
-          <Select defaultValue="semua" style={{ width: 150 }}>
+          <Select
+            defaultValue="semua"
+            style={{ width: 150, marginRight: 10 }}
+            onChange={(value) => handleFilterByCategory(value)}
+          >
             <Select.Option value="semua">Semua</Select.Option>
             {categories.map((category) => (
               <Select.Option key={category} value={category}>
@@ -131,48 +196,70 @@ const ProdukPage = () => {
               </Select.Option>
             ))}
           </Select>
+          <Select
+            defaultValue="harga-asc"
+            style={{ width: 150 }}
+            onChange={(value) => {
+              const sortOrder = value === "harga-asc" ? "ASC" : "DESC";
+              fetchProdukByHarga(sortOrder);
+            }}
+          >
+            <Select.Option value="harga-asc">Harga Terendah</Select.Option>
+            <Select.Option value="harga-desc">Harga Tertinggi</Select.Option>
+          </Select>
         </div>
       </div>
 
-      {/* Product Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-        {produk.map((item) => (
-          <Card
-            key={item.id}
-            cover={<img alt={item.nama_produk} src={item.gambar_produk} />}
-            actions={[
-              <EditOutlined
-                key="edit"
-                onClick={() => console.log(`Edit ${item.nama_produk}`)}
-              />,
-            ]}
-          >
-            <Card.Meta title={item.nama_produk} description={`${item.harga_produk} USD`} />
-          </Card>
-        ))}
+        {paginatedProduk.length === 0 ? (
+          <div className="text-center text-gray-500">Produk tidak ada</div>
+        ) : (
+          paginatedProduk.map((item) => (
+            <Card
+              key={item.id_produk}
+              cover={<img alt={item.nama_produk} src={item.gambar_produk} />}
+              actions={[
+                <EditOutlined
+                  key="edit"
+                  onClick={() => console.log(`Edit ${item.nama_produk}`)}
+                />,
+              ]}
+            >
+              <Card.Meta
+                title={item.nama_produk}
+                description={`${item.harga_produk} USD`}
+              />
+            </Card>
+          ))
+        )}
       </div>
 
-      {/* Pagination */}
-      <Pagination
-        current={currentPage}
-        total={produk.length}
-        pageSize={8}
-        onChange={handlePageChange}
-        className="flex justify-end"
-      />
+      {totalProduk > pageSize && (
+        <Pagination
+          current={currentPage}
+          total={totalProduk}
+          pageSize={pageSize}
+          onChange={handlePageChange}
+          className="flex justify-end"
+        />
+      )}
 
       <Modal
         title="Tambah Produk"
         visible={isAddModalVisible}
         onCancel={handleCancel}
         footer={[
-          <Button key="back" style={cancelButtonStyle} onClick={handleCancel}>
+          <Button
+            key="back"
+            style={{ backgroundColor: "#fff", color: "#3B8394" }}
+            onClick={handleCancel}
+          >
             Batal
           </Button>,
           <Button
             key="submit"
+            style={{ backgroundColor: "#3B8394", color: "#fff" }}
             onClick={handleOk}
-            style={saveButtonStyle} // Terapkan gaya khusus di sini
           >
             Simpan
           </Button>,
@@ -182,38 +269,51 @@ const ProdukPage = () => {
           <Form.Item
             name="nama_produk"
             label="Nama Produk"
-            rules={[{ required: true, message: "Silakan masukkan nama produk!" }]}
+            rules={[
+              { required: true, message: "Silakan masukkan nama produk!" },
+            ]}
           >
             <Input />
           </Form.Item>
           <Form.Item
             name="stok"
             label="Stok"
-            rules={[{ required: true, message: "Silakan masukkan stok produk!" }]}
+            rules={[
+              { required: true, message: "Silakan masukkan stok produk!" },
+            ]}
           >
             <Input type="number" />
           </Form.Item>
           <Form.Item
-            name="gambar_produk"
-            label="Gambar Produk"
-            rules={[{ required: true, message: "Silakan masukkan URL gambar produk!" }]}
+            name="harga_produk"
+            label="Harga Produk"
+            rules={[
+              { required: true, message: "Silakan masukkan harga produk!" },
+            ]}
           >
-            <Input />
+            <Input type="number" />
           </Form.Item>
           <Form.Item
-            name="status_produk"
-            label="Status Produk"
-            rules={[{ required: true, message: "Silakan pilih status produk!" }]}
+            name="kategori"
+            label="Kategori"
+            rules={[
+              { required: true, message: "Silakan pilih kategori!" },
+            ]}
           >
             <Select>
-              <Select.Option value="aktif">Aktif</Select.Option>
-              <Select.Option value="nonaktif">Nonaktif</Select.Option>
+              {categories.map((category) => (
+                <Select.Option key={category} value={category}>
+                  {category}
+                </Select.Option>
+              ))}
             </Select>
           </Form.Item>
           <Form.Item
-            name="satuan_produk"
-            label="Satuan Produk"
-            rules={[{ required: true, message: "Silakan masukkan satuan produk!" }]}
+            name="gambar_produk"
+            label="Gambar Produk"
+            rules={[
+              { required: true, message: "Silakan masukkan URL gambar produk!" },
+            ]}
           >
             <Input />
           </Form.Item>
