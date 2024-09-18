@@ -127,21 +127,21 @@ const KategoriPage = () => {
 
         {/* Tabel Kategori */}
         <div className="mt-5 overflow-x-auto">
-          <table className="min-w-full bg-white border-collapse border border-gray-300 rounded-lg shadow-md">
+          <table className="min-w-full bg-white border-collapse rounded-lg shadow-md">
             <thead>
               <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-                <th className="py-3 px-6 text-left font-semibold border border-gray-300 w-16">No</th>
-                <th className="py-3 px-6 text-left font-semibold border border-gray-300">Nama Kategori</th>
-                <th className="py-3 px-6 text-left font-semibold border border-gray-300">Aksi</th>
+                <th className="py-3 px-6 text-left font-semibold w-16">No</th>
+                <th className="py-3 px-6 text-left font-semibold">Nama Kategori</th>
+                <th className="py-3 px-6 text-left font-semibold">Aksi</th>
               </tr>
             </thead>
             <tbody className="text-gray-700 text-sm">
               {kategori.length > 0 ? (
                 kategori.map((item, index) => (
                   <tr key={index} className="hover:bg-gray-100 transition duration-200">
-                    <td className="py-3 px-6 text-left border border-gray-300 w-16">{index + 1}</td>
-                    <td className="py-3 px-6 text-left border border-gray-300">{item.nama}</td>
-                    <td className="py-3 px-6 text-left border border-gray-300">
+                    <td className="py-3 px-6 text-left w-16">{index + 1}</td>
+                    <td className="py-3 px-6 text-left">{item.nama}</td>
+                    <td className="py-3 px-6 text-left">
                       <a
                         href="#"
                         onClick={() => handleEditClick(item.nama)}
