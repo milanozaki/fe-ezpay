@@ -29,10 +29,9 @@ const InboxPage = () => {
       try {
         const response = await fetch('http://localhost:3222/toko/daftar'); // Ganti dengan endpoint API Anda
         if (!response.ok) {
-          throw new Error('Network response was not ok');
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
         const result = await response.json();
-        // Asumsikan response JSON berisi array dengan format yang sesuai
         setData(result.map((item: any) => ({
           id: item.id_toko,
           tanggal: item.createdAt,
@@ -46,6 +45,7 @@ const InboxPage = () => {
           foto: item.foto
         })));
       } catch (error: any) {
+        console.error('Error fetching data:', error); // Logging error
         setError(error.message);
       } finally {
         setLoading(false);
@@ -69,12 +69,7 @@ const InboxPage = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          // Tidak ada body karena API tidak membutuhkannya
         });
-  
-        console.log('Response status for reject request:', response.status); // Debugging
-        const responseBody = await response.text(); // Mengambil response body untuk debugging
-        console.log('Response body for reject request:', responseBody); // Debugging
   
         if (!response.ok) {
           throw new Error(`Tolak request failed: ${response.statusText}`);
@@ -99,10 +94,6 @@ const InboxPage = () => {
           },
         });
   
-        // console.log('Response status for approve request:', response.status); // Debugging
-        // const responseBody = await response.text(); // Mengambil response body untuk debugging
-        // console.log('Response body for approve request:', responseBody); // Debugging
-  
         if (!response.ok) {
           throw new Error(`Terima request failed: ${response.statusText}`);
         }
@@ -125,7 +116,7 @@ const InboxPage = () => {
 
   return (
     <div>
-      <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-md">
+      <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-md relative">
         <thead>
           <tr className="bg-gray-100 border-b">
             <th className="py-2 px-4 text-left">Pesan</th>
@@ -135,8 +126,12 @@ const InboxPage = () => {
         </thead>
         <tbody>
           {data.map((item) => (
-            <tr key={item.id} className="border-b">
-              <td className="py-2 px-4">PERMINTAAN Pembuatan Toko Baru</td>
+            <tr key={item.id} className="border-b relative">
+              <td className="py-2 px-4 relative">
+                {/* Pin merah bulat di bagian kiri atas */}
+                <div className="absolute top-0 left-0 w-2 h-2 bg-red-500 rounded-full"></div>
+                PERMINTAAN Pembuatan Toko Baru
+              </td>
               <td className="py-2 px-4">{item.tanggal}</td>
               <td className="py-2 px-4">
                 <a
@@ -159,12 +154,11 @@ const InboxPage = () => {
         footer={
           <div className="flex justify-end">
             <Button onClick={handleTolak} style={{ backgroundColor: 'red', color: 'white' }} className="mr-2">
-            Tolak
+              Tolak
             </Button>
             <Button onClick={handleTerima} style={{ backgroundColor: 'blue', color: 'white' }} type="primary">
-            Terima
+              Terima
             </Button>
-
           </div>
         }
         width={600}

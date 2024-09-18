@@ -69,7 +69,7 @@ const KelolaAkunpage = () => {
         <tbody>
           {data.map((item, index) => (
             <tr key={item.id} className="border-b">
-              <td className="py-2 px-4">{index + 1}</td>
+              <td className="py-2 px-4">{index + 1 + "."}</td>
               <td className="py-2 px-4">{item.nama_toko}</td>
               <td className="py-2 px-4">{item.nama}</td>
               <td className="py-2 px-4">{item.email}</td>
