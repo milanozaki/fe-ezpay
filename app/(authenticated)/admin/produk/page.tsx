@@ -21,8 +21,8 @@ import {
   SearchOutlined,
   EditOutlined,
   FilterOutlined,
+  UploadOutlined,
 } from "@ant-design/icons";
-import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { debounce } from "lodash";
 
@@ -83,7 +83,7 @@ const ProdukPage: React.FC = () => {
       const response = await axios.get(
         `http://localhost:3222/produk/search?nama_produk=${value}`
       );
-      const searchResult = response.data;
+      const searchResult = response.data.data;
       setFilteredProduk(searchResult);
       setTotalProduk(searchResult.length);
     } catch (error) {
@@ -100,7 +100,7 @@ const ProdukPage: React.FC = () => {
 
     try {
       const response = await axios.get(url);
-      const sortedProduk = response.data;
+      const sortedProduk = response.data.data;
       setFilteredProduk(sortedProduk);
       setTotalProduk(sortedProduk.length);
     } catch (error) {
@@ -109,7 +109,7 @@ const ProdukPage: React.FC = () => {
   };
 
   const debouncedSearch = useCallback(
-    debounce((value) => {
+    debounce((value: string) => {
       fetchProduk(value);
     }, 250),
     []
@@ -131,7 +131,7 @@ const ProdukPage: React.FC = () => {
         const response = await axios.get(
           `http://localhost:3222/kategori/produk/${namaKategori}`
         );
-        const filteredData = response.data;
+        const filteredData = response.data.data;
         if (filteredData.length === 0) {
           message.error("Tidak ada produk tersedia di kategori ini");
         }
@@ -225,11 +225,11 @@ const ProdukPage: React.FC = () => {
         <div className="flex items-center">
           <Dropdown overlay={menu} trigger={["click"]}>
             <Button icon={<FilterOutlined />} style={{ marginRight: 5 }}>
-              {sortOrder === null
-                ? "Filter"
-                : sortOrder === "ASC"
+              {sortOrder === "ASC"
                 ? "Harga Terendah"
-                : "Harga Tertinggi"}
+                : sortOrder === "DESC"
+                ? "Harga Tertinggi"
+                : "Filter"}
             </Button>
           </Dropdown>
 
@@ -262,7 +262,14 @@ const ProdukPage: React.FC = () => {
           paginatedProduk.map((item) => (
             <Card
               key={item.id_produk}
-              cover={<Image alt={item.nama_produk} src={item.gambar_produk} />}
+              cover={
+                <Image
+                  alt={item.nama_produk}
+                  src={`http://localhost:3222/gambar_produk/${item.gambar_produk}`}
+                  className="card-image"
+                  preview={false}
+                />
+              }
               actions={[
                 <EditOutlined
                   key="edit"
@@ -276,7 +283,7 @@ const ProdukPage: React.FC = () => {
                   <span style={{ color: "black" }}>
                     Rp {formatCurrency(item.harga_produk)}
                   </span>
-                } // Apply inline style here
+                }
               />
             </Card>
           ))
@@ -373,7 +380,9 @@ const ProdukPage: React.FC = () => {
                 name="gambar_produk"
                 label="Gambar Produk"
                 valuePropName="fileList"
-                getValueFromEvent={({ fileList }: any) => fileList}
+                getValueFromEvent={({ fileList }: { fileList: any }) =>
+                  fileList
+                }
                 rules={[
                   { required: true, message: "Silakan unggah gambar produk!" },
                 ]}
@@ -385,7 +394,6 @@ const ProdukPage: React.FC = () => {
                   showUploadList={{ showRemoveIcon: true }}
                   accept="image/*"
                   customRequest={({ file, onSuccess }: any) => {
-                    // File will be handled by form submission
                     onSuccess && onSuccess(null, file);
                   }}
                 >
