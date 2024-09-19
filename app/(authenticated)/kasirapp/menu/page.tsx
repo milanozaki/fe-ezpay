@@ -7,6 +7,9 @@ interface Produk {
   harga_produk: number;
   gambar_produk: string;
   stok: number;
+  kategori: {
+    nama: string; // Menambahkan kategori dengan nama
+  };
 }
 
 const MenuPage = () => {
@@ -65,6 +68,12 @@ const MenuPage = () => {
     setCart((prevCart) => [...prevCart, produk]);
   };
 
+  // Filter produk berdasarkan kategori yang aktif
+  const filteredProducts =
+    activeButton === "Semua"
+      ? products // Jika kategori 'Semua' dipilih, tampilkan semua produk
+      : products.filter((produk) => produk.kategori.nama === activeButton); // Filter produk berdasarkan kategori.nama
+
   if (loading) {
     return <div>Loading...</div>; // Tampilkan loading jika data sedang diambil
   }
@@ -99,7 +108,7 @@ const MenuPage = () => {
 
         {/* Daftar Produk dalam grid 3 kolom */}
         <div className="grid grid-cols-3 gap-4">
-          {products.map((produk: Produk, index: number) => (
+          {filteredProducts.map((produk: Produk, index: number) => (
             <div key={index} className="border p-4 flex flex-col items-center">
               <img
                 src={produk.gambar_produk}
