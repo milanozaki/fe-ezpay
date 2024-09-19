@@ -13,7 +13,7 @@ const LoginPage = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
+  
     try {
       const response = await fetch('http://localhost:3222/auth/login/kasir', {
         method: 'POST',
@@ -22,19 +22,19 @@ const LoginPage = () => {
         },
         body: JSON.stringify({ email, password }),
       });
-
+  
       if (!response.ok) {
         throw new Error('Login gagal');
       }
-
+  
       const data = await response.json();
-
+  
+      // Cek jika password default dan ada redirect URL
       if (data.redirectUrl) {
-        // Redirect ke halaman edit password kasir dengan ID user
-        router.push(`/edit_password_kasir?id=${data.userId}`);
+        router.push(data.redirectUrl); // Redirect ke halaman edit password kasir dengan ID user
       } else {
         localStorage.setItem('userEmail', email);
-        router.push('/kasirapp/menu');
+        router.push('/kasirapp/menu'); // Redirect ke menu kasir jika login sukses
       }
     } catch (err) {
       setError('Login gagal. Periksa kredensial Anda dan coba lagi.');
@@ -42,6 +42,7 @@ const LoginPage = () => {
       setLoading(false);
     }
   };
+  
   
 
   return (
