@@ -19,6 +19,8 @@ const KasirPage: React.FC = () => {
   const [kasirList, setKasirList] = useState<Kasir[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
+  const [editKasirId, setEditKasirId] = useState<string | null>(null); // Track ID for edit
+  const [isEditMode, setIsEditMode] = useState(false); // Track if we are editing or adding
 
   useEffect(() => {
     // Fetch kasir list from API
@@ -38,10 +40,8 @@ const KasirPage: React.FC = () => {
       .post("http://localhost:3222/users/tambah-kasir", values)
       .then((response) => {
         message.success("Kasir berhasil ditambahkan!");
-        // Close the modal and reset the form
         setIsModalVisible(false);
         form.resetFields();
-        // Optionally refetch the list to include the newly added kasir
         return axios.get("http://localhost:3222/users/kasir");
       })
       .then((response) => {
@@ -53,11 +53,35 @@ const KasirPage: React.FC = () => {
       });
   };
 
-  const handleEditKasir = (id_kasir: string) => {
-    // Implement the logic to edit a kasir
-    message.success(
-      `Fitur edit kasir dengan ID ${id_kasir} akan ditambahkan nanti!`
-    );
+  const handleEditKasir = (values: any) => {
+    // Make PUT request to edit kasir's status
+    if (!editKasirId) return;
+    axios
+      .put(`http://localhost:3222/users/edit-kasir/${editKasirId}`, {
+        status: values.status, // Only send the status
+      })
+      .then(() => {
+        message.success("Status kasir berhasil diubah!");
+        setIsModalVisible(false);
+        form.resetFields();
+        return axios.get("http://localhost:3222/users/kasir");
+      })
+      .then((response) => {
+        setKasirList(response.data.data);
+      })
+      .catch((error) => {
+        console.error("Error editing kasir:", error);
+        message.error("Terjadi kesalahan saat mengedit status kasir.");
+      });
+  };
+
+  const openEditModal = (kasir: Kasir) => {
+    setIsEditMode(true); // Set mode to edit
+    setIsModalVisible(true);
+    setEditKasirId(kasir.id_kasir);
+    form.setFieldsValue({
+      status: kasir.status,
+    });
   };
 
   return (
@@ -65,7 +89,12 @@ const KasirPage: React.FC = () => {
       <div className="flex justify-between items-center mb-4">
         <Button
           type="primary"
-          onClick={() => setIsModalVisible(true)}
+          onClick={() => {
+            setEditKasirId(null); // Clear edit mode
+            setIsEditMode(false); // Set mode to add
+            setIsModalVisible(true);
+            form.resetFields(); // Reset form for adding a new kasir
+          }}
           className="bg-blue-500 text-white"
         >
           Tambah Kasir
@@ -88,7 +117,7 @@ const KasirPage: React.FC = () => {
               <td className="py-3 px-20 text-left">{kasir.nama_kasir}</td>
               <td
                 className={`py-3 px-16 text-left ${
-                  kasir.status === StatusEnum.ACTIVE ? "text-green-600" : ""
+                  kasir.status === StatusEnum.ACTIVE ? "text-green-600" : "text-red-600"
                 }`}
               >
                 {kasir.status}
@@ -96,9 +125,9 @@ const KasirPage: React.FC = () => {
               <td className="py-3 px-6 text-left">
                 <Button
                   type="primary"
-                  onClick={() => handleEditKasir(kasir.id_kasir)}
+                  onClick={() => openEditModal(kasir)}
                 >
-                  Edit
+                  Edit Status
                 </Button>
               </td>
             </tr>
@@ -106,9 +135,9 @@ const KasirPage: React.FC = () => {
         </tbody>
       </table>
 
-      {/* Modal for Adding Kasir */}
+      {/* Modal for Adding or Editing Kasir */}
       <Modal
-        title="Tambah Kasir"
+        title={editKasirId ? "Edit Status Kasir" : "Tambah Kasir"}
         visible={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={null}
@@ -116,22 +145,20 @@ const KasirPage: React.FC = () => {
         <Form
           form={form}
           layout="vertical"
-          onFinish={handleAddKasir}
+          onFinish={editKasirId ? handleEditKasir : handleAddKasir}
         >
-          <Form.Item
-            name="nama"
-            label="Nama"
-            rules={[{ required: true, message: 'Nama kasir harus diisi!' }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="email"
-            label="Email"
-            rules={[{ required: true, message: 'Email kasir harus diisi!' }, { type: 'email', message: 'Email tidak valid!' }]}
-          >
-            <Input />
-          </Form.Item>
+          {/* Nama hanya ditampilkan saat tambah kasir */}
+          {!isEditMode && (
+            <Form.Item
+              name="nama"
+              label="Nama"
+              rules={[{ required: true, message: 'Nama kasir harus diisi!' }]}
+            >
+              <Input />
+            </Form.Item>
+          )}
+
+          {/* Status bisa diubah saat tambah maupun edit */}
           <Form.Item
             name="status"
             label="Status"
@@ -145,9 +172,10 @@ const KasirPage: React.FC = () => {
               ))}
             </Select>
           </Form.Item>
+
           <Form.Item>
             <Button type="primary" htmlType="submit">
-              Tambah
+              {editKasirId ? "Simpan Perubahan" : "Tambah"}
             </Button>
           </Form.Item>
         </Form>
