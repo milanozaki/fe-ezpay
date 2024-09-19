@@ -14,7 +14,7 @@ interface Kasir {
   id_kasir: string;
   nama_kasir: string;
   status: StatusEnum;
-  email: string;
+  email_kasir: string;
 }
 
 const KasirPage: React.FC = () => {
@@ -117,7 +117,7 @@ const KasirPage: React.FC = () => {
       <tr key={kasir.id_kasir}>
         <td className="py-3 px-6 text-left w-16">{index + 1}</td>
         <td className="py-3 px-20 text-left">{kasir.nama_kasir}</td>
-        <td className="py-3 px-24 text-left">{kasir.email}</td> {/* Tampilkan email */}
+        <td className="py-3 px-24 text-left">{kasir.email_kasir}</td> {/* Tampilkan email */}
         <td
           className={`py-3 px-16 text-left ${
             kasir.status === StatusEnum.ACTIVE ? "text-green-600" : "text-red-600"
