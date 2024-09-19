@@ -11,12 +11,11 @@ const LoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     setLoading(true);
     setError('');
 
     try {
-      const response = await fetch('http://localhost:3222/auth/login/kasir', { // Ganti dengan URL endpoint login yang sesuai
+      const response = await fetch('http://localhost:3222/auth/login/kasir', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -25,22 +24,25 @@ const LoginPage = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Login failed');
+        throw new Error('Login gagal');
       }
 
       const data = await response.json();
 
-      // Menyimpan email ke localStorage setelah login berhasil
-      localStorage.setItem('userEmail', email);
-      
-      // Redirect ke halaman dashboard setelah login berhasil
-      router.push('/kasirapp/menu');
+      if (data.redirectUrl) {
+        // Redirect ke halaman edit password kasir dengan ID user
+        router.push(`/edit_password_kasir?id=${data.userId}`);
+      } else {
+        localStorage.setItem('userEmail', email);
+        router.push('/kasirapp/menu');
+      }
     } catch (err) {
-      setError('Login failed. Please check your credentials and try again.');
+      setError('Login gagal. Periksa kredensial Anda dan coba lagi.');
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-[#5aa5be] px-4 py-8">
@@ -60,7 +62,7 @@ const LoginPage = () => {
           
           {/* Judul login */}
           <h2 className="relative z-10 text-center text-2xl font-semibold text-gray-800 mb-8">Selamat Datang!</h2>
-
+  
           {/* Form */}
           <form onSubmit={handleSubmit} className="relative z-10">
             {/* Input Email */}
@@ -74,7 +76,7 @@ const LoginPage = () => {
                 required
               />
             </div>
-
+  
             {/* Input Password */}
             <div className="mb-6">
               <input
@@ -89,14 +91,14 @@ const LoginPage = () => {
                 <a href="#" className="text-sm text-blue-500 hover:underline">Forgot password?</a>
               </div>
             </div>
-
+  
             {/* Error Message */}
             {error && (
               <div className="text-red-500 text-center mb-4">
                 {error}
               </div>
             )}
-
+  
             {/* Tombol Login */}
             <div className="flex justify-center">
               <button
@@ -110,13 +112,14 @@ const LoginPage = () => {
           </form>
         </div>
       </div>
-
+  
       {/* Footer copyright */}
       <footer className="text-white text-sm text-center -py-1 mt-5">
         © 2024 Ezpay. All rights reserved.
       </footer>
     </div>
   );
+  
 };
 
 export default LoginPage;
