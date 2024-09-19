@@ -16,7 +16,7 @@ const LoginPage = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:3222/auth/login/toko', { // Ganti dengan URL endpoint login yang sesuai
+      const response = await fetch('http://localhost:3222/auth/login/', { // Ganti dengan URL endpoint login yang sesuai
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
