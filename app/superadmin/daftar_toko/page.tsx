@@ -4,15 +4,16 @@ import { Modal, Button } from 'antd'; // Menggunakan Ant Design untuk modal
 
 // Tipe data untuk item tabel
 interface TableData {
-  id: number;
-  tanggal: string;
-  nama: string;
-  email: string;
-  no_handphone: string;
+  id_toko: string;
   nama_toko: string;
   deskripsi_toko?: string;
   alamat_toko: string;
   foto?: string; // Optional
+  user: {
+    nama: string;
+    email: string;
+    no_handphone: string;
+  }
 }
 
 const KelolaAkunpage = () => {
@@ -25,6 +26,8 @@ const KelolaAkunpage = () => {
   useEffect(() => {
     // Fungsi untuk mengambil data dari API
     const fetchData = async () => {
+      setLoading(true); // Set loading true saat fetch data
+      setError(null); // Reset error saat memulai fetch
       try {
         const response = await fetch('http://localhost:3222/toko/approved'); // Ganti dengan endpoint API Anda
         if (!response.ok) {
@@ -34,6 +37,7 @@ const KelolaAkunpage = () => {
         setData(result);
       } catch (error: any) {
         setError(error.message);
+        setData([]); // Reset data jika ada error
       } finally {
         setLoading(false);
       }
@@ -68,11 +72,11 @@ const KelolaAkunpage = () => {
         </thead>
         <tbody>
           {data.map((item, index) => (
-            <tr key={item.id} className="border-b">
+            <tr key={item.id_toko} className="border-b">
               <td className="py-2 px-4">{index + 1 + "."}</td>
               <td className="py-2 px-4">{item.nama_toko}</td>
-              <td className="py-2 px-4">{item.nama}</td>
-              <td className="py-2 px-4">{item.email}</td>
+              <td className="py-2 px-4">{item.user.nama}</td>
+              <td className="py-2 px-4">{item.user.email}</td>
               <td className="py-2 px-4">
                 <a
                   onClick={() => handleDetailClick(item)}
@@ -109,9 +113,9 @@ const KelolaAkunpage = () => {
                 className="w-full max-w-md mb-4" 
               />
             )}
-            <p><strong>Pemilik:</strong> {selectedToko.nama}</p>
-            <p><strong>Email:</strong> {selectedToko.email}</p>
-            <p><strong>No Handphone:</strong> {selectedToko.no_handphone}</p>
+            <p><strong>Pemilik:</strong> {selectedToko.user.nama}</p>
+            <p><strong>Email:</strong> {selectedToko.user.email}</p>
+            <p><strong>No Handphone:</strong> {selectedToko.user.no_handphone}</p>
             <p><strong>Alamat:</strong> {selectedToko.alamat_toko}</p>
             <p><strong>Deskripsi:</strong> {selectedToko.deskripsi_toko}</p>
           </div>
