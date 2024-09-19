@@ -19,7 +19,6 @@ const RiwayatTransaksiPage = () => {
   const [data, setData] = useState<any[]>([]);
   const pageSize = 10;
 
-  // Fetch data from backend with optional date range
   const fetchData = async (startDate = "", endDate = "") => {
     try {
       const response = await axios.get("http://localhost:3222/transaksi/all", {
@@ -28,13 +27,12 @@ const RiwayatTransaksiPage = () => {
           endDate,
         },
       });
-      console.log("Fetched Data:", response.data); // Check the data structure
       if (Array.isArray(response.data)) {
         setData(
           response.data.map((item: any, index: number) => ({
             ...item,
             key: index,
-          })) // Add key for each item
+          }))
         );
       } else {
         console.error("Data is not in array format:", response.data);
@@ -44,18 +42,15 @@ const RiwayatTransaksiPage = () => {
     }
   };
 
-  // Fetch all data when component mounts
   useEffect(() => {
     fetchData();
   }, []);
 
-  // Show modal with transaction details
   const showModal = (transaction: any) => {
     setSelectedTransaction(transaction);
     setIsModalVisible(true);
   };
 
-  // Close modal
   const handleOk = () => {
     setIsModalVisible(false);
   };
@@ -64,16 +59,14 @@ const RiwayatTransaksiPage = () => {
     setIsModalVisible(false);
   };
 
-  // Handle date changes
   const handleDateChange = (dates: any, dateStrings: [string, string]) => {
     if (dateStrings[0] && dateStrings[1]) {
-      fetchData(dateStrings[0], dateStrings[1]); // Fetch data based on date range
+      fetchData(dateStrings[0], dateStrings[1]);
     } else {
-      fetchData(); // Show all data if no date selected
+      fetchData();
     }
   };
 
-  // Define columns for the table
   const columns = [
     {
       title: "Tanggal & Waktu",
@@ -109,18 +102,15 @@ const RiwayatTransaksiPage = () => {
     },
   ];
 
-  // Pagination handler
   const onPageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  // Data displayed based on pagination
   const paginatedData = data.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
-  // Export data to Excel
   const exportToExcel = () => {
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -129,19 +119,25 @@ const RiwayatTransaksiPage = () => {
   };
 
   return (
-    <div className="pt-1 pb-5 mr-20 ml-64">
+    <div
+      className="pt-0 pb-6 px-8 relative"
+      style={{ overflowY: "auto", maxHeight: "90vh", overflowX: "hidden" }} // Tambahkan overflowX: "hidden"
+    >
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm mb-4">Pilih Tanggal</h3>
           <RangePicker onChange={handleDateChange} className="mb-4" />
         </div>
-        <FloatButton
-          tooltip={<div>Export to Excel</div>}
-          style={{ position: "relative", top: 0, right: 0 }}
-          onClick={exportToExcel}
-        />
+        <div className="relative">
+          {/* Export Button */}
+          <FloatButton
+            tooltip={<div>Export to Excel</div>}
+            style={{ position: "absolute", top: 0, right: 0 }}
+            onClick={exportToExcel}
+          />
+        </div>
       </div>
-      <div className="relative w-full h-auto bg-white p-6 shadow-lg rounded-lg">
+      <div className="relative w-full bg-white p-4 shadow-lg rounded-lg">
         <Table
           columns={columns}
           dataSource={paginatedData}
@@ -151,6 +147,7 @@ const RiwayatTransaksiPage = () => {
             total: data.length,
             onChange: onPageChange,
           }}
+          scroll={{ x: "max-content" }} // Menambahkan properti scroll untuk tabel jika diperlukan
         />
       </div>
 
@@ -159,7 +156,7 @@ const RiwayatTransaksiPage = () => {
         open={isModalVisible}
         onOk={handleOk}
         onCancel={handleCancel}
-        width={800} // Adjust width as needed
+        width={800}
       >
         {selectedTransaction ? (
           <div>
