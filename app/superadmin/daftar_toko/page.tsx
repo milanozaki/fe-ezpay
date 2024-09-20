@@ -71,23 +71,28 @@ const KelolaAkunpage = () => {
           </tr>
         </thead>
         <tbody>
-          {data.map((item, index) => (
-            <tr key={item.id_toko} className="border-b">
-              <td className="py-2 px-4">{index + 1 + "."}</td>
-              <td className="py-2 px-4">{item.nama_toko}</td>
-              <td className="py-2 px-4">{item.user.nama}</td>
-              <td className="py-2 px-4">{item.user.email}</td>
-              <td className="py-2 px-4">
-                <a
-                  onClick={() => handleDetailClick(item)}
-                  className="text-blue-500 cursor-pointer hover:underline"
-                >
-                  Detail
-                </a>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+  {data.map((item, index) => (
+    <tr key={item.id_toko} className="border-b">
+      <td className="py-2 px-4">{index + 1 + "."}</td>
+      <td className="py-2 px-4">{item.nama_toko}</td>
+      <td className="py-2 px-4">
+        {item.user ? item.user.nama : 'Tidak ada data'}
+      </td>
+      <td className="py-2 px-4">
+        {item.user ? item.user.email : 'Tidak ada data'}
+      </td>
+      <td className="py-2 px-4">
+        <a
+          onClick={() => handleDetailClick(item)}
+          className="text-blue-500 cursor-pointer hover:underline"
+        >
+          Detail
+        </a>
+      </td>
+    </tr>
+  ))}
+</tbody>
+
       </table>
 
       {/* Modal untuk menampilkan detail toko */}

@@ -9,26 +9,30 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const router = useRouter(); // Inisialisasi router
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-  
-    try {
-      const response = await fetch('http://localhost:3222/auth/login/kasir', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-  
-      if (!response.ok) {
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+
+  try {
+    const response = await fetch('http://localhost:3222/auth/login/kasir', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // Tampilkan pesan dari backend jika akun tidak aktif
+      if (data.message === 'Akses ditolak: Akun Anda sedang tidak aktif') {
+        setError('Akun Anda sedang tidak aktif. Hubungi admin.');
+      } else {
         throw new Error('Login gagal');
       }
-  
-      const data = await response.json();
-  
+    } else {
       // Cek jika password default dan ada redirect URL
       if (data.redirectUrl) {
         router.push(data.redirectUrl); // Redirect ke halaman edit password kasir dengan ID user
@@ -36,13 +40,16 @@ const LoginPage = () => {
         localStorage.setItem('userEmail', email);
         router.push('/kasirapp/menu'); // Redirect ke menu kasir jika login sukses
       }
-    } catch (err) {
-      setError('Login gagal. Periksa kredensial Anda dan coba lagi.');
-    } finally {
-      setLoading(false);
     }
-  };
-  
+  } catch (err) {
+    if (!Error('Akun Anda sedang tidak aktif')) {
+      setError('Login gagal. Periksa kredensial Anda dan coba lagi.');
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
   
 
   return (
