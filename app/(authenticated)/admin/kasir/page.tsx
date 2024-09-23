@@ -103,46 +103,41 @@ const KasirPage: React.FC = () => {
       </div>
 
       <table className="w-full divide-y divide-gray-200">
-        <thead>
-          <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-            <th className="py-3 px-6 text-left font-semibold">No</th>
-            <th className="py-3 px-20 text-left font-semibold">Nama</th>
-            <th className="py-3 px-24 text-left font-semibold">Email</th>
-            <th className="py-3 px-16 text-left font-semibold">Status</th>
-            <th className="py-3 px-6 text-left font-semibold">Aksi</th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {kasirList.map((kasir, index) => (
-            <tr key={kasir.id_kasir}>
-              <td className="py-3 px-6 text-left w-16">{index + 1}</td>
-              <td className="py-3 px-20 text-left">{kasir.nama_kasir}</td>
-              <td className="py-3 px-24 text-left">{kasir.email_kasir}</td>
-              <td className="py-3 px-16 text-left">
-                <span
-                  className={`inline-block px-4 py-1 text-sm font-semibold rounded-md whitespace-nowrap ${
-                    kasir.status === StatusEnum.ACTIVE
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}
-                  style={{ minWidth: '100px', textAlign: 'center' }} // Atur min-width dan text-align agar konsisten
-                >
-                  {kasir.status === StatusEnum.ACTIVE ? 'Aktif' : 'Tidak Aktif'}
-                </span>
-              </td>
+  <thead>
+    <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+      <th className="py-3 px-6 text-left font-semibold">No</th>
+      <th className="py-3 px-20 text-left font-semibold">Nama</th>
+      <th className="py-3 px-24 text-left font-semibold">Email</th>
+      <th className="py-3 px-16 text-left font-semibold">Status</th>
+      <th className="py-3 px-6 text-left font-semibold">Aksi</th>
+    </tr>
+  </thead>
+  <tbody className="bg-white divide-y divide-gray-200">
+    {kasirList.map((kasir, index) => (
+      <tr key={kasir.id_kasir}>
+        <td className="py-3 px-6 text-left w-16">{index + 1}</td>
+        <td className="py-3 px-20 text-left">{kasir.nama_kasir}</td>
+        <td className="py-3 px-24 text-left">{kasir.email_kasir}</td> {/* Tampilkan email */}
+        <td
+          className={`py-3 px-16 text-left ${
+            kasir.status === StatusEnum.ACTIVE ? "text-green-600" : "text-red-600"
+          }`}
+        >
+          {kasir.status}
+        </td>
+        <td className="py-3 px-6 text-left">
+          <Button
+            type="primary"
+            onClick={() => openEditModal(kasir)}
+          >
+            Edit Status
+          </Button>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
 
-              <td className="py-3 px-6 text-left">
-                <span
-                  className="text-blue-500 cursor-pointer hover:underline"
-                  onClick={() => openEditModal(kasir)}
-                >
-                  Edit
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
 
       {/* Modal for Adding or Editing Kasir */}
       <Modal
@@ -152,54 +147,69 @@ const KasirPage: React.FC = () => {
         footer={null}
       >
         <Form
-  form={form}
-  layout="vertical"
-  onFinish={editKasirId ? handleEditKasir : handleAddKasir}
->
-  {/* Nama hanya ditampilkan saat tambah kasir */}
-  {!isEditMode && (
-    <Form.Item
-      name="nama"
-      label="Nama"
-      rules={[{ required: true, message: 'Nama kasir harus diisi!' }]}
-    >
-      <Input />
-    </Form.Item>
-  )}
+          form={form}
+          layout="vertical"
+          onFinish={editKasirId ? handleEditKasir : handleAddKasir}
+        >
+          <div className="flex justify-between">
+            {/* Nama Kasir - hanya ditampilkan saat tambah kasir */}
+            {!isEditMode && (
+              <Form.Item
+                name="nama"
+                label="Nama"
+                rules={[{ required: true, message: "Nama kasir harus diisi!" }]}
+                style={{ width: "48%" }} // Atur lebar untuk box pertama
+              >
+                <Input />
+              </Form.Item>
+            )}
 
-  {/* Tambahkan email di sini */}
-  {!isEditMode && (
-    <Form.Item
-      name="email"
-      label="Email"
-      rules={[{ required: true, type: 'email', message: 'Email kasir harus valid!' }]}
-    >
-      <Input />
-    </Form.Item>
-  )}
+            {/* Email Kasir */}
+            {!isEditMode && (
+              <Form.Item
+                name="email"
+                label="Email"
+                rules={[
+                  {
+                    required: true,
+                    type: "email",
+                    message: "Email kasir harus valid!",
+                  },
+                ]}
+                style={{ width: "48%" }} // Atur lebar untuk box kedua
+              >
+                <Input />
+              </Form.Item>
+            )}
+          </div>
 
-  {/* Status bisa diubah saat tambah maupun edit */}
-  <Form.Item
-    name="status"
-    label="Status"
-    rules={[{ required: true, message: 'Status kasir harus diisi!' }]}
-  >
-    <Select>
-      {Object.entries(StatusEnum).map(([key, value]) => (
-        <Select.Option key={key} value={value}>
-          {key}
-        </Select.Option>
-      ))}
-    </Select>
-  </Form.Item>
+          <div className="flex justify-between">
+            {/* Status Kasir */}
+            <Form.Item
+              name="status"
+              label="Status"
+              rules={[{ required: true, message: "Status kasir harus diisi!" }]}
+              style={{ width: "48%" }} // Atur lebar untuk box ketiga
+            >
+              <Select>
+                {Object.entries(StatusEnum).map(([key, value]) => (
+                  <Select.Option key={key} value={value}>
+                    {key}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
 
-  <Form.Item>
-    <Button type="primary" htmlType="submit">
-      {editKasirId ? "Simpan Perubahan" : "Tambah"}
-    </Button>
-  </Form.Item>
-</Form>
+            {/* Kosongkan sebelahnya untuk simetri */}
+            <div style={{ width: "48%" }}></div>
+          </div>
 
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              {editKasirId ? "Simpan Perubahan" : "Tambah"}
+            </Button>
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );
