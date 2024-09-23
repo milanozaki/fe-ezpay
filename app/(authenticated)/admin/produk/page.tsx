@@ -35,8 +35,19 @@ interface Produk {
   satuan_produk: string;
 }
 
+interface UpdateProdukDto {
+  nama_produk?: string;
+  harga_produk?: number;
+  stok?: number;
+  gambar_produk?: string;
+  satuan_produk?: string;
+  status_produk?: string;
+}
+
 const ProdukPage: React.FC = () => {
   const [isAddModalVisible, setIsAddModalVisible] = useState<boolean>(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState<boolean>(false);
+  const [selectedProduk, setSelectedProduk] = useState<Produk | null>(null);
   const [form] = Form.useForm();
   const [categories, setCategories] = useState<string[]>([]);
   const [produk, setProduk] = useState<Produk[]>([]);
@@ -181,6 +192,7 @@ const ProdukPage: React.FC = () => {
 
   const handleCancel = () => {
     setIsAddModalVisible(false);
+    setIsEditModalVisible(false);
   };
 
   const handlePageChange = (page: number) => {
@@ -193,6 +205,36 @@ const ProdukPage: React.FC = () => {
     fetchProdukByHarga(order);
   };
 
+  const handleEditClick = (item: Produk) => {
+    setSelectedProduk(item);
+    form.setFieldsValue(item);
+    setIsEditModalVisible(true);
+  };
+ 
+  const handleUpdateProduk = async () => {
+    if (!selectedProduk) return;
+    try {
+      const values = await form.validateFields();
+      const updateData: UpdateProdukDto = {
+        ...values,
+        harga_produk: Number(values.harga_produk),
+        stok: Number(values.stok),
+      };
+
+      await axios.put(
+        `http://localhost:3222/produk/${selectedProduk.nama_produk}`,
+        updateData
+      );
+
+      message.success("Produk berhasil diperbarui");
+      setIsEditModalVisible(false);
+      setSelectedProduk(null);
+      form.resetFields();
+    } catch (error) {
+      message.error("Gagal memperbarui produk");
+      console.error("Error updating product:", error);
+    }
+  };
   const menu = (
     <Menu onClick={handleSortOrderChange}>
       <Menu.Item key="harga-asc">Harga Terendah</Menu.Item>
@@ -271,10 +313,12 @@ const ProdukPage: React.FC = () => {
                 />
               }
               actions={[
-                <EditOutlined
-                  key="edit"
-                  onClick={() => console.log(`Edit ${item.nama_produk}`)}
-                />,
+                <Button
+                  icon={<EditOutlined />}
+                  onClick={() => handleEditClick(item)}
+                >
+                  Edit
+                </Button>,
               ]}
             >
               <Card.Meta
@@ -415,6 +459,42 @@ const ProdukPage: React.FC = () => {
               </Form.Item>
             </Col>
           </Row>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="Edit Produk"
+        visible={isEditModalVisible}
+        onOk={handleUpdateProduk}
+        onCancel={handleCancel}
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item
+            name="nama_produk"
+            label="Nama Produk"
+            rules={[{ required: true, message: "Nama produk wajib diisi" }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="harga_produk"
+            label="Harga Produk"
+            rules={[{ required: true, message: "Harga produk wajib diisi" }]}
+          >
+            <Input type="number" />
+          </Form.Item>
+          <Form.Item
+            name="stok"
+            label="Stok Produk"
+            rules={[{ required: true, message: "Stok produk wajib diisi" }]}
+          >
+            <Input type="number" />
+          </Form.Item>
+          <Form.Item name="gambar_produk" label="Gambar Produk">
+            <Upload beforeUpload={() => false}>
+              <Button icon={<UploadOutlined />}>Unggah Gambar</Button>
+            </Upload>
+          </Form.Item>
         </Form>
       </Modal>
     </div>
