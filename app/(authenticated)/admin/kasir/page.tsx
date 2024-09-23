@@ -98,46 +98,46 @@ const KasirPage: React.FC = () => {
           }}
           className="bg-blue-500 text-white"
         >
-          Tambah Kasir
+          + Tambah Kasir
         </Button>
       </div>
 
       <table className="w-full divide-y divide-gray-200">
-        <thead>
-          <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-            <th className="py-3 px-6 text-left font-semibold">No</th>
-            <th className="py-3 px-20 text-left font-semibold">Nama</th>
-            <th className="py-3 px-24 text-left font-semibold">Email</th>{" "}
-            {/* Tambahkan kolom email */}
-            <th className="py-3 px-16 text-left font-semibold">Status</th>
-            <th className="py-3 px-6 text-left font-semibold">Aksi</th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {kasirList.map((kasir, index) => (
-            <tr key={kasir.id_kasir}>
-              <td className="py-3 px-6 text-left w-16">{index + 1}</td>
-              <td className="py-3 px-20 text-left">{kasir.nama_kasir}</td>
-              <td className="py-3 px-24 text-left">{kasir.email_kasir}</td>{" "}
-              {/* Tampilkan email */}
-              <td
-                className={`py-3 px-16 text-left ${
-                  kasir.status === StatusEnum.ACTIVE
-                    ? "text-green-600"
-                    : "text-red-600"
-                }`}
-              >
-                {kasir.status}
-              </td>
-              <td className="py-3 px-6 text-left">
-                <Button type="primary" onClick={() => openEditModal(kasir)}>
-                  Edit Status
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+  <thead>
+    <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+      <th className="py-3 px-6 text-left font-semibold">No</th>
+      <th className="py-3 px-20 text-left font-semibold">Nama</th>
+      <th className="py-3 px-24 text-left font-semibold">Email</th>
+      <th className="py-3 px-16 text-left font-semibold">Status</th>
+      <th className="py-3 px-6 text-left font-semibold">Aksi</th>
+    </tr>
+  </thead>
+  <tbody className="bg-white divide-y divide-gray-200">
+    {kasirList.map((kasir, index) => (
+      <tr key={kasir.id_kasir}>
+        <td className="py-3 px-6 text-left w-16">{index + 1}</td>
+        <td className="py-3 px-20 text-left">{kasir.nama_kasir}</td>
+        <td className="py-3 px-24 text-left">{kasir.email_kasir}</td> {/* Tampilkan email */}
+        <td
+          className={`py-3 px-16 text-left ${
+            kasir.status === StatusEnum.ACTIVE ? "text-green-600" : "text-red-600"
+          }`}
+        >
+          {kasir.status}
+        </td>
+        <td className="py-3 px-6 text-left">
+          <Button
+            type="primary"
+            onClick={() => openEditModal(kasir)}
+          >
+            Edit Status
+          </Button>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
 
       {/* Modal for Adding or Editing Kasir */}
       <Modal
