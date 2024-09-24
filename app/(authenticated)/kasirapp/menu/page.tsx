@@ -1,6 +1,7 @@
 "use client"; // Menandakan ini adalah komponen client-side
 import React, { useEffect, useState } from "react";
-import { AiOutlineDoubleRight, AiOutlineDoubleLeft } from "react-icons/ai"; // Import ikon dari react-icons
+import { AiOutlineDoubleRight, AiOutlineDoubleLeft, AiOutlineMinus, AiOutlinePlus } from "react-icons/ai"; // Import ikon dari react-icons
+import { Card, Button, Image } from "antd"; // Import komponen dari Ant Design
 
 interface Produk {
   id_produk: string;
@@ -8,6 +9,7 @@ interface Produk {
   harga_produk: number;
   gambar_produk: string;
   stok: number;
+  quantity: number; // Tambahkan properti untuk jumlah produk dalam keranjang
   kategori: {
     nama: string; // Menambahkan kategori dengan nama
   };
@@ -20,6 +22,7 @@ const MenuPage = () => {
   const [loading, setLoading] = useState<boolean>(true); // State untuk loading
   const [cart, setCart] = useState<Produk[]>([]); // State untuk menyimpan produk yang dipilih
   const [currentPage, setCurrentPage] = useState<number>(0); // State untuk halaman kategori saat ini
+  const [paymentMethod, setPaymentMethod] = useState<string>("Tunai"); // State untuk metode pembayaran
 
   const categoriesPerPage = 5; // Jumlah kategori per halaman
 
@@ -76,7 +79,18 @@ const MenuPage = () => {
 
   // Fungsi untuk menambahkan produk ke dalam cart
   const addToCart = (produk: Produk) => {
-    setCart((prevCart) => [...prevCart, produk]);
+    setCart((prevCart) => {
+      const existingItem = prevCart.find((item) => item.id_produk === produk.id_produk);
+      if (existingItem) {
+        return prevCart.map((item) =>
+          item.id_produk === produk.id_produk
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      } else {
+        return [...prevCart, { ...produk, quantity: 1 }];
+      }
+    });
   };
 
   // Filter produk berdasarkan kategori yang aktif
@@ -97,6 +111,15 @@ const MenuPage = () => {
     if (currentPage > 0) {
       setCurrentPage(currentPage - 1);
     }
+  };
+
+  // Menghitung total harga produk dalam keranjang
+  const totalHarga = cart.reduce((total, item) => total + item.harga_produk * item.quantity, 0);
+
+  // Fungsi untuk handle pembayaran (tambahkan logika sesuai kebutuhan Anda)
+  const handlePayment = () => {
+    // Implementasikan logika pembayaran di sini
+    alert(`Pembayaran dengan metode ${paymentMethod} untuk total Rp ${totalHarga}`);
   };
 
   if (loading) {
@@ -152,43 +175,116 @@ const MenuPage = () => {
           )}
         </div>
 
-        {/* Daftar Produk dalam grid 3 kolom */}
-        <div className="grid grid-cols-3 gap-4">
-          {filteredProducts.map((produk: Produk, index: number) => (
-            <div key={index} className="border p-4 flex flex-col items-center">
-              <img
-                src={produk.gambar_produk}
-                alt={produk.nama_produk}
-                className="w-32 h-32 object-cover mb-2"
+        {/* Daftar Produk dalam grid 3 kolom menggunakan Card Ant Design */}
+        <div className="grid grid-cols-3 gap-4 mx-4">
+          {filteredProducts.map((produk: Produk) => (
+            <Card
+              key={produk.id_produk}
+              className="shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer"
+              cover={
+                <Image
+                  alt={produk.nama_produk}
+                  src={`http://localhost:3222/gambar_produk/${produk.gambar_produk}`}
+                  className="card-image h-40"
+                  preview={false}
+                  fallback="/path/to/placeholder-image.png" // Ganti dengan path gambar placeholder yang valid
+                />
+              }
+              onClick={() => addToCart(produk)}
+            >
+              <Card.Meta
+                title={produk.nama_produk}
+                description={
+                  <span style={{ color: "black" }}>
+                    Rp {produk.harga_produk}
+                  </span>
+                }
               />
-              <p className="font-bold">{produk.nama_produk}</p>
-              <p>Harga: Rp{produk.harga_produk}</p>
-              <p>Stok: {produk.stok}</p>
-              <button
-                onClick={() => addToCart(produk)}
-                className="bg-blue-500 text-white px-4 py-2 mt-2 rounded"
-              >
-                Tambah ke Keranjang
-              </button>
-            </div>
+            </Card>
           ))}
         </div>
       </div>
 
-      {/* Sidebar Cart di pojok kanan */}
-      <div className="w-1/4 bg-gray-100 p-4 ml-4 h-full">
-        <h2>Keranjang Belanja</h2>
-        {cart.length === 0 ? (
-          <p>Keranjang kosong</p>
-        ) : (
-          <ul>
-            {cart.map((item, index) => (
-              <li key={index} className="border-b py-2">
-                {item.nama_produk} - Rp{item.harga_produk}
-              </li>
-            ))}
-          </ul>
-        )}
+      {/* Sidebar Cart di sebelah kanan */}
+      <div className="w-1/4 bg-gray-100 p-4 rounded-md flex flex-col h-screen">
+        <h2 className="text-xl font-bold text-center bg-[#3B8394] text-white p-2 rounded-md mb-4">Pesanan ({cart.length})</h2>
+        <div className="flex-grow max-h-[calc(100vh-150px)] overflow-y-auto mb-4">
+          {cart.length === 0 ? (
+            <p className="text-center text-gray-500">Keranjang kosong</p>
+          ) : (
+            cart.map((item, index) => (
+              <div key={index} className="border-b pb-2 mb-2 flex flex-col items-start">
+                <div className="flex justify-between w-full">
+                  <span className="font-semibold">{item.nama_produk}</span>
+                  <span className="ml-4">Rp {item.harga_produk}</span>
+                </div>
+                <div className="flex items-center mt-1">
+                  <button
+                    className="mx-2 border border-gray-400 rounded px-2"
+                    onClick={() => {
+                      if (item.quantity > 1) {
+                        setCart((prevCart) =>
+                          prevCart.map((prod) =>
+                            prod.id_produk === item.id_produk
+                              ? { ...prod, quantity: prod.quantity - 1 }
+                              : prod
+                          )
+                        );
+                      } else {
+                        setCart((prevCart) =>
+                          prevCart.filter((_, i) => i !== index)
+                        );
+                      }
+                    }}
+                  >
+                    <AiOutlineMinus />
+                  </button>
+                  <span>{item.quantity}</span>
+                  <button
+                    className="mx-2 border border-gray-400 rounded px-2"
+                    onClick={() => {
+                      setCart((prevCart) =>
+                        prevCart.map((prod) =>
+                          prod.id_produk === item.id_produk
+                            ? { ...prod, quantity: prod.quantity + 1 }
+                            : prod
+                        )
+                      );
+                    }}
+                  >
+                    <AiOutlinePlus />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Pilihan Metode Pembayaran */}
+        <div className="flex flex-col mb-4">
+          <label className="text-lg font-semibold">Metode Pembayaran:</label>
+          <select
+            className="border rounded-md p-2"
+            value={paymentMethod}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+          >
+            <option value="Tunai">Tunai</option>
+            <option value="QRIS">QRIS</option>
+          </select>
+        </div>
+
+        {/* Total Harga */}
+        <div className="text-lg font-semibold">Total: Rp {totalHarga}</div>
+
+        {/* Tombol Bayar */}
+        <Button
+          type="primary"
+          onClick={handlePayment}
+          className="mt-4"
+          disabled={cart.length === 0}
+        >
+          Bayar
+        </Button>
       </div>
     </div>
   );

@@ -12,10 +12,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [selectedMenu, setSelectedMenu] = useState<string>("");
   const pathname = usePathname();
-  
+
   const authenticatedMenu = [
-    { name: "Menu", path: "/kasirapp/menu", icon: <IoFastFoodOutline /> },
-    { name: "Riwayat Transaksi", path: "/kasirapp/riwayat", icon: <HistoryOutlined /> },
+    { name: "Menu", path: "/kasirapp/menu", icon: <IoFastFoodOutline size={20} /> },
+    { name: "Riwayat", path: "/kasirapp/riwayat", icon: <HistoryOutlined size={20} /> },
   ];
 
   // Mengambil email pengguna dari localStorage
@@ -59,9 +59,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     <div className="flex min-h-screen overflow-hidden">
       {/* Sidebar */}
       <div
-        className={`bg-white text-black w-60 h-full fixed top-0 left-0 transform ${
+        className={`bg-white text-black w-20 h-full fixed top-0 left-0 transform ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 transition-transform duration-300 md:block shadow-lg flex flex-col justify-center items-center z-50`}
+        } md:translate-x-0 transition-transform duration-300 md:block shadow-lg flex flex-col justify-between items-center z-50`}
       >
         <div className="flex justify-center items-center mb-6 mt-4">
           <Image
@@ -72,11 +72,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             priority
           />
         </div>
-        <ul className="w-full">
+        <ul className="w-full flex flex-col">
           {authenticatedMenu.map((item) => (
             <li
               key={item.name}
-              className="pt-3 pb-3 pr-4 pl-7 hover:bg-[#257691] mr-3 ml-2 rounded-lg"
+              className={`relative flex-grow flex items-center justify-center pt-3 pb-3 hover:bg-[#257691] rounded-lg`}
+              style={{ height: "60px" }} // Atur tinggi setiap menu
             >
               <Link
                 href={item.path}
@@ -85,9 +86,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   selectedMenu === item.name ? "font-bold" : ""
                 }`}
               >
-                <span className="text-sm mr-3">{item.icon}</span>
-                {item.name}
+                <span className="text-lg">{item.icon}</span>
               </Link>
+              {selectedMenu === item.name && (
+                <div className="absolute right-0 h-full w-1 bg-[#257691]"></div>
+              )}
             </li>
           ))}
         </ul>
@@ -101,7 +104,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         ></div>
       )}
 
-      <div className="flex-1 flex flex-col ml-60">
+      <div className="flex-1 flex flex-col ml-20">
         {/* Header */}
         <header className="bg-[#257691] shadow-md p-4 flex justify-between items-center text-white relative md:px-8 md:py-6">
           <h1 className="text-xl font-semibold">{selectedMenu}</h1>
