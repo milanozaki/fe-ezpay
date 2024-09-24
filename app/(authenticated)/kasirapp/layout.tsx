@@ -18,10 +18,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     { name: "Riwayat", path: "/kasirapp/riwayat", icon: <HistoryOutlined size={20} /> },
   ];
 
-  // Mengambil email pengguna dari localStorage
   const userEmail = localStorage.getItem('userEmail') || "guest@example.com";
-  const userRole = "Kasir"; // Anda bisa menyesuaikan ini jika role bisa berbeda
-
+  const userRole = "Kasir";
   const avatarUrl = "https://mir-s3-cdn-cf.behance.net/project_modules/disp/414d9011889067.5625411b2afd2.png";
 
   const avatarMenu = (
@@ -38,7 +36,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         className="w-full -mt-4"
         onClick={() => {
           console.log("Logout button clicked");
-          localStorage.removeItem('userEmail'); // Hapus email saat logout
+          localStorage.removeItem('userEmail');
         }}
       >
         Keluar
@@ -57,7 +55,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="flex min-h-screen overflow-hidden">
-      {/* Sidebar */}
       <div
         className={`bg-white text-black w-20 h-full fixed top-0 left-0 transform ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -77,7 +74,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             <li
               key={item.name}
               className={`relative flex-grow flex items-center justify-center pt-3 pb-3 hover:bg-[#257691] rounded-lg`}
-              style={{ height: "60px" }} // Atur tinggi setiap menu
+              style={{ height: "60px" }}
             >
               <Link
                 href={item.path}
@@ -96,7 +93,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         </ul>
       </div>
 
-      {/* Overlay untuk close sidebar di mobile */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black opacity-50 md:hidden"
@@ -105,14 +101,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       )}
 
       <div className="flex-1 flex flex-col ml-20">
-        {/* Header */}
-        <header className="bg-[#257691] shadow-md p-4 flex justify-between items-center text-white relative md:px-8 md:py-6">
-          <h1 className="text-xl font-semibold">{selectedMenu}</h1>
-          <Dropdown
-            overlay={avatarMenu}
-            trigger={["click"]}
-            placement="bottomRight"
-          >
+        <header className="bg-[#257691] shadow-md p-4 sticky top-0 flex justify-between items-center text-white z-50 md:px-8 md:py-6">
+          <h1 className="text-xl font-semibold ml-4">{selectedMenu}</h1>
+          <Dropdown overlay={avatarMenu} trigger={["click"]} placement="bottomRight">
             <Avatar
               size="large"
               style={{ cursor: "pointer" }}
@@ -127,3 +118,4 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default Layout;
+  
