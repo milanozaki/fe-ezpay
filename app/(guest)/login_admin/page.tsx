@@ -1,42 +1,43 @@
-'use client'; // Menandakan komponen ini sebagai Client Component
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation'; // Impor useRouter dari Next.js
+"use client"; // Menandakan komponen ini sebagai Client Component
+import React, { useState } from "react";
+import { useRouter } from "next/navigation"; // Impor useRouter dari Next.js
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const router = useRouter(); // Inisialisasi router
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
-      const response = await fetch('http://localhost:3222/auth/login/', { // Ganti dengan URL endpoint login yang sesuai
-        method: 'POST',
+      const response = await fetch("http://localhost:3222/auth/login/", {
+        // Ganti dengan URL endpoint login yang sesuai
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
-        throw new Error('Login failed');
+        throw new Error("Login failed");
       }
 
       const data = await response.json();
 
       // Menyimpan email ke localStorage setelah login berhasil
-      localStorage.setItem('userEmail', email);
-      
+      localStorage.setItem("userEmail", email);
+
       // Redirect ke halaman dashboard setelah login berhasil
-      router.push('/admin/dashboard');
+      router.push("/admin/dashboard");
     } catch (err) {
-      setError('Login failed. Please check your credentials and try again.');
+      setError("Login failed. Please check your credentials and try again.");
     } finally {
       setLoading(false);
     }
@@ -50,16 +51,18 @@ const LoginPage = () => {
         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-[350px] relative">
           {/* Gambar ikon */}
           <div className="relative z-10 flex justify-center mb-6">
-            <img 
+            <img
               src="/images/logoEzpay.png" // Ganti dengan ikon yang sesuai
               alt="Login Icon"
               width={90}
               height={90}
             />
           </div>
-          
+
           {/* Judul login */}
-          <h2 className="relative z-10 text-center text-2xl font-semibold text-gray-800 mb-8">Selamat Datang!</h2>
+          <h2 className="relative z-10 text-center text-2xl font-semibold text-gray-800 mb-8">
+            Selamat Datang!
+          </h2>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="relative z-10">
@@ -86,15 +89,29 @@ const LoginPage = () => {
                 required
               />
               <div className="text-right mt-2">
-                <a href="#" className="text-sm text-blue-500 hover:underline">Forgot password?</a>
+                <a href="#" className="text-sm text-blue-500 hover:underline">
+                  Forgot password?
+                </a>
+              </div>
+
+              {/* Tautan Kembali */}
+              <div className="text-left mt-2">
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    router.back(); // Kembali ke halaman sebelumnya
+                  }}
+                  className="text-sm text-blue-500 hover:underline"
+                >
+                  Kembali
+                </a>
               </div>
             </div>
 
             {/* Error Message */}
             {error && (
-              <div className="text-red-500 text-center mb-4">
-                {error}
-              </div>
+              <div className="text-red-500 text-center mb-4">{error}</div>
             )}
 
             {/* Tombol Login */}
@@ -104,7 +121,7 @@ const LoginPage = () => {
                 className="w-full bg-[#4a98b1] text-white py-3 px-4 rounded-2xl hover:bg-[#56a6c0] transition-colors"
                 disabled={loading}
               >
-                {loading ? 'Logging in...' : 'Log in'}
+                {loading ? "Logging in..." : "Log in"}
               </button>
             </div>
           </form>

@@ -98,6 +98,19 @@ const handleSubmit = async (e: React.FormEvent) => {
               <div className="text-right mt-2">
                 <a href="#" className="text-sm text-blue-500 hover:underline">Forgot password?</a>
               </div>
+                            {/* Tautan Kembali */}
+                            <div className="text-left mt-2">
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    router.back(); // Kembali ke halaman sebelumnya
+                  }}
+                  className="text-sm text-blue-500 hover:underline"
+                >
+                  Kembali
+                </a>
+              </div>
             </div>
   
             {/* Error Message */}
