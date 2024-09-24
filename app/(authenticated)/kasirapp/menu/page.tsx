@@ -1,5 +1,6 @@
 "use client"; // Menandakan ini adalah komponen client-side
 import React, { useEffect, useState } from "react";
+import { AiOutlineDoubleRight, AiOutlineDoubleLeft } from "react-icons/ai"; // Import ikon dari react-icons
 
 interface Produk {
   id_produk: string;
@@ -18,6 +19,9 @@ const MenuPage = () => {
   const [activeButton, setActiveButton] = useState<string>("Semua"); // State untuk tombol yang aktif
   const [loading, setLoading] = useState<boolean>(true); // State untuk loading
   const [cart, setCart] = useState<Produk[]>([]); // State untuk menyimpan produk yang dipilih
+  const [currentPage, setCurrentPage] = useState<number>(0); // State untuk halaman kategori saat ini
+
+  const categoriesPerPage = 5; // Jumlah kategori per halaman
 
   // Fetch data kategori dan produk dari API saat komponen di-mount
   useEffect(() => {
@@ -56,6 +60,13 @@ const MenuPage = () => {
     setActiveButton(namaKategori); // Set tombol yang diklik menjadi aktif
   };
 
+  // Fungsi untuk menampilkan tombol sesuai halaman
+  const getPaginatedCategories = () => {
+    const startIndex = currentPage * categoriesPerPage;
+    const endIndex = startIndex + categoriesPerPage;
+    return categories.slice(startIndex, endIndex);
+  };
+
   // Kondisi untuk menentukan apakah tombol aktif atau tidak
   const getButtonStyle = (namaKategori: string) => {
     return activeButton === namaKategori
@@ -74,6 +85,20 @@ const MenuPage = () => {
       ? products // Jika kategori 'Semua' dipilih, tampilkan semua produk
       : products.filter((produk) => produk.kategori.nama === activeButton); // Filter produk berdasarkan kategori.nama
 
+  // Fungsi untuk menampilkan halaman kategori berikutnya
+  const goToNextPage = () => {
+    if ((currentPage + 1) * categoriesPerPage < categories.length) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Fungsi untuk menampilkan halaman kategori sebelumnya
+  const goToPreviousPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   if (loading) {
     return <div>Loading...</div>; // Tampilkan loading jika data sedang diambil
   }
@@ -82,6 +107,7 @@ const MenuPage = () => {
     <div className="flex w-full">
       {/* Kategori dan Daftar Produk */}
       <div className="w-3/4">
+        {/* Kontainer dengan scroll horizontal */}
         <div className="flex gap-2 mb-4">
           <button
             className={`px-4 py-2 rounded-3xl border-2 transition duration-300 flex items-center justify-center ${getButtonStyle(
@@ -92,8 +118,18 @@ const MenuPage = () => {
             Semua
           </button>
 
-          {/* Render tombol berdasarkan kategori dari API */}
-          {categories.map((category, index) => (
+          {/* Tombol untuk halaman sebelumnya */}
+          {currentPage > 0 && (
+            <button
+              className="px-4 py-2 rounded-3xl border-2 text-[#3B8394] hover:bg-[#3B8394] hover:text-white transition duration-300 flex items-center justify-center"
+              onClick={goToPreviousPage}
+            >
+              <AiOutlineDoubleLeft />
+            </button>
+          )}
+
+          {/* Render tombol kategori berdasarkan halaman */}
+          {getPaginatedCategories().map((category, index) => (
             <button
               key={index}
               className={`px-4 py-2 rounded-3xl border-2 transition duration-300 flex items-center justify-center ${getButtonStyle(
@@ -104,6 +140,16 @@ const MenuPage = () => {
               {category.nama} {/* Menampilkan nama kategori */}
             </button>
           ))}
+
+          {/* Tombol untuk halaman berikutnya */}
+          {(currentPage + 1) * categoriesPerPage < categories.length && (
+            <button
+              className="px-4 py-2 rounded-3xl border-2 text-[#3B8394] hover:bg-[#3B8394] hover:text-white transition duration-300 flex items-center justify-center"
+              onClick={goToNextPage}
+            >
+              <AiOutlineDoubleRight />
+            </button>
+          )}
         </div>
 
         {/* Daftar Produk dalam grid 3 kolom */}
