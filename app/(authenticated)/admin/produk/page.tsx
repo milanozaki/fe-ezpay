@@ -161,28 +161,80 @@ const ProdukPage: React.FC = () => {
     setIsAddModalVisible(true);
   };
 
+  // const handleAddProduk = async () => {
+  //   try {
+  //     const values = await form.validateFields(); // Validasi input dari form
+  //     const formData = new FormData(); // Membuat instance FormData
+
+  //     // Menambahkan semua field dari values ke formData
+  //     Object.keys(values).forEach((key) => {
+  //       formData.append(key, values[key]);
+  //     });
+
+  //     // Menambahkan gambar jika ada
+  //     if (values.gambar_produk && values.gambar_produk.length > 0) {
+  //       formData.append("gambar_produk", values.gambar_produk[0].originFileObj);
+  //     }
+
+  //     console.log("Form Data yang dikirim:", Array.from(formData.entries())); // Debugging
+
+  //     // Mengirim permintaan POST untuk menambahkan produk
+  //     await axios.post("http://localhost:3222/produk", formData, {
+  //       headers: {
+  //         "Content-Type": "multipart/form-data", // Menentukan tipe konten
+  //       },
+  //     });
+
+  //     message.success("Produk berhasil ditambahkan"); // Pesan sukses
+  //     setIsAddModalVisible(false); // Menutup modal
+  //     form.resetFields(); // Mereset form
+  //   } catch (error) {
+  //     console.error("Error adding product:", error); // Logging kesalahan
+  //     message.error("Gagal menambahkan produk"); // Pesan kesalahan umum
+  //     if (axios.isAxiosError(error) && error.response) {
+  //       console.error("Detail kesalahan:", error.response.data); // Logging detail kesalahan dari server
+  //     }
+  //   }
+  // };
+
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
       const formData = new FormData();
+
+      // Tambahkan semua field dari values ke formData
       Object.keys(values).forEach((key) => {
-        formData.append(key, values[key]);
+        if (key === "kategori") {
+          // Ganti nama kategori menjadi id_kategori
+          formData.append("id_kategori", values[key]);
+        } else {
+          formData.append(key, values[key]);
+        }
       });
+
+      // Menambahkan gambar jika ada
       if (values.gambar_produk && values.gambar_produk.length > 0) {
-        formData.append("file", values.gambar_produk[0].originFileObj);
+        formData.append("gambar_produk", values.gambar_produk[0].originFileObj);
       }
 
+      console.log("Form Data being sent:", Array.from(formData.entries())); // Debugging
+
+      // Mengirim permintaan POST untuk menambahkan produk
       await axios.post("http://localhost:3222/produk", formData, {
         headers: {
-          "Content-Type": "multipart/form-data",
+          "Content-Type": "multipart/form-data", // Menentukan tipe konten
         },
       });
-      message.success("Produk berhasil ditambahkan");
-      setIsAddModalVisible(false);
-      form.resetFields();
+
+      message.success("Produk berhasil ditambahkan"); // Pesan sukses
+      setIsAddModalVisible(false); // Menutup modal
+      form.resetFields(); // Mereset form
     } catch (error) {
-      message.error("Gagal menambahkan produk");
-      console.error("Error adding product:", error);
+      console.error("Error adding product:", error); // Logging kesalahan
+      message.error("Gagal menambahkan produk"); // Pesan kesalahan umum
+      if (axios.isAxiosError(error) && error.response) {
+        console.error("Detail kesalahan:", error.response.data); // Logging detail kesalahan dari server
+      }
     }
   };
 
@@ -210,7 +262,7 @@ const ProdukPage: React.FC = () => {
     form.setFieldsValue(item);
     setIsEditModalVisible(true);
   };
- 
+
   const handleUpdateProduk = async () => {
     if (!selectedProduk) return;
     try {
@@ -221,8 +273,10 @@ const ProdukPage: React.FC = () => {
         stok: Number(values.stok),
       };
 
+      console.log("Updating product with ID:", selectedProduk.id_produk); // Log ID
+
       await axios.put(
-        `http://localhost:3222/produk/${selectedProduk.nama_produk}`,
+        `http://localhost:3222/produk/${selectedProduk.id_produk}`, // Gunakan ID
         updateData
       );
 
@@ -231,10 +285,18 @@ const ProdukPage: React.FC = () => {
       setSelectedProduk(null);
       form.resetFields();
     } catch (error) {
-      message.error("Gagal memperbarui produk");
-      console.error("Error updating product:", error);
+      if (axios.isAxiosError(error) && error.response) {
+        console.error("Error updating product:", error.response.data);
+        message.error(
+          `Gagal memperbarui produk: ${error.response.data.message}`
+        );
+      } else {
+        console.error("Unknown error:", error);
+        message.error("Gagal memperbarui produk: kesalahan tidak terduga");
+      }
     }
   };
+
   const menu = (
     <Menu onClick={handleSortOrderChange}>
       <Menu.Item key="harga-asc">Harga Terendah</Menu.Item>
@@ -469,32 +531,54 @@ const ProdukPage: React.FC = () => {
         onCancel={handleCancel}
       >
         <Form form={form} layout="vertical">
-          <Form.Item
-            name="nama_produk"
-            label="Nama Produk"
-            rules={[{ required: true, message: "Nama produk wajib diisi" }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="harga_produk"
-            label="Harga Produk"
-            rules={[{ required: true, message: "Harga produk wajib diisi" }]}
-          >
-            <Input type="number" />
-          </Form.Item>
-          <Form.Item
-            name="stok"
-            label="Stok Produk"
-            rules={[{ required: true, message: "Stok produk wajib diisi" }]}
-          >
-            <Input type="number" />
-          </Form.Item>
-          <Form.Item name="gambar_produk" label="Gambar Produk">
-            <Upload beforeUpload={() => false}>
-              <Button icon={<UploadOutlined />}>Unggah Gambar</Button>
-            </Upload>
-          </Form.Item>
+          <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="nama_produk"
+              label="Nama Produk"
+              rules={[{ required: true, message: "Nama produk wajib diisi" }]}
+            >
+              <Input />
+            </Form.Item>
+            </Col>
+            <Col span={12}>
+            <Form.Item
+              name="harga_produk"
+              label="Harga Produk"
+              rules={[{ required: true, message: "Harga produk wajib diisi" }]}
+            >
+              <Input type="number" />
+            </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="stok"
+              label="Stok Produk"
+              rules={[{ required: true, message: "Stok produk wajib diisi" }]}
+            >
+              <Input type="number" />
+            </Form.Item>
+            </Col>
+            <Col span={12}>
+            <Form.Item name="gambar_produk" label="Gambar Produk">
+              <Upload
+                name="gambar_produk"
+                listType="picture"
+                beforeUpload={() => false} // Prevent automatic upload
+                showUploadList={{ showRemoveIcon: true }}
+                accept="image/*"
+                customRequest={({ file, onSuccess }: any) => {
+                  // File will be handled by form submission
+                  onSuccess && onSuccess(null, file);
+                }}
+              >
+                <Button icon={<UploadOutlined />}>Unggah Gambar</Button>
+              </Upload>
+            </Form.Item>
+            </Col>
+          </Row>
         </Form>
       </Modal>
     </div>
