@@ -100,8 +100,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         ></div>
       )}
 
-      <div className="flex-1 flex flex-col ml-20">
-        <header className="bg-[#257691] shadow-md p-4 sticky top-0 flex justify-between items-center text-white z-50 md:px-8 md:py-6">
+      <div className="flex-1 flex flex-col ml-20 ">
+        <header className="bg-[#257691] shadow-md top-0 flex justify-between items-center text-white z-50 md:px-8 md:py-6">
           <h1 className="text-xl font-semibold ml-4">{selectedMenu}</h1>
           <Dropdown overlay={avatarMenu} trigger={["click"]} placement="bottomRight">
             <Avatar

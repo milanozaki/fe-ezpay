@@ -97,37 +97,39 @@ const KelolaAkunpage = () => {
 
       {/* Modal untuk menampilkan detail toko */}
       <Modal
-        title={selectedToko?.nama_toko || 'Detail Toko'}
-        visible={isModalVisible}
-        onCancel={handleCloseModal}
-        footer={
-          <div className="flex justify-end">
-            <Button onClick={handleCloseModal} type="primary">
-              Tutup
-            </Button>
-          </div>
-        }
-        width={600}
-      >
-        {selectedToko ? (
-          <div className="p-4">
-            {selectedToko.foto && (
-              <img 
-                src={selectedToko.foto} 
-                alt={selectedToko.nama_toko} 
-                className="w-full max-w-md mb-4" 
-              />
-            )}
-            <p><strong>Pemilik:</strong> {selectedToko.user.nama}</p>
-            <p><strong>Email:</strong> {selectedToko.user.email}</p>
-            <p><strong>No Handphone:</strong> {selectedToko.user.no_handphone}</p>
-            <p><strong>Alamat:</strong> {selectedToko.alamat_toko}</p>
-            <p><strong>Deskripsi:</strong> {selectedToko.deskripsi_toko}</p>
-          </div>
-        ) : (
-          <div>Loading detail...</div>
-        )}
-      </Modal>
+  title={selectedToko?.nama_toko || 'Detail Toko'}
+  visible={isModalVisible}
+  onCancel={handleCloseModal}
+  footer={
+    <div className="flex justify-end">
+      <Button onClick={handleCloseModal} type="primary">
+        Tutup
+      </Button>
+    </div>
+  }
+  width={600}
+>
+  {selectedToko ? (
+    <div className="p-4">
+      {/* Menampilkan gambar dari server internal */}
+      {selectedToko.foto && (
+        <img 
+          src={`http://localhost:3222/gambar_toko/${selectedToko.foto}`} 
+          alt={selectedToko.nama_toko} 
+          className="w-full max-w-md mb-4 object-cover rounded-lg shadow-lg" 
+        />
+      )}
+      <p><strong>Pemilik:</strong> {selectedToko.user.nama}</p>
+      <p><strong>Email:</strong> {selectedToko.user.email}</p>
+      <p><strong>No Handphone:</strong> {selectedToko.user.no_handphone}</p>
+      <p><strong>Alamat:</strong> {selectedToko.alamat_toko}</p>
+      <p><strong>Deskripsi:</strong> {selectedToko.deskripsi_toko}</p>
+    </div>
+  ) : (
+    <div>Loading detail...</div>
+  )}
+</Modal>
+
     </div>
   );
 };

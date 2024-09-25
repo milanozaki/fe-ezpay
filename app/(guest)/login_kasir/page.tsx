@@ -9,48 +9,48 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const router = useRouter(); // Inisialisasi router
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
-  setError('');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
-  try {
-    const response = await fetch('http://localhost:3222/auth/login/kasir', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const response = await fetch('http://localhost:3222/auth/login/kasir', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok) {
-      // Tampilkan pesan dari backend jika akun tidak aktif
-      if (data.message === 'Akses ditolak: Akun Anda sedang tidak aktif') {
-        setError('Akun Anda sedang tidak aktif. Hubungi admin.');
+      if (!response.ok) {
+        // Tampilkan pesan error untuk status 401 (kredensial salah)
+        if (response.status === 401) {
+          setError('Email atau password salah. Silakan coba lagi.');
+        } 
+        // Tampilkan pesan dari backend jika akun tidak aktif
+        else if (data.message === 'Akses ditolak: Akun Anda sedang tidak aktif') {
+          setError('Akun Anda sedang tidak aktif. Hubungi admin.');
+        } else {
+          throw new Error('Login gagal');
+        }
       } else {
-        throw new Error('Login gagal');
+        // Cek jika password default dan ada redirect URL
+        if (data.redirectUrl) {
+          router.push(data.redirectUrl); // Redirect ke halaman edit password kasir dengan ID user
+        } else {
+          localStorage.setItem('userEmail', email);
+          router.push('/kasirapp/menu'); // Redirect ke menu kasir jika login sukses
+        }
       }
-    } else {
-      // Cek jika password default dan ada redirect URL
-      if (data.redirectUrl) {
-        router.push(data.redirectUrl); // Redirect ke halaman edit password kasir dengan ID user
-      } else {
-        localStorage.setItem('userEmail', email);
-        router.push('/kasirapp/menu'); // Redirect ke menu kasir jika login sukses
-      }
-    }
-  } catch (err) {
-    if (!Error('Akun Anda sedang tidak aktif')) {
+    } catch (err) {
       setError('Login gagal. Periksa kredensial Anda dan coba lagi.');
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
-};
-
-  
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-[#5aa5be] px-4 py-8">
@@ -98,8 +98,8 @@ const handleSubmit = async (e: React.FormEvent) => {
               <div className="text-right mt-2">
                 <a href="#" className="text-sm text-blue-500 hover:underline">Forgot password?</a>
               </div>
-                            {/* Tautan Kembali */}
-                            <div className="text-left mt-2">
+              {/* Tautan Kembali */}
+              <div className="text-left mt-2">
                 <a
                   href="#"
                   onClick={(e) => {
@@ -140,7 +140,6 @@ const handleSubmit = async (e: React.FormEvent) => {
       </footer>
     </div>
   );
-  
 };
 
 export default LoginPage;

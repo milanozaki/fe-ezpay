@@ -11,20 +11,15 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   // Menentukan langkah aktif dan status langkah
   let currentStep = 0;
-  const stepStatuses: Array<'wait' | 'process' | 'finish'> = ['wait', 'wait', 'wait'];
+  const stepStatuses: Array<'wait' | 'process' | 'finish'> = ['wait', 'wait'];
 
   if (pathname.includes('/registrasi/DataPemilikToko')) {
     currentStep = 0; // Langkah pertama aktif
     stepStatuses[0] = 'process'; // Langkah pertama aktif
-  } else if (pathname.includes('/registrasi/DataToko')) {
+  } else if (pathname.includes('/registrasi/verifikasi')) {
     currentStep = 1; // Langkah kedua aktif
     stepStatuses[0] = 'finish'; // Langkah pertama selesai
     stepStatuses[1] = 'process'; // Langkah kedua aktif
-  } else if (pathname.includes('/registrasi/verifikasi')) {
-    currentStep = 2; // Langkah ketiga aktif
-    stepStatuses[0] = 'finish'; // Langkah pertama selesai
-    stepStatuses[1] = 'finish'; // Langkah kedua selesai
-    stepStatuses[2] = 'process'; // Langkah ketiga aktif
   }
 
   return (
@@ -37,8 +32,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         <div className="w-full max-w-md mt-5">
           <Steps current={currentStep} direction="horizontal" type="default" progressDot>
             <Step title="Data Pemilik Toko" status={stepStatuses[0]} />
-            <Step title="Data Toko" status={stepStatuses[1]} />
-            <Step title="Verifikasi" status={stepStatuses[2]} />
+            <Step title="Verifikasi" status={stepStatuses[1]} />
           </Steps>
         </div>
 
@@ -50,7 +44,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Footer copyright full-width dan selalu nempel di bawah */}
       <footer className="w-full bg-[#cfe2ff] text-black text-sm text-center py-4 absolute bottom-0 left-0">
-      © 2024 Ezpay. All rights reserved.
+        © 2024 Ezpay. All rights reserved.
       </footer>
     </div>
   );

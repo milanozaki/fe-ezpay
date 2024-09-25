@@ -11,29 +11,29 @@ const LoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     setLoading(true);
     setError("");
-
+  
     try {
       const response = await fetch("http://localhost:3222/auth/login/", {
-        // Ganti dengan URL endpoint login yang sesuai
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
       });
-
+  
       if (!response.ok) {
         throw new Error("Login failed");
       }
-
+  
       const data = await response.json();
-
-      // Menyimpan email ke localStorage setelah login berhasil
+  
+      // Menyimpan email dan access_token ke localStorage setelah login berhasil
       localStorage.setItem("userEmail", email);
-
+      localStorage.setItem("accessToken", data.access_token); // Simpan access token
+  
       // Redirect ke halaman dashboard setelah login berhasil
       router.push("/admin/dashboard");
     } catch (err) {
@@ -42,6 +42,8 @@ const LoginPage = () => {
       setLoading(false);
     }
   };
+  
+  
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-[#5aa5be] px-4 py-8">

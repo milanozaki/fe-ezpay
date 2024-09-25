@@ -27,7 +27,7 @@ const InboxPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:3222/toko/daftar');
+        const response = await fetch('http://localhost:3222/toko/pending');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -152,40 +152,67 @@ const InboxPage = () => {
 
       {/* Modal untuk menampilkan detail toko */}
       <Modal
-        title={selectedToko?.nama_toko || 'Detail Toko'}
-        visible={isModalVisible}
-        onCancel={handleCloseModal}
-        footer={
-          <div className="flex justify-end">
-            <Button onClick={handleTolak} style={{ backgroundColor: 'red', color: 'white' }} className="mr-2">
-              Tolak
-            </Button>
-            <Button onClick={handleTerima} style={{ backgroundColor: 'blue', color: 'white' }} type="primary">
-              Terima
-            </Button>
-          </div>
-        }
-        width={600}
+  title={<h2 className="text-2xl font-bold text-gray-800">{selectedToko?.nama_toko || 'Detail Toko'}</h2>}
+  visible={isModalVisible}
+  onCancel={handleCloseModal}
+  footer={
+    <div className="flex justify-end gap-4">
+      <Button
+        onClick={handleTolak}
+        style={{
+          backgroundColor: '#ff4d4f',
+          color: 'white',
+          borderRadius: '8px',
+          border: 'none',
+        }}
+        className="hover:bg-red-700 transition-all"
       >
-        {selectedToko ? (
-          <div className="p-4">
-            {selectedToko.foto && (
-              <img 
-                src={selectedToko.foto} 
-                alt={selectedToko.nama_toko} 
-                className="w-full max-w-md mb-4" 
-              />
-            )}
-            <p><strong>Pemilik:</strong> {selectedToko.user.nama}</p>
-            <p><strong>Email:</strong> {selectedToko.user.email}</p>
-            <p><strong>No Handphone:</strong> {selectedToko.user.no_handphone}</p>
-            <p><strong>Alamat:</strong> {selectedToko.alamat_toko}</p>
-            <p><strong>Deskripsi:</strong> {selectedToko.deskripsi_toko}</p>
-          </div>
-        ) : (
-          <div>Loading detail...</div>
-        )}
-      </Modal>
+        Tolak
+      </Button>
+      <Button
+        onClick={handleTerima}
+        style={{
+          backgroundColor: '#1890ff',
+          color: 'white',
+          borderRadius: '8px',
+          border: 'none',
+        }}
+        className="hover:bg-blue-700 transition-all"
+        type="primary"
+      >
+        Terima
+      </Button>
+    </div>
+  }
+  width={700}
+  className="custom-modal" // Optional: Add custom class to target with global CSS if needed
+>
+  {selectedToko ? (
+    <div className="p-6 bg-gray-50 rounded-lg">
+      {/* Image with enhanced styling */}
+      {selectedToko.foto && (
+        <img 
+          src={`http://localhost:3222/gambar_toko/${selectedToko.foto}`} 
+          alt={selectedToko.nama_toko} 
+          className="w-full max-w-md mb-6 object-cover rounded-lg shadow-lg border border-gray-200" 
+        />
+      )}
+
+      {/* Owner details with better text styling */}
+      <div className="text-gray-700 space-y-2">
+        <p><strong>Pemilik:</strong> {selectedToko.user.nama}</p>
+        <p><strong>Email:</strong> {selectedToko.user.email}</p>
+        <p><strong>No Handphone:</strong> {selectedToko.user.no_handphone}</p>
+        <p><strong>Alamat:</strong> {selectedToko.alamat_toko}</p>
+        <p><strong>Deskripsi:</strong> {selectedToko.deskripsi_toko || 'Tidak ada deskripsi tersedia'}</p>
+      </div>
+    </div>
+  ) : (
+    <div>Loading detail...</div>
+  )}
+</Modal>
+
+
     </div>
   );
 };
