@@ -25,6 +25,7 @@ import {
 import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { debounce } from "lodash";
+import { productRepository } from "#/repository/product";
 
 interface Produk {
   id_produk: string;
@@ -59,6 +60,8 @@ const ProdukPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("ASC");
 
+  const { data: dataProduct } = productRepository.hooks.useProduct();
+  console.log(dataProduct?.data.length, "dp");
   useEffect(() => {
     // Fetch kategori dan produk
     axios
@@ -69,24 +72,26 @@ const ProdukPage: React.FC = () => {
           const categoryNames = categoryData.map((item) => item.nama);
           setCategories(categoryNames);
         }
+        console.log(response);
       })
       .catch((error) => {
         console.error("Error fetching categories:", error);
       });
 
-    axios
-      .get("http://localhost:3222/produk/all")
-      .then((response) => {
-        const produkData = response.data.data;
-        if (Array.isArray(produkData)) {
-          setProduk(produkData);
-          setFilteredProduk(produkData);
-          setTotalProduk(produkData.length);
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching produk:", error);
-      });
+    // axios
+    //   .get("http://localhost:3222/produk/all")
+    //   .then((response) => {
+    //     const produkData = response.data.data;
+    //     if (Array.isArray(produkData)) {
+    //       setProduk(produkData);
+    //       setFilteredProduk(produkData);
+    //       setTotalProduk(produkData.length);
+    //     }
+    //     console.log(produkData);
+    //   })
+    //   .catch((error) => {
+    //     console.error("Error fetching produk:", error);
+    //   });
   }, []);
 
   const fetchProduk = async (value: string) => {
@@ -360,39 +365,45 @@ const ProdukPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-        {paginatedProduk.length === 0 ? (
+        {dataProduct?.data.length === 0 ? (
           <div className="text-center text-gray-500">Produk tidak ada</div>
         ) : (
-          paginatedProduk.map((item) => (
-            <Card
-              key={item.id_produk}
-              cover={
-                <Image
-                  alt={item.nama_produk}
-                  src={`http://localhost:3222/gambar_produk/${item.gambar_produk}`}
-                  className="card-image"
-                  preview={false}
-                />
-              }
-              actions={[
-                <Button
-                  icon={<EditOutlined />}
-                  onClick={() => handleEditClick(item)}
+          dataProduct?.data.map((item: any) => {
+            console.log(item.gambar_produk); // Log the image path for debugging
+            return (
+              <>
+                <Card
+                  key={item.id_produk}
+                  cover={
+                    <Image
+                      alt={item.gambar_produk}
+                      src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
+                      className="card-image"
+                      preview={false}
+                    />
+                  }
+                
+                  actions={[
+                    <Button
+                      icon={<EditOutlined />}
+                      onClick={() => handleEditClick(item)}
+                    >
+                      Edit
+                    </Button>,
+                  ]}
                 >
-                  Edit
-                </Button>,
-              ]}
-            >
-              <Card.Meta
-                title={item.nama_produk}
-                description={
-                  <span style={{ color: "black" }}>
-                    Rp {formatCurrency(item.harga_produk)}
-                  </span>
-                } // Apply inline style here
-              />
-            </Card>
-          ))
+                  <Card.Meta
+                    title={item.nama_produk}
+                    description={
+                      <span style={{ color: "black" }}>
+                        Rp {formatCurrency(item.harga_produk)}
+                      </span>
+                    } // Apply inline style here
+                  />
+                </Card>
+              </>
+            );
+          })
         )}
       </div>
 
@@ -532,51 +543,53 @@ const ProdukPage: React.FC = () => {
       >
         <Form form={form} layout="vertical">
           <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="nama_produk"
-              label="Nama Produk"
-              rules={[{ required: true, message: "Nama produk wajib diisi" }]}
-            >
-              <Input />
-            </Form.Item>
+            <Col span={12}>
+              <Form.Item
+                name="nama_produk"
+                label="Nama Produk"
+                rules={[{ required: true, message: "Nama produk wajib diisi" }]}
+              >
+                <Input />
+              </Form.Item>
             </Col>
             <Col span={12}>
-            <Form.Item
-              name="harga_produk"
-              label="Harga Produk"
-              rules={[{ required: true, message: "Harga produk wajib diisi" }]}
-            >
-              <Input type="number" />
-            </Form.Item>
+              <Form.Item
+                name="harga_produk"
+                label="Harga Produk"
+                rules={[
+                  { required: true, message: "Harga produk wajib diisi" },
+                ]}
+              >
+                <Input type="number" />
+              </Form.Item>
             </Col>
           </Row>
           <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="stok"
-              label="Stok Produk"
-              rules={[{ required: true, message: "Stok produk wajib diisi" }]}
-            >
-              <Input type="number" />
-            </Form.Item>
+            <Col span={12}>
+              <Form.Item
+                name="stok"
+                label="Stok Produk"
+                rules={[{ required: true, message: "Stok produk wajib diisi" }]}
+              >
+                <Input type="number" />
+              </Form.Item>
             </Col>
             <Col span={12}>
-            <Form.Item name="gambar_produk" label="Gambar Produk">
-              <Upload
-                name="gambar_produk"
-                listType="picture"
-                beforeUpload={() => false} // Prevent automatic upload
-                showUploadList={{ showRemoveIcon: true }}
-                accept="image/*"
-                customRequest={({ file, onSuccess }: any) => {
-                  // File will be handled by form submission
-                  onSuccess && onSuccess(null, file);
-                }}
-              >
-                <Button icon={<UploadOutlined />}>Unggah Gambar</Button>
-              </Upload>
-            </Form.Item>
+              <Form.Item name="gambar_produk" label="Gambar Produk">
+                <Upload
+                  name="gambar_produk"
+                  listType="picture"
+                  beforeUpload={() => false} // Prevent automatic upload
+                  showUploadList={{ showRemoveIcon: true }}
+                  accept="image/*"
+                  customRequest={({ file, onSuccess }: any) => {
+                    // File will be handled by form submission
+                    onSuccess && onSuccess(null, file);
+                  }}
+                >
+                  <Button icon={<UploadOutlined />}>Unggah Gambar</Button>
+                </Upload>
+              </Form.Item>
             </Col>
           </Row>
         </Form>
