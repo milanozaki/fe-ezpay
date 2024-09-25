@@ -165,43 +165,6 @@ const ProdukPage: React.FC = () => {
     form.resetFields();
     setIsAddModalVisible(true);
   };
-
-  // const handleAddProduk = async () => {
-  //   try {
-  //     const values = await form.validateFields(); // Validasi input dari form
-  //     const formData = new FormData(); // Membuat instance FormData
-
-  //     // Menambahkan semua field dari values ke formData
-  //     Object.keys(values).forEach((key) => {
-  //       formData.append(key, values[key]);
-  //     });
-
-  //     // Menambahkan gambar jika ada
-  //     if (values.gambar_produk && values.gambar_produk.length > 0) {
-  //       formData.append("gambar_produk", values.gambar_produk[0].originFileObj);
-  //     }
-
-  //     console.log("Form Data yang dikirim:", Array.from(formData.entries())); // Debugging
-
-  //     // Mengirim permintaan POST untuk menambahkan produk
-  //     await axios.post("http://localhost:3222/produk", formData, {
-  //       headers: {
-  //         "Content-Type": "multipart/form-data", // Menentukan tipe konten
-  //       },
-  //     });
-
-  //     message.success("Produk berhasil ditambahkan"); // Pesan sukses
-  //     setIsAddModalVisible(false); // Menutup modal
-  //     form.resetFields(); // Mereset form
-  //   } catch (error) {
-  //     console.error("Error adding product:", error); // Logging kesalahan
-  //     message.error("Gagal menambahkan produk"); // Pesan kesalahan umum
-  //     if (axios.isAxiosError(error) && error.response) {
-  //       console.error("Detail kesalahan:", error.response.data); // Logging detail kesalahan dari server
-  //     }
-  //   }
-  // };
-
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
