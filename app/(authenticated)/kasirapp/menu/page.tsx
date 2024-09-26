@@ -137,8 +137,11 @@ const MenuPage = () => {
                   cover={
                     <Image
                       alt={produk.nama_produk}
-                      src={`http://localhost:3222/gambar_produk/${produk.gambar_produk}`}
+                      src={`http://localhost:3222/produk/image/${produk.gambar_produk}`}
                       className="card-image h-40"
+                      preview={
+                        false
+                      }
                     />
                   }
                   onClick={() => addToCart(produk)}

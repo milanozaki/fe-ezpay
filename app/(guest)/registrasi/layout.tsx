@@ -43,7 +43,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       </div>
 
       {/* Footer copyright full-width dan selalu nempel di bawah */}
-      <footer className="w-full bg-[#cfe2ff] text-black text-sm text-center py-4 absolute bottom-0 left-0">
+      <footer className="w-full bg-[#8cc1d0] text-black text-sm text-center py-4 absolute bottom-0 left-0">
         © 2024 Ezpay. All rights reserved.
       </footer>
     </div>
