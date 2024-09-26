@@ -235,35 +235,61 @@ const ProdukPage: React.FC = () => {
     if (!selectedProduk) return;
     try {
       const values = await form.validateFields();
-      const updateData: UpdateProdukDto = {
-        ...values,
-        harga_produk: Number(values.harga_produk),
-        stok: Number(values.stok),
-      };
-
-      console.log("Updating product with ID:", selectedProduk.id_produk); // Log ID
-
+      const formData = new FormData();
+      formData.append('nama_produk', values.nama_produk);
+      formData.append('harga_produk', values.harga_produk);
+      formData.append('stok', values.stok);
+      formData.append('gambar_produk', values.gambar_produk.file);
+  
       await axios.put(
-        `http://localhost:3222/produk/${selectedProduk.id_produk}`, // Gunakan ID
-        updateData
+        `http://localhost:3222/produk/${selectedProduk.id_produk}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
       );
-
-      message.success("Produk berhasil diperbarui");
-      setIsEditModalVisible(false);
-      setSelectedProduk(null);
-      form.resetFields();
+  
+      // ...
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        console.error("Error updating product:", error.response.data);
-        message.error(
-          `Gagal memperbarui produk: ${error.response.data.message}`
-        );
-      } else {
-        console.error("Unknown error:", error);
-        message.error("Gagal memperbarui produk: kesalahan tidak terduga");
-      }
+      // ...
     }
   };
+
+  // const handleUpdateProduk = async () => {
+  //   if (!selectedProduk) return;
+  //   try {
+  //     const values = await form.validateFields();
+  //     const updateData: UpdateProdukDto = {
+  //       ...values,
+  //       harga_produk: Number(values.harga_produk),
+  //       stok: Number(values.stok),
+  //     };
+
+  //     console.log("Updating product with ID:", selectedProduk.id_produk); // Log ID
+
+  //     await axios.put(
+  //       `http://localhost:3222/produk/${selectedProduk.id_produk}`, // Gunakan ID
+  //       updateData
+  //     );
+
+  //     message.success("Produk berhasil diperbarui");
+  //     setIsEditModalVisible(false);
+  //     setSelectedProduk(null);
+  //     form.resetFields();
+  //   } catch (error) {
+  //     if (axios.isAxiosError(error) && error.response) {
+  //       console.error("Error updating product:", error.response.data);
+  //       message.error(
+  //         `Gagal memperbarui produk: ${error.response.data.message}`
+  //       );
+  //     } else {
+  //       console.error("Unknown error:", error);
+  //       message.error("Gagal memperbarui produk: kesalahan tidak terduga");
+  //     }
+  //   }
+  // };
 
   const menu = (
     <Menu onClick={handleSortOrderChange}>
