@@ -34,15 +34,15 @@ interface Produk {
   gambar_produk: string;
   status_produk: string;
   satuan_produk: string;
+  kode_produk: string;
+  stok: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-interface UpdateProdukDto {
-  nama_produk?: string;
-  harga_produk?: number;
-  stok?: number;
-  gambar_produk?: string;
-  satuan_produk?: string;
-  status_produk?: string;
+enum StatusEnum {
+  ACTIVE = "aktif",
+  INACTIVE = "tidak aktif",
 }
 
 const ProdukPage: React.FC = () => {
@@ -60,8 +60,8 @@ const ProdukPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("ASC");
 
-  const { data: dataProduct } = productRepository.hooks.useProduct();
-  console.log(dataProduct?.data.length, "dp");
+  // const { data: dataProduct } = productRepository.hooks.useProduct();
+  // console.log(dataProduct?.data.length, "dp");
   useEffect(() => {
     // Fetch kategori dan produk
     axios
@@ -72,26 +72,24 @@ const ProdukPage: React.FC = () => {
           const categoryNames = categoryData.map((item) => item.nama);
           setCategories(categoryNames);
         }
-        console.log(response);
       })
       .catch((error) => {
         console.error("Error fetching categories:", error);
       });
 
-    // axios
-    //   .get("http://localhost:3222/produk/all")
-    //   .then((response) => {
-    //     const produkData = response.data.data;
-    //     if (Array.isArray(produkData)) {
-    //       setProduk(produkData);
-    //       setFilteredProduk(produkData);
-    //       setTotalProduk(produkData.length);
-    //     }
-    //     console.log(produkData);
-    //   })
-    //   .catch((error) => {
-    //     console.error("Error fetching produk:", error);
-    //   });
+    axios
+      .get("http://localhost:3222/produk/all")
+      .then((response) => {
+        const produkData = response.data.data;
+        if (Array.isArray(produkData)) {
+          setProduk(produkData);
+          setFilteredProduk(produkData);
+          setTotalProduk(produkData.length);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching produk:", error);
+      });
   }, []);
 
   const fetchProduk = async (value: string) => {
@@ -235,29 +233,33 @@ const ProdukPage: React.FC = () => {
     if (!selectedProduk) return;
     try {
       const values = await form.validateFields();
-  
+
       // Membuat FormData untuk upload file gambar dan data lainnya
       const formData = new FormData();
-      formData.append('nama_produk', values.nama_produk);
-      formData.append('harga_produk', values.harga_produk);
-      formData.append('stok', values.stok);
-  
+      formData.append("nama_produk", values.nama_produk);
+      formData.append("harga_produk", values.harga_produk);
+      formData.append("stok", values.stok);
+
       // Pastikan gambar dipilih sebelum menambahkan ke formData
       if (values.gambar_produk && values.gambar_produk.file) {
-        formData.append('gambar_produk', values.gambar_produk.file);
+        formData.append("gambar_produk", values.gambar_produk.file);
       }
-  
+
+      if (values.status_produk) {
+        formData.append("status_produk", values.status_produk);
+      }
+
       // Mengirim request PUT ke backend untuk update produk
       await axios.put(
         `http://localhost:3222/produk/${selectedProduk.id_produk}`,
         formData,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
+            "Content-Type": "multipart/form-data",
           },
         }
       );
-  
+
       // Setelah berhasil update, menampilkan pesan sukses dan reset form
       message.success("Produk berhasil diperbarui");
       setIsEditModalVisible(false);
@@ -277,7 +279,6 @@ const ProdukPage: React.FC = () => {
       }
     }
   };
-  
 
   // const handleUpdateProduk = async () => {
   //   if (!selectedProduk) return;
@@ -376,48 +377,41 @@ const ProdukPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-        {dataProduct?.data.length === 0 ? (
+        {paginatedProduk.length === 0 ? (
           <div className="text-center text-gray-500">Produk tidak ada</div>
         ) : (
-          dataProduct?.data.map((item: any) => {
-            console.log(item.gambar_produk); // Log the image path for debugging
-            return (
-              <>
-                <Card
-                  key={item.id_produk}
-                  cover={
-                    <Image
-                      alt={item.gambar_produk}
-                      src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
-                      className="card-image"
-                      preview={false}
-                    />
-                  }
-                
-                  actions={[
-                    <Button
-                      icon={<EditOutlined />}
-                      onClick={() => handleEditClick(item)}
-                    >
-                      Edit
-                    </Button>,
-                  ]}
+          paginatedProduk.map((item) => (
+            <Card
+              key={item.id_produk}
+              cover={
+                <Image
+                  alt={item.nama_produk}
+                  src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
+                  className="card-image"
+                  preview={false}
+                />
+              }
+              actions={[
+                <Button
+                  icon={<EditOutlined />}
+                  onClick={() => handleEditClick(item)}
                 >
-                  <Card.Meta
-                    title={item.nama_produk}
-                    description={
-                      <span style={{ color: "black" }}>
-                        Rp {formatCurrency(item.harga_produk)}
-                      </span>
-                    } // Apply inline style here
-                  />
-                </Card>
-              </>
-            );
-          })
+                  Edit
+                </Button>,
+              ]}
+            >
+              <Card.Meta
+                title={item.nama_produk}
+                description={
+                  <span style={{ color: "black" }}>
+                    Rp {formatCurrency(item.harga_produk)}
+                  </span>
+                } // Apply inline style here
+              />
+            </Card>
+          ))
         )}
       </div>
-
       {totalProduk > pageSize && (
         <Pagination
           current={currentPage}
@@ -585,6 +579,26 @@ const ProdukPage: React.FC = () => {
                 <Input type="number" />
               </Form.Item>
             </Col>
+            <Col span={12}>
+              <Form.Item
+                name="status_produk"
+                label="Status Produk"
+                rules={[
+                  { required: true, message: "Status produk wajib diisi" },
+                ]}
+              >
+                <Select>
+                  <Select.Option value={StatusEnum.ACTIVE}>
+                    {StatusEnum.ACTIVE}
+                  </Select.Option>
+                  <Select.Option value={StatusEnum.INACTIVE}>
+                    {StatusEnum.INACTIVE}
+                  </Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="gambar_produk" label="Gambar Produk">
                 <Upload
