@@ -69,12 +69,13 @@ const KategoriPage = () => {
   };
 
   const handleOkAdd = () => {
-    // Kirim data kategori baru ke API
     form.validateFields()
       .then((values) => {
         axios.post('http://localhost:3222/kategori', { nama: values.nama })
           .then((response) => {
-            setKategori((prevKategori) => [...prevKategori, response.data]);
+            // Pastikan response.data mengandung data kategori yang baru ditambahkan
+            const newKategori = { nama: values.nama }; // Sesuaikan dengan struktur data dari API
+            setKategori((prevKategori) => [...prevKategori, newKategori]);
             setIsAddModalVisible(false); // Sembunyikan modal setelah berhasil
             
             // Tampilkan notifikasi setelah tambah berhasil

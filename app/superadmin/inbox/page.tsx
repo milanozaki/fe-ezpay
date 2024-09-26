@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { Modal, Button } from 'antd'; // Import Button dari Ant Design
+import { Modal, Button, Popconfirm, message } from 'antd'; // Tambahkan Popconfirm dan message dari Ant Design
 
 // Tipe data untuk item tabel
 interface TableData {
@@ -14,7 +14,7 @@ interface TableData {
     nama: string;
     email: string;
     no_handphone: string;
-  }
+  };
 }
 
 const InboxPage = () => {
@@ -23,6 +23,8 @@ const InboxPage = () => {
   const [error, setError] = useState<string | null>(null); // State untuk error
   const [selectedToko, setSelectedToko] = useState<TableData | null>(null); // State untuk detail toko
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false); // State untuk modal
+  const [messageApi, contextHolder] = message.useMessage();
+  const key = 'updatable';
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,7 +48,6 @@ const InboxPage = () => {
             no_handphone: item.user?.no_handphone || '',
           },
         })));
-        
       } catch (error: any) {
         console.error('Error fetching data:', error);
         setError(error.message);
@@ -54,10 +55,8 @@ const InboxPage = () => {
         setLoading(false);
       }
     };
-  
     fetchData();
   }, []);
-  
 
   const handleDetailClick = (item: TableData) => {
     console.log('Detail Clicked:', item); // Debugging
@@ -70,46 +69,38 @@ const InboxPage = () => {
       try {
         const response = await fetch(`http://localhost:3222/toko/register/${selectedToko.id_toko}/reject`, {
           method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
         });
-  
         if (!response.ok) {
           throw new Error(`Tolak request failed: ${response.statusText}`);
         }
         setIsModalVisible(false);
-        alert('Toko ditolak');
+        messageApi.success('Toko ditolak');
       } catch (error: any) {
         console.error('Error during reject request:', error); // Debugging
-        alert(error.message);
+        messageApi.error(error.message);
       }
     }
   };
-  
 
   const handleTerima = async () => {
     if (selectedToko) {
       try {
         const response = await fetch(`http://localhost:3222/toko/register/${selectedToko.id_toko}/approve`, {
           method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
         });
-  
         if (!response.ok) {
           throw new Error(`Terima request failed: ${response.statusText}`);
         }
         setIsModalVisible(false);
-        alert('Toko diterima');
+        messageApi.success('Toko diterima');
       } catch (error: any) {
         console.error('Error during approve request:', error); // Debugging
-        alert(error.message);
+        messageApi.error(error.message);
       }
     }
   };
-  
 
   const handleCloseModal = () => {
     setIsModalVisible(false);
@@ -120,6 +111,7 @@ const InboxPage = () => {
 
   return (
     <div>
+      {contextHolder}
       <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-md relative">
         <thead>
           <tr className="bg-gray-100 border-b">
@@ -138,10 +130,7 @@ const InboxPage = () => {
               </td>
               <td className="py-2 px-4">{item.tanggal}</td>
               <td className="py-2 px-4">
-                <a
-                  onClick={() => handleDetailClick(item)}
-                  className="text-blue-500 cursor-pointer hover:underline"
-                >
+                <a onClick={() => handleDetailClick(item)} className="text-blue-500 cursor-pointer hover:underline">
                   Detail
                 </a>
               </td>
@@ -149,70 +138,49 @@ const InboxPage = () => {
           ))}
         </tbody>
       </table>
-
       {/* Modal untuk menampilkan detail toko */}
-      <Modal
-  title={<h2 className="text-2xl font-bold text-gray-800">{selectedToko?.nama_toko || 'Detail Toko'}</h2>}
-  visible={isModalVisible}
-  onCancel={handleCloseModal}
-  footer={
-    <div className="flex justify-end gap-4">
-      <Button
-        onClick={handleTolak}
-        style={{
-          backgroundColor: '#ff4d4f',
-          color: 'white',
-          borderRadius: '8px',
-          border: 'none',
-        }}
-        className="hover:bg-red-700 transition-all"
+      <Modal title={<h2 className="text-2xl font-bold text-gray-800">{selectedToko?.nama_toko || 'Detail Toko'}</h2>} 
+             visible={isModalVisible} 
+             onCancel={handleCloseModal} 
+             footer={
+               <div className="flex justify-end gap-4">
+                 <Popconfirm title="Apakah Anda yakin ingin menolak toko ini?" onConfirm={handleTolak} okText="Ya" cancelText="Batal">
+                   <Button style={{ backgroundColor: '#ff4d4f', color: 'white', borderRadius: '8px', border: 'none' }} className="hover:bg-red-700 transition-all">
+                     Tolak
+                   </Button>
+                 </Popconfirm>
+                 <Popconfirm title="Apakah Anda yakin ingin menerima toko ini?" onConfirm={handleTerima} okText="Ya" cancelText="Batal">
+                   <Button style={{ backgroundColor: '#1890ff', color: 'white', borderRadius: '8px', border: 'none' }} className="hover:bg-blue-700 transition-all" type="primary">
+                     Terima
+                   </Button>
+                 </Popconfirm>
+               </div>
+             } 
+             width={700} 
+             className="custom-modal" // Optional: Add custom class to target with global CSS if needed
       >
-        Tolak
+        {selectedToko ? (
+          <div className="p-6 bg-gray-50 rounded-lg">
+            {/* Image with enhanced styling */}
+            {selectedToko.foto && (
+              <img src={`http://localhost:3222/gambar_toko/${selectedToko.foto}`} alt={selectedToko.nama_toko} className="w-full max-w-md mb-6 object-cover rounded-lg shadow-lg border border-gray-200" />
+            )}
+            {/* Owner details with better text styling */}
+            <div className="text-gray-700 space-y-2">
+              <p><strong>Pemilik:</strong> {selectedToko.user.nama}</p>
+              <p><strong>Email:</strong> {selectedToko.user.email}</p>
+              <p><strong>No Handphone:</strong> {selectedToko.user.no_handphone}</p>
+              <p><strong>Alamat:</strong> {selectedToko.alamat_toko}</p>
+              <p><strong>Deskripsi:</strong> {selectedToko.deskripsi_toko || 'Tidak ada deskripsi tersedia'}</p>
+            </div>
+          </div>
+        ) : (
+          <div>Loading detail...</div>
+        )}
+      </Modal>
+      <Button type="primary" onClick={() => messageApi.open({ key, type: 'loading', content: 'Loading...' })}>
+        Open the message box
       </Button>
-      <Button
-        onClick={handleTerima}
-        style={{
-          backgroundColor: '#1890ff',
-          color: 'white',
-          borderRadius: '8px',
-          border: 'none',
-        }}
-        className="hover:bg-blue-700 transition-all"
-        type="primary"
-      >
-        Terima
-      </Button>
-    </div>
-  }
-  width={700}
-  className="custom-modal" // Optional: Add custom class to target with global CSS if needed
->
-  {selectedToko ? (
-    <div className="p-6 bg-gray-50 rounded-lg">
-      {/* Image with enhanced styling */}
-      {selectedToko.foto && (
-        <img 
-          src={`http://localhost:3222/gambar_toko/${selectedToko.foto}`} 
-          alt={selectedToko.nama_toko} 
-          className="w-full max-w-md mb-6 object-cover rounded-lg shadow-lg border border-gray-200" 
-        />
-      )}
-
-      {/* Owner details with better text styling */}
-      <div className="text-gray-700 space-y-2">
-        <p><strong>Pemilik:</strong> {selectedToko.user.nama}</p>
-        <p><strong>Email:</strong> {selectedToko.user.email}</p>
-        <p><strong>No Handphone:</strong> {selectedToko.user.no_handphone}</p>
-        <p><strong>Alamat:</strong> {selectedToko.alamat_toko}</p>
-        <p><strong>Deskripsi:</strong> {selectedToko.deskripsi_toko || 'Tidak ada deskripsi tersedia'}</p>
-      </div>
-    </div>
-  ) : (
-    <div>Loading detail...</div>
-  )}
-</Modal>
-
-
     </div>
   );
 };

@@ -24,20 +24,20 @@ const LoginPage = () => {
         body: JSON.stringify({ email, password }),
       });
   
-      if (!response.ok) {
-        throw new Error("Login failed");
-      }
-  
       const data = await response.json();
   
-      // Menyimpan email dan access_token ke localStorage setelah login berhasil
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("accessToken", data.access_token); // Simpan access token
-  
-      // Redirect ke halaman dashboard setelah login berhasil
-      router.push("/admin/dashboard");
+      if (data.redirectUrl) {
+        // Redirect jika toko ditolak
+        router.push(data.redirectUrl);
+      } else if (data.accessToken) {
+        // Simpan accessToken dan redirect ke dashboard
+        localStorage.setItem("accessToken", data.accessToken);
+        router.push("/admin/dashboard");
+      } else {
+        setError(data.message);
+      }
     } catch (err) {
-      setError("Login failed. Please check your credentials and try again.");
+      setError("Login gagal. Periksa kembali kredensial Anda.");
     } finally {
       setLoading(false);
     }
