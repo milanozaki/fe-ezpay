@@ -138,7 +138,10 @@ const MenuPage = () => {
                     <Image
                       alt={produk.nama_produk}
                       src={`http://localhost:3222/produk/image/${produk.gambar_produk}`}
-                      className="card-image h-40"
+                      style={{
+                        width: "350px",
+                        height: "250px",
+                      }}
                       preview={
                         false
                       }
