@@ -15,12 +15,15 @@ import {
   Menu,
   Row,
   Col,
+  Typography,
+  Table,
 } from "antd";
 import {
   PlusOutlined,
   SearchOutlined,
   EditOutlined,
   FilterOutlined,
+  InfoCircleOutlined,
 } from "@ant-design/icons";
 import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
@@ -46,6 +49,10 @@ enum StatusEnum {
 }
 
 const ProdukPage: React.FC = () => {
+  const [isInfoModalVisible, setIsInfoModalVisible] = useState<boolean>(false);
+  const [selectedProductInfo, setSelectedProductInfo] = useState<Produk | null>(
+    null
+  );
   const [isAddModalVisible, setIsAddModalVisible] = useState<boolean>(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState<boolean>(false);
   const [selectedProduk, setSelectedProduk] = useState<Produk | null>(null);
@@ -157,6 +164,11 @@ const ProdukPage: React.FC = () => {
       }
     }
     setCurrentPage(1);
+  };
+
+  const handleInfoClick = (item: Produk) => {
+    setSelectedProductInfo(item);
+    setIsInfoModalVisible(true);
   };
 
   const handleAddClick = () => {
@@ -321,6 +333,8 @@ const ProdukPage: React.FC = () => {
     </Menu>
   );
 
+  const { Title, Text } = Typography;
+
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const paginatedProduk = Array.isArray(filteredProduk)
@@ -387,26 +401,48 @@ const ProdukPage: React.FC = () => {
                 <Image
                   alt={item.nama_produk}
                   src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
-                  className="card-image"
+                  style={{
+                    width: "300px",
+                    height: "200px",
+                    objectFit: "cover",
+                  }} // Adjusted className for size
                   preview={false}
                 />
               }
               actions={[
                 <Button
+                  className="bg-blue-600 text-white hover:bg-blue-400"
                   icon={<EditOutlined />}
                   onClick={() => handleEditClick(item)}
                 >
                   Edit
+                </Button>,
+                <Button
+                  className="bg-green-600 text-white hover:bg-green-400"
+                  icon={<InfoCircleOutlined />}
+                  onClick={() => handleInfoClick(item)}
+                >
+                  Info
                 </Button>,
               ]}
             >
               <Card.Meta
                 title={item.nama_produk}
                 description={
-                  <span style={{ color: "black" }}>
-                    Rp {formatCurrency(item.harga_produk)}
-                  </span>
-                } // Apply inline style here
+                  <div>
+                    <span style={{ color: "black" }}>
+                      Rp {formatCurrency(item.harga_produk)}
+                    </span>
+                    <div
+                      style={{
+                        color: item.status_produk === "aktif" ? "green" : "red", // Change text color based on status
+                        marginTop: "4px", // Optional: Add some margin for spacing
+                      }}
+                    >
+                      {item.status_produk}
+                    </div>
+                  </div>
+                }
               />
             </Card>
           ))
@@ -613,11 +649,120 @@ const ProdukPage: React.FC = () => {
                   }}
                 >
                   <Button icon={<UploadOutlined />}>Unggah Gambar</Button>
+                  <p className="text-red-500 text-xs mt-1">
+                    File gambar harus berbentuk JPG, JPEG, PNG
+                  </p>
                 </Upload>
               </Form.Item>
             </Col>
           </Row>
         </Form>
+      </Modal>
+
+      <Modal
+        title="Info Produk"
+        visible={isInfoModalVisible}
+        onCancel={() => setIsInfoModalVisible(false)}
+        footer={null}
+      >
+        {selectedProductInfo && (
+          <div className="overflow-x-auto">
+            <Image
+              alt={selectedProductInfo.nama_produk}
+              src={`http://localhost:3222/produk/image/${selectedProductInfo.gambar_produk}`}
+              className="mt-4 w-full"
+              preview={false}
+            />
+            <table className="min-w-full border border-gray-300">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border-b-2 border-gray-400 px-4 py-2 text-left">
+                    Detail
+                  </th>
+                  <th className="border-b-2 border-gray-400 px-4 py-2 text-left">
+                    Info
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="border-b border-gray-300 px-4 py-2">
+                    ID Produk
+                  </td>
+                  <td className="border-b border-gray-300 px-4 py-2">
+                    {selectedProductInfo.id_produk}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="border-b border-gray-300 px-4 py-2">
+                    Nama Produk
+                  </td>
+                  <td className="border-b border-gray-300 px-4 py-2">
+                    {selectedProductInfo.nama_produk}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="border-b border-gray-300 px-4 py-2">Harga</td>
+                  <td className="border-b border-gray-300 px-4 py-2">
+                    Rp {formatCurrency(selectedProductInfo.harga_produk)}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="border-b border-gray-300 px-4 py-2">Status</td>
+                  <td
+                    className={`border-b border-gray-300 px-4 py-2 ${
+                      selectedProductInfo.status_produk === "aktif"
+                        ? "text-green-500"
+                        : "text-red-500"
+                    }`}
+                  >
+                    {selectedProductInfo.status_produk}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="border-b border-gray-300 px-4 py-2">Satuan</td>
+                  <td className="border-b border-gray-300 px-4 py-2">
+                    {selectedProductInfo.satuan_produk}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="border-b border-gray-300 px-4 py-2">
+                    Kode Produk
+                  </td>
+                  <td className="border-b border-gray-300 px-4 py-2">
+                    {selectedProductInfo.kode_produk}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="border-b border-gray-300 px-4 py-2">Stok</td>
+                  <td className="border-b border-gray-300 px-4 py-2">
+                    {selectedProductInfo.stok}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="border-b border-gray-300 px-4 py-2">
+                    Dibuat Pada
+                  </td>
+                  <td className="border-b border-gray-300 px-4 py-2">
+                    {new Date(
+                      selectedProductInfo.createdAt
+                    ).toLocaleDateString()}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="border-b border-gray-300 px-4 py-2">
+                    Diperbarui Pada
+                  </td>
+                  <td className="border-b border-gray-300 px-4 py-2">
+                    {new Date(
+                      selectedProductInfo.updatedAt
+                    ).toLocaleDateString()}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
       </Modal>
     </div>
   );
