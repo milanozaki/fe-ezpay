@@ -59,6 +59,7 @@ const ProdukPage: React.FC = () => {
   const [form] = Form.useForm();
   const [categories, setCategories] = useState<string[]>([]);
   const [produk, setProduk] = useState<Produk[]>([]);
+  const [produkList, setProdukList] = useState<Produk[]>([]);
   const [filteredProduk, setFilteredProduk] = useState<Produk[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -245,24 +246,24 @@ const ProdukPage: React.FC = () => {
     if (!selectedProduk) return;
     try {
       const values = await form.validateFields();
-
+  
       // Membuat FormData untuk upload file gambar dan data lainnya
       const formData = new FormData();
       formData.append("nama_produk", values.nama_produk);
       formData.append("harga_produk", values.harga_produk);
       formData.append("stok", values.stok);
-
+  
       // Pastikan gambar dipilih sebelum menambahkan ke formData
       if (values.gambar_produk && values.gambar_produk.file) {
         formData.append("gambar_produk", values.gambar_produk.file);
       }
-
+  
       if (values.status_produk) {
         formData.append("status_produk", values.status_produk);
       }
-
+  
       // Mengirim request PUT ke backend untuk update produk
-      await axios.put(
+      const response = await axios.put(
         `http://localhost:3222/produk/${selectedProduk.id_produk}`,
         formData,
         {
@@ -271,7 +272,14 @@ const ProdukPage: React.FC = () => {
           },
         }
       );
-
+  
+      // Mengupdate produk dalam state produkList
+      setProdukList((prevList) =>
+        prevList.map((item) =>
+          item.id_produk === selectedProduk.id_produk ? response.data : item
+        )
+      );
+  
       // Setelah berhasil update, menampilkan pesan sukses dan reset form
       message.success("Produk berhasil diperbarui");
       setIsEditModalVisible(false);
@@ -287,10 +295,11 @@ const ProdukPage: React.FC = () => {
       } else {
         // Handling error umum
         console.error("Unknown error:", error);
-        message.error("Gagal memperbarui produk: kesalahan tidak terduga");
+        message.error("Gagal memperbarui produk: Data harus diisi!");
       }
     }
   };
+  
 
   // const handleUpdateProduk = async () => {
   //   if (!selectedProduk) return;
@@ -675,11 +684,11 @@ const ProdukPage: React.FC = () => {
             />
             <table className="min-w-full border border-gray-300">
               <thead>
-                <tr className="bg-gray-100">
-                  <th className="border-b-2 border-gray-400 px-4 py-2 text-left">
+                <tr className="bg-green-600">
+                  <th className="border-b-2 border-green-400 px-4 py-2 text-left text-white ">
                     Detail
                   </th>
-                  <th className="border-b-2 border-gray-400 px-4 py-2 text-left">
+                  <th className="border-b-2 border-green-400 px-4 py-2 text-left text-white">
                     Info
                   </th>
                 </tr>
@@ -712,7 +721,7 @@ const ProdukPage: React.FC = () => {
                   <td
                     className={`border-b border-gray-300 px-4 py-2 ${
                       selectedProductInfo.status_produk === "aktif"
-                        ? "text-green-500"
+                        ? "text-green-600"
                         : "text-red-500"
                     }`}
                   >
