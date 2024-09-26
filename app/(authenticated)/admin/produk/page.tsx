@@ -235,12 +235,19 @@ const ProdukPage: React.FC = () => {
     if (!selectedProduk) return;
     try {
       const values = await form.validateFields();
+  
+      // Membuat FormData untuk upload file gambar dan data lainnya
       const formData = new FormData();
       formData.append('nama_produk', values.nama_produk);
       formData.append('harga_produk', values.harga_produk);
       formData.append('stok', values.stok);
-      formData.append('gambar_produk', values.gambar_produk.file);
   
+      // Pastikan gambar dipilih sebelum menambahkan ke formData
+      if (values.gambar_produk && values.gambar_produk.file) {
+        formData.append('gambar_produk', values.gambar_produk.file);
+      }
+  
+      // Mengirim request PUT ke backend untuk update produk
       await axios.put(
         `http://localhost:3222/produk/${selectedProduk.id_produk}`,
         formData,
@@ -251,11 +258,26 @@ const ProdukPage: React.FC = () => {
         }
       );
   
-      // ...
+      // Setelah berhasil update, menampilkan pesan sukses dan reset form
+      message.success("Produk berhasil diperbarui");
+      setIsEditModalVisible(false);
+      setSelectedProduk(null);
+      form.resetFields();
     } catch (error) {
-      // ...
+      // Handling error untuk Axios
+      if (axios.isAxiosError(error) && error.response) {
+        console.error("Error updating product:", error.response.data);
+        message.error(
+          `Gagal memperbarui produk: ${error.response.data.message}`
+        );
+      } else {
+        // Handling error umum
+        console.error("Unknown error:", error);
+        message.error("Gagal memperbarui produk: kesalahan tidak terduga");
+      }
     }
   };
+  
 
   // const handleUpdateProduk = async () => {
   //   if (!selectedProduk) return;
