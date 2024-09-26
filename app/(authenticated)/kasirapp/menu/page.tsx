@@ -1,4 +1,4 @@
-"use client"; 
+'use client';
 import React, { useEffect, useState } from "react";
 import { Select, Card, Image, Button } from "antd";
 
@@ -139,8 +139,6 @@ const MenuPage = () => {
                       alt={produk.nama_produk}
                       src={`http://localhost:3222/gambar_produk/${produk.gambar_produk}`}
                       className="card-image h-40"
-                      preview={false}
-                      fallback="/path/to/placeholder-image.png"
                     />
                   }
                   onClick={() => addToCart(produk)}

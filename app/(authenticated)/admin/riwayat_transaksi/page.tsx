@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { DatePicker, Table, Button, FloatButton, Modal } from "antd";
+import { DatePicker, Table, Button, FloatButton, Modal, Popconfirm } from "antd"; // Import Popconfirm
 import "antd/dist/reset.css";
 import * as XLSX from "xlsx";
 import axios from "axios";
@@ -135,11 +135,18 @@ const RiwayatTransaksiPage = () => {
           <h3 className="text-sm mb-4">Pilih Tanggal</h3>
           <RangePicker onChange={handleDateChange} className="mb-4" />
         </div>
-        <FloatButton
-          tooltip={<div>Export to Excel</div>}
-          style={{ position: "relative", top: 0, right: 0 }}
-          onClick={exportToExcel}
-        />
+        {/* Use Popconfirm for exporting to Excel */}
+        <Popconfirm
+          title="Apakah Anda yakin ingin mengekspor data ke Excel?"
+          onConfirm={exportToExcel}
+          okText="Ya"
+          cancelText="Batal"
+        >
+          <FloatButton
+            tooltip={<div>Export to Excel</div>}
+            style={{ position: "relative", top: 0, right: 0 }}
+          />
+        </Popconfirm>
       </div>
       <div className="relative w-full h-auto bg-white p-6 shadow-lg rounded-lg">
         <Table

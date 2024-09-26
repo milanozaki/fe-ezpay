@@ -45,7 +45,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     },
     { name: "Kategori", path: "/admin/kategori", icon: <AiOutlineProfile /> },
     { name: "Produk", path: "/admin/produk", icon: <IoBagHandleOutline /> },
-    { name: "Kasir", path: "/admin/kasir", icon: <SettingOutlined /> },
+    { name: "Kasir", path: "/admin/kasir_admin", icon: <SettingOutlined /> },
   ];
 
   const avatarUrl =
