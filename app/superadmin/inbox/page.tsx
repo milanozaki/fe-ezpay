@@ -178,9 +178,6 @@ const InboxPage = () => {
           <div>Loading detail...</div>
         )}
       </Modal>
-      <Button type="primary" onClick={() => messageApi.open({ key, type: 'loading', content: 'Loading...' })}>
-        Open the message box
-      </Button>
     </div>
   );
 };

@@ -1,29 +1,40 @@
-"use client"; // Menandakan komponen ini sebagai Client Component
+"use client";
 import React, { useEffect, useState } from "react";
 import { CgShoppingBag } from "react-icons/cg";
 import { GrTransaction } from "react-icons/gr";
+import { Bar } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+
+// Daftarkan komponen yang diperlukan dari Chart.js
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 // DashboardPage Component
 const DashboardPage = () => {
-  const [stokMenipis, setStokMenipis] = useState<any[]>([]); // State untuk menyimpan data stok menipis
-  const [jumlahProduk, setJumlahProduk] = useState<number>(0); // State untuk menyimpan jumlah produk
-  const [jumlahTransaksi, setJumlahTransaksi] = useState<number>(0); // State untuk menyimpan jumlah transaksi
-  const [loading, setLoading] = useState<boolean>(true); // State untuk loading
+  const [stokMenipis, setStokMenipis] = useState<any[]>([]);
+  const [jumlahProduk, setJumlahProduk] = useState<number>(0);
+  const [jumlahTransaksi, setJumlahTransaksi] = useState<number>(0);
+  const [totalOmset, setTotalOmset] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // Fetch data dari API
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true); // Set loading to true sebelum memulai fetch
+        setLoading(true);
 
-        // Fetch untuk stok menipis
         const stokResponse = await fetch(
           "http://localhost:3222/produk/filter-stok"
         );
         const stokData = await stokResponse.json();
         setStokMenipis(stokData);
 
-        // Fetch untuk jumlah produk
         const jumlahResponse = await fetch(
           "http://localhost:3222/produk/count"
         );
@@ -35,35 +46,63 @@ const DashboardPage = () => {
         );
         const transaksiData = await transaksiResponse.json();
         setJumlahTransaksi(transaksiData.jumlahTransaksi);
+
+        const omsetResponse = await fetch(
+          "http://localhost:3222/transaksi/total-harga"
+        );
+        const omsetData = await omsetResponse.json();
+        setTotalOmset(omsetData);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
-        setLoading(false); // Set loading to false setelah fetch selesai
+        setLoading(false);
       }
     };
 
     fetchData();
   }, []);
 
-  // Jika data sedang diambil, tampilkan loading
   if (loading) {
     return <div>Loading...</div>;
   }
 
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "top" as const,
+      },
+      title: {
+        display: true,
+        text: "Statistik Penjualan Bulanan",
+      },
+    },
+  };
+
+  // Sample dummy data for the chart
+  const chartData = {
+    labels: ["January", "February", "March", "April", "May", "June", "July"],
+    datasets: [
+      {
+        label: "Penjualan",
+        data: [65, 59, 80, 81, 56, 55, 40],
+        backgroundColor: "rgba(51, 47, 208, 1)",
+        borderColor: "rgba(51, 47, 208, )",
+        borderWidth: 1,
+      },
+    ],
+  };
+
   return (
     <div className="p-6 mr-24 ml-60">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mr-5 ml-5">
-        <div className="w-full h-[200px] bg-white p-6 shadow-lg rounded-lg relative">
-          <h2
-            className="text-xl font-semibold text-center text-white p-2 absolute top-0 left-0 right-0 rounded-t-lg"
-            style={{
-              backgroundImage: "linear-gradient(to right, #007F73, #4CCD99)",
-            }}
-          >
+        {/* Card Jumlah Produk */}
+        <div className="w-full h-[200px] bg-white p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-xl relative">
+          <h2 className="text-xl font-semibold text-center text-white p-3 absolute top-0 left-0 right-0 rounded-t-xl bg-[#31716c]">
             Jumlah Produk
           </h2>
-          <div className="flex items-center justify-center mt-10">
-            <div className="bg-green-100 rounded-2xl w-[90px] h-[90px] flex items-center justify-center mr-12">
+          <div className="flex items-center justify-center mt-10 ">
+            <div className="bg-green-100 rounded-3xl w-[90px] h-[90px] flex items-center justify-center mr-12">
               <CgShoppingBag
                 style={{ fontSize: 60, padding: 5 }}
                 className="text-green-700"
@@ -71,23 +110,18 @@ const DashboardPage = () => {
             </div>
             <div className="mr-12">
               <p className="text-sm text-gray-500">Total produk </p>
-              <p className="text-2xl font-semibold text-gray-700">
-                {jumlahProduk}
-              </p>
+              <p className="text-3xl font-bold text-gray-900">{jumlahProduk}</p>
             </div>
           </div>
         </div>
-        <div className="w-full h-[200px] bg-white p-6 shadow-lg rounded-lg relative">
-          <h2
-            className="text-xl font-semibold text-center text-white p-2 absolute top-0 left-0 right-0 rounded-t-lg"
-            style={{
-              backgroundImage: "linear-gradient(to right, #687EFF, #80B3FF)",
-            }}
-          >
+
+        {/* Card Transaksi */}
+        <div className="w-full h-[200px] bg-white p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-xl relative">
+          <h2 className="text-xl font-semibold text-center text-white p-3 absolute top-0 left-0 right-0 rounded-t-xl bg-[#0B8494]">
             Transaksi
           </h2>
           <div className="flex items-center justify-center mt-10">
-            <div className="bg-blue-50 rounded-2xl w-[90px] h-[90px] flex items-center justify-center mr-12">
+            <div className="bg-blue-50 rounded-3xl w-[90px] h-[90px] flex items-center justify-center mr-12">
               <GrTransaction
                 style={{ fontSize: 60, padding: 10 }}
                 className="text-blue-700"
@@ -95,19 +129,16 @@ const DashboardPage = () => {
             </div>
             <div className="mr-12">
               <p className="text-sm text-gray-500">Total transaksi</p>
-              <p className="text-2xl font-semibold text-gray-700">
+              <p className="text-3xl font-bold text-gray-900">
                 {jumlahTransaksi}
               </p>
             </div>
           </div>
         </div>
-        <div className="w-full h-[200px] bg-white p-6 shadow-lg rounded-lg relative">
-          <h2
-            className="text-xl font-semibold text-center text-white p-2 absolute top-0 left-0 right-0 rounded-t-lg"
-            style={{
-              backgroundImage: "linear-gradient(to right, #3D8399, #21404A)",
-            }}
-          >
+
+        {/* Card Stok Menipis */}
+        <div className="w-full h-[200px] bg-white p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-xl relative">
+          <h2 className="text-xl font-semibold text-center text-white p-3 absolute top-0 left-0 right-0 rounded-t-xl bg-[#50B498]">
             Stok Menipis
           </h2>
           <div className="mt-8">
@@ -130,27 +161,33 @@ const DashboardPage = () => {
           </div>
         </div>
       </div>
-      {/* Baris kedua: grid dengan ukuran 75% dan 25% */}
-      <div className="grid grid-cols-[3fr,1fr] gap-10 mr-5 ml-5 mt-10">
-        {/* Card Statistik Penjualan Bulanan */}
-        <div className="w-full h-[200px] bg-white p-6 shadow-lg rounded-lg relative">
-          <h2 className="text-xl font-semibold text-center bg-[#257691] text-white p-2 absolute top-0 left-0 right-0 rounded-t-lg">
-            Statistik Penjualan Bulanan
-          </h2>
-          <div className="flex justify-center items-center h-full">
-            <p className="text-gray-700">Data penjualan tidak tersedia</p>
-          </div>
-        </div>
-        {/* Card baru di sebelah Statistik Penjualan Bulanan */}
-        <div className="w-full h-[200px] bg-white p-6 shadow-lg rounded-lg relative">
-          <h2 className="text-xl font-semibold text-center bg-[#257691] text-white p-2 absolute top-0 left-0 right-0 rounded-t-lg">
-            Kartu Baru
-          </h2>
-          <div className="flex justify-center items-center h-full">
-            <p className="text-gray-700">Data untuk kartu baru</p>
-          </div>
-        </div>
-      </div>
+
+{/* Baris kedua */}
+<div className="grid grid-cols-[3fr,1fr] gap-5 mr-5 ml-5 mt-10">
+  {/* Card Statistik Penjualan Bulanan */}
+  <div className="w-full p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-xl relative flex flex-col h-full">
+    <h2 className="text-xl font-semibold text-center bg-[#294978] absolute top-0 left-0 right-0 text-white p-3 rounded-t-xl">
+      Statistik Penjualan Bulanan
+    </h2>
+    <div className="flex justify-center items-center h-full">
+      <Bar data={chartData} options={chartOptions} height={130} />
+    </div>
+  </div>
+
+  {/* Card Omset */}
+  <div className="w-full h-full bg-white p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-xl relative flex flex-col"> 
+    <h2 className="text-xl font-semibold text-center bg-[#FF7F50] text-white p-3 absolute top-0 left-0 right-0 rounded-t-xl">
+      Omset Bulanan
+    </h2>
+    <div className="flex flex-col justify-center items-center h-full">
+      <p className="text-3xl font-bold text-gray-900">
+        Rp {totalOmset.toLocaleString()}
+      </p>
+      <p className="text-sm text-gray-500">Total Omset Bulan Ini</p>
+    </div>
+  </div>
+</div>
+
     </div>
   );
 };
