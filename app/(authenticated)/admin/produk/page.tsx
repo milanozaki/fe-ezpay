@@ -258,22 +258,22 @@ const ProdukPage: React.FC = () => {
     if (!selectedProduk) return;
     try {
       const values = await form.validateFields();
-  
+
       // Membuat FormData untuk upload file gambar dan data lainnya
       const formData = new FormData();
       formData.append("nama_produk", values.nama_produk);
       formData.append("harga_produk", values.harga_produk);
       formData.append("stok", values.stok);
-  
+
       // Pastikan gambar dipilih sebelum menambahkan ke formData
       if (values.gambar_produk && values.gambar_produk.file) {
         formData.append("gambar_produk", values.gambar_produk.file);
       }
-  
+
       if (values.status_produk) {
         formData.append("status_produk", values.status_produk);
       }
-  
+
       // Mengirim request PUT ke backend untuk update produk
       const response = await axios.put(
         `http://localhost:3222/produk/${selectedProduk.id_produk}`,
@@ -284,7 +284,7 @@ const ProdukPage: React.FC = () => {
           },
         }
       );
-  
+
       // Mengupdate produk dalam state produkList
       setProdukList((prevList) =>
         prevList.map((item) =>
@@ -292,7 +292,6 @@ const ProdukPage: React.FC = () => {
         )
       );
 
-  
       // Setelah berhasil update, menampilkan pesan sukses dan reset form
       message.success("Produk berhasil diperbarui");
       setIsEditModalVisible(false);
@@ -312,7 +311,6 @@ const ProdukPage: React.FC = () => {
       }
     }
   };
- 
   const menu = (
     <Menu onClick={handleSortOrderChange}>
       <Menu.Item key="harga-asc">Harga Terendah</Menu.Item>
@@ -391,7 +389,7 @@ const ProdukPage: React.FC = () => {
                   style={{
                     width: "300px",
                     height: "200px",
-                    objectFit: "cover",
+                    // objectFit: "cover",
                   }} // Adjusted className for size
                   preview={false}
                 />
@@ -657,7 +655,11 @@ const ProdukPage: React.FC = () => {
             <Image
               alt={selectedProductInfo.nama_produk}
               src={`http://localhost:3222/produk/image/${selectedProductInfo.gambar_produk}`}
-              className="mt-4 w-full"
+              style={{
+                width: "200px",
+                height: "150px",
+                // objectFit: "cover",
+              }} // Adjusted className for size
               preview={false}
             />
             <table className="min-w-full border border-gray-300">
