@@ -100,6 +100,17 @@ const ProdukPage: React.FC = () => {
       });
   }, []);
 
+  useEffect(() => {
+    if (selectedProduk) {
+      form.setFieldsValue({
+        nama_produk: selectedProduk.nama_produk,
+        harga_produk: selectedProduk.harga_produk,
+        stok: selectedProduk.stok,
+        status_produk: selectedProduk.status_produk,
+      });
+    }
+  }, [selectedProduk, form]);
+
   const fetchProduk = async (value: string) => {
     try {
       const response = await axios.get(
@@ -112,6 +123,7 @@ const ProdukPage: React.FC = () => {
       console.error("Error searching products:", error);
     }
   };
+  
 
   const fetchProdukByHarga = async (order: "ASC" | "DESC") => {
     let url = `http://localhost:3222/produk/by-harga?sort=${order}`;
@@ -299,42 +311,6 @@ const ProdukPage: React.FC = () => {
       }
     }
   };
-
-  
-  // const handleUpdateProduk = async () => {
-  //   if (!selectedProduk) return;
-  //   try {
-  //     const values = await form.validateFields();
-  //     const updateData: UpdateProdukDto = {
-  //       ...values,
-  //       harga_produk: Number(values.harga_produk),
-  //       stok: Number(values.stok),
-  //     };
-
-  //     console.log("Updating product with ID:", selectedProduk.id_produk); // Log ID
-
-  //     await axios.put(
-  //       `http://localhost:3222/produk/${selectedProduk.id_produk}`, // Gunakan ID
-  //       updateData
-  //     );
-
-  //     message.success("Produk berhasil diperbarui");
-  //     setIsEditModalVisible(false);
-  //     setSelectedProduk(null);
-  //     form.resetFields();
-  //   } catch (error) {
-  //     if (axios.isAxiosError(error) && error.response) {
-  //       console.error("Error updating product:", error.response.data);
-  //       message.error(
-  //         `Gagal memperbarui produk: ${error.response.data.message}`
-  //       );
-  //     } else {
-  //       console.error("Unknown error:", error);
-  //       message.error("Gagal memperbarui produk: kesalahan tidak terduga");
-  //     }
-  //   }
-  // };
-
   const menu = (
     <Menu onClick={handleSortOrderChange}>
       <Menu.Item key="harga-asc">Harga Terendah</Menu.Item>

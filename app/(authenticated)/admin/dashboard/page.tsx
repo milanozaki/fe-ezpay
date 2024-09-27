@@ -130,14 +130,24 @@ const DashboardPage = () => {
           </div>
         </div>
       </div>
-      {/* Baris kedua */}
-      <div className="grid grid-cols-1 md:grid-cols-1 gap-10 mr-5 ml-5 mt-10">
+      {/* Baris kedua: grid dengan ukuran 75% dan 25% */}
+      <div className="grid grid-cols-[3fr,1fr] gap-10 mr-5 ml-5 mt-10">
+        {/* Card Statistik Penjualan Bulanan */}
         <div className="w-full h-[200px] bg-white p-6 shadow-lg rounded-lg relative">
           <h2 className="text-xl font-semibold text-center bg-[#257691] text-white p-2 absolute top-0 left-0 right-0 rounded-t-lg">
             Statistik Penjualan Bulanan
           </h2>
           <div className="flex justify-center items-center h-full">
             <p className="text-gray-700">Data penjualan tidak tersedia</p>
+          </div>
+        </div>
+        {/* Card baru di sebelah Statistik Penjualan Bulanan */}
+        <div className="w-full h-[200px] bg-white p-6 shadow-lg rounded-lg relative">
+          <h2 className="text-xl font-semibold text-center bg-[#257691] text-white p-2 absolute top-0 left-0 right-0 rounded-t-lg">
+            Kartu Baru
+          </h2>
+          <div className="flex justify-center items-center h-full">
+            <p className="text-gray-700">Data untuk kartu baru</p>
           </div>
         </div>
       </div>
