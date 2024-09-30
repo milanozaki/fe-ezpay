@@ -114,7 +114,7 @@ const KategoriPage = () => {
             className="flex items-center gap-1"
             onClick={handleAddClick}
             style={{
-              backgroundColor: 'blue-500',
+              backgroundColor: '#3B8394',
               borderColor: 'blue-500',
               color: '#fff',
               borderRadius: '12px',

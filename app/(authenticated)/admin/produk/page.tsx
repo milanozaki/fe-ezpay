@@ -28,7 +28,6 @@ import {
 import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { debounce } from "lodash";
-import { productRepository } from "#/repository/product";
 
 interface Produk {
   id_produk: string;
@@ -188,46 +187,57 @@ const ProdukPage: React.FC = () => {
     form.resetFields();
     setIsAddModalVisible(true);
   };
+
+    // Contoh fungsi untuk mendapatkan id_kategori
+    const getIdKategoriFromName = async (kategoriName: string): Promise<string | null> => {
+      try {
+        const response = await axios.get(`http://localhost:3222/kategori/find-by-name?nama=${encodeURIComponent(kategoriName)}`);
+        console.log("Respons dari API kategori:", response.data); // Log respons API
+    
+        if (response.data && response.data.data) {
+          return response.data.data.id_kategori; // Pastikan ini sesuai dengan respons API
+        }
+        return null;
+      } catch (error) {
+        console.error("Gagal mengambil ID kategori:", error);
+        return null;
+      }
+    };
+    
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-      const formData = new FormData();
-
-      // Tambahkan semua field dari values ke formData
-      Object.keys(values).forEach((key) => {
-        if (key === "kategori") {
-          // Ganti nama kategori menjadi id_kategori
-          formData.append("id_kategori", values[key]);
-        } else {
-          formData.append(key, values[key]);
-        }
-      });
-
-      // Menambahkan gambar jika ada
-      if (values.gambar_produk && values.gambar_produk.length > 0) {
-        formData.append("gambar_produk", values.gambar_produk[0].originFileObj);
+      console.log("Nilai yang diterima dari form:", values); // Debugging
+      console.log("Kategori yang dipilih:", values.kategori); // Log kategori yang dipilih
+  
+      const id_kategori = await getIdKategoriFromName(values.kategori);
+      if (!id_kategori) {
+        throw new Error("ID kategori tidak ditemukan");
       }
-
-      console.log("Form Data being sent:", Array.from(formData.entries())); // Debugging
-
-      // Mengirim permintaan POST untuk menambahkan produk
-      await axios.post("http://localhost:3222/produk", formData, {
+  
+      const createProdukDto = {
+        ...values,
+        id_kategori,
+      };
+  
+      await axios.post("http://localhost:3222/produk", createProdukDto, {
         headers: {
-          "Content-Type": "multipart/form-data", // Menentukan tipe konten
+          "Content-Type": "application/json",
         },
       });
-
-      message.success("Produk berhasil ditambahkan"); // Pesan sukses
-      setIsAddModalVisible(false); // Menutup modal
-      form.resetFields(); // Mereset form
+  
+      message.success("Produk berhasil ditambahkan");
+      setIsAddModalVisible(false);
+      form.resetFields();
     } catch (error) {
-      console.error("Error adding product:", error); // Logging kesalahan
-      message.error("Gagal menambahkan produk"); // Pesan kesalahan umum
+      console.error("Error adding product:", error);
+      message.error("Gagal menambahkan produk");
       if (axios.isAxiosError(error) && error.response) {
-        console.error("Detail kesalahan:", error.response.data); // Logging detail kesalahan dari server
+        console.error("Detail kesalahan:", error.response.data);
       }
     }
   };
+  
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat("id-ID").format(amount);

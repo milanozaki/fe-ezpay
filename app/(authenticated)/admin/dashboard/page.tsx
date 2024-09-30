@@ -175,15 +175,15 @@ const DashboardPage = () => {
   </div>
 
   {/* Card Omset */}
-  <div className="w-full h-full bg-white p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-xl relative flex flex-col"> 
-    <h2 className="text-xl font-semibold text-center bg-[#FF7F50] text-white p-3 absolute top-0 left-0 right-0 rounded-t-xl">
-      Omset Bulanan
+  <div className="w-full h-full bg-gradient-to-r from-[#fc7a4a] to-[#ff6a34] p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-xl relative flex flex-col"> 
+    <h2 className="text-xl font-semibold text-center text-white ">
+      Pendapatan Anda
     </h2>
     <div className="flex flex-col justify-center items-center h-full">
-      <p className="text-3xl font-bold text-gray-900">
+      <p className="text-3xl font-bold text-white">
         Rp {totalOmset.toLocaleString()}
       </p>
-      <p className="text-sm text-gray-500">Total Omset Bulan Ini</p>
+      <p className="text-sm text-white">Total Pendapatan Bulan Ini</p>
     </div>
   </div>
 </div>
