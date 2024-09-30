@@ -122,7 +122,37 @@ const ProdukPage: React.FC = () => {
       console.error("Error searching products:", error);
     }
   };
-  
+
+  const fetchProdukByStatus = async (status: StatusEnum) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3222/produk?status=${status}`
+      );
+      
+      const filteredProduk = response.data; // Adjust based on your API response structure
+      setFilteredProduk(filteredProduk);
+      setTotalProduk(filteredProduk.length);
+    } catch (error) {
+      console.error("Error fetching products by status:", error);
+    }
+  };
+
+  const fetchProdukByStok = async (order: "ASC" | "DESC") => {
+    let url = `http://localhost:3222/produk/by-stok?sort=${order}`;
+
+    if (selectedCategory) {
+      url += `&kategori=${selectedCategory}`;
+    }
+
+    try {
+      const response = await axios.get(url);
+      const sortedProduk = response.data; // Adjust based on your API response
+      setFilteredProduk(sortedProduk);
+      setTotalProduk(sortedProduk.length);
+    } catch (error) {
+      console.error("Error fetching products by price:", error);
+    }
+  };
 
   const fetchProdukByHarga = async (order: "ASC" | "DESC") => {
     let url = `http://localhost:3222/produk/by-harga?sort=${order}`;
@@ -133,7 +163,7 @@ const ProdukPage: React.FC = () => {
 
     try {
       const response = await axios.get(url);
-      const sortedProduk = response.data;
+      const sortedProduk = response.data; // Adjust based on your API response
       setFilteredProduk(sortedProduk);
       setTotalProduk(sortedProduk.length);
     } catch (error) {
@@ -252,17 +282,59 @@ const ProdukPage: React.FC = () => {
     setCurrentPage(page);
   };
 
-  const handleSortOrderChange = ({ key }: { key: string }) => {
-    const order = key === "harga-asc" ? "ASC" : "DESC";
-    setSortOrder(order);
-    fetchProdukByHarga(order);
-  };
+  // const handleSortOrderChange = ({ key }: { key: string }) => {
+  //   const order = key === "harga-asc" ? "ASC" : "DESC";
+  //   setSortOrder(order);
+  //   fetchProdukByHarga(order);
+  // };
 
   const handleEditClick = (item: Produk) => {
     setSelectedProduk(item);
     form.setFieldsValue(item);
     setIsEditModalVisible(true);
   };
+
+  const handleFilterChange = ({ key }: { key: string }) => {
+    switch (key) {
+      case "harga-asc":
+        fetchProdukByHarga("ASC"); // Call your existing function for ascending price
+        setSortOrder("ASC");
+        break;
+      case "harga-desc":
+        fetchProdukByHarga("DESC"); // Call your existing function for descending price
+        setSortOrder("DESC");
+        break;
+      case "stok-asc":
+        fetchProdukByStok("ASC"); // Fetch products sorted by lowest stock (changed 'asc' to 'ASC')
+        setSortOrder("ASC");
+        break;
+      case "stok-desc":
+        fetchProdukByStok("DESC"); // Fetch products sorted by highest stock (changed 'desc' to 'DESC')
+        setSortOrder("DESC");
+        break;
+      case "status-active":
+        fetchProdukByStatus(StatusEnum.ACTIVE); // Fetch active products
+        break;
+      case "status-inactive":
+        fetchProdukByStatus(StatusEnum.INACTIVE); // Fetch inactive products
+        break;
+      // Add more cases for additional filters as needed
+      default:
+        break;
+    }
+  };
+
+  const menu = (
+    <Menu onClick={handleFilterChange}>
+      <Menu.Item key="harga-asc">Harga Terendah</Menu.Item>
+      <Menu.Item key="harga-desc">Harga Tertinggi</Menu.Item>
+      <Menu.Item key="stok-asc">Stok Terendah</Menu.Item>
+      <Menu.Item key="stok-desc">Stok Tertinggi</Menu.Item>
+      <Menu.Item key="status-active">Status Aktif</Menu.Item>
+      <Menu.Item key="status-inactive">Status Tidak Aktif</Menu.Item>
+      {/* Add more items as needed */}
+    </Menu>
+  );
 
   const handleUpdateProduk = async () => {
     if (!selectedProduk) return;
@@ -321,12 +393,12 @@ const ProdukPage: React.FC = () => {
       }
     }
   };
-  const menu = (
-    <Menu onClick={handleSortOrderChange}>
-      <Menu.Item key="harga-asc">Harga Terendah</Menu.Item>
-      <Menu.Item key="harga-desc">Harga Tertinggi</Menu.Item>
-    </Menu>
-  );
+  // const menu = (
+  //   <Menu onClick={handleSortOrderChange}>
+  //     <Menu.Item key="harga-asc">Harga Terendah</Menu.Item>
+  //     <Menu.Item key="harga-desc">Harga Tertinggi</Menu.Item>
+  //   </Menu>
+  // );
 
   const { Title, Text } = Typography;
 
@@ -353,13 +425,18 @@ const ProdukPage: React.FC = () => {
         </Button>
 
         <div className="flex items-center">
-          <Dropdown overlay={menu} trigger={["click"]}>
+          {/* <Dropdown overlay={menu} trigger={["click"]}>
             <Button icon={<FilterOutlined />} style={{ marginRight: 5 }}>
               {sortOrder === null
                 ? "Filter"
                 : sortOrder === "ASC"
                 ? "Harga Terendah"
                 : "Harga Tertinggi"}
+            </Button>
+          </Dropdown> */}
+          <Dropdown overlay={menu} trigger={["click"]}>
+            <Button icon={<FilterOutlined />} style={{ marginRight: 5 }}>
+              Filter
             </Button>
           </Dropdown>
 
