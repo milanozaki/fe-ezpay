@@ -57,6 +57,10 @@ const MenuPage = () => {
     setActiveButton(value);
   };
 
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat("id-ID").format(amount);
+  };
+
   const filteredProducts =
     activeButton === "Semua"
       ? products
@@ -96,8 +100,8 @@ const MenuPage = () => {
   const totalHarga = cart.reduce((total, item) => total + item.harga_produk * item.quantity, 0);
 
   return (
-    <div className="flex w-full max-w-screen overflow-hidden">
-      <div className="w-3/4 overflow-hidden mx-4">
+    <div className="flex -my-2 w-full h-full max-w-screen overflow-hidden ">
+      <div className="w-3/4 mx-2 h-[calc(100vh-200px)]">
         <div className="mb-4">
           <Select
             defaultValue="Semua"
@@ -153,7 +157,7 @@ const MenuPage = () => {
                     title={produk.nama_produk}
                     description={
                       <span style={{ color: "black" }}>
-                        Rp {produk.harga_produk.toLocaleString("id-ID")}
+                        Rp {formatCurrency(produk.harga_produk)}
                       </span>
                     }
                   />
@@ -165,9 +169,22 @@ const MenuPage = () => {
       </div>
 
       {/* Keranjang */}
-      <div className="w-1/4 h-[calc(100vh-200px)] p-4 bg-gray-100 border-l flex flex-col">
+      <div className="w-[25%] h-[calc(100vh-175px)] p-4 bg-transparent flex flex-col">
         <h2 className="text-lg font-bold mb-4">Pesanan ({cart.length})</h2>
-        <div className="flex-grow overflow-auto">
+        <div className="flex-grow overflow-auto scrollbar-hidden touch-scroll">
+        <style jsx>{`
+              .scrollbar-hidden {
+                -ms-overflow-style: none; /* IE and Edge */
+                scrollbar-width: none; /* Firefox */
+              }
+              .scrollbar-hidden::-webkit-scrollbar {
+                display: none; /* Chrome, Safari, and Opera */
+              }
+              .touch-scroll {
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch; /* iOS for smooth scrolling */
+              }
+            `}</style>
           {cart.length === 0 ? (
             <p>Keranjang Anda kosong</p>
           ) : (
@@ -176,7 +193,7 @@ const MenuPage = () => {
                 <li key={index} className="mb-4">
                   <div className="flex justify-between items-center">
                     <span>{item.nama_produk}</span>
-                    <span>Rp {item.harga_produk.toLocaleString("id-ID")}</span>
+                    <span>Rp {formatCurrency(item.harga_produk)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <div className="flex items-center">
@@ -195,7 +212,7 @@ const MenuPage = () => {
         </div>
 
         <div className="mt-4 font-bold">
-          Total: Rp {totalHarga.toLocaleString("id-ID")}
+          Total: Rp {formatCurrency(totalHarga)}
         </div>
 
         <div className="mt-4">
