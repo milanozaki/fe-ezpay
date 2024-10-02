@@ -6,13 +6,13 @@ import { HistoryOutlined } from "@ant-design/icons";
 import { IoFastFoodOutline } from "react-icons/io5";
 import { Avatar, Dropdown, Button, Divider } from "antd";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { useRouter,usePathname } from "next/navigation";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [selectedMenu, setSelectedMenu] = useState<string>("");
   const pathname = usePathname();
-
+  const router = useRouter(); // Inisialisasi router
   const authenticatedMenu = [
     { name: "Menu", path: "/kasirapp/menu", icon: <IoFastFoodOutline size={20} /> },
     { name: "Riwayat", path: "/kasirapp/riwayat", icon: <HistoryOutlined size={20} /> },
@@ -35,8 +35,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         danger
         className="w-full -mt-4"
         onClick={() => {
-          console.log("Logout button clicked");
           localStorage.removeItem('userEmail');
+          router.push("/login_kasir");
         }}
       >
         Keluar
