@@ -56,7 +56,7 @@ const ProdukPage: React.FC = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState<boolean>(false);
   const [selectedProduk, setSelectedProduk] = useState<Produk | null>(null);
   const [form] = Form.useForm();
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<{ id_kategori: string; nama: string }[]>([]);
   const [produk, setProduk] = useState<Produk[]>([]);
   const [produkList, setProdukList] = useState<Produk[]>([]);
   const [filteredProduk, setFilteredProduk] = useState<Produk[]>([]);
@@ -72,17 +72,21 @@ const ProdukPage: React.FC = () => {
   useEffect(() => {
     // Fetch kategori dan produk
     axios
-      .get("http://localhost:3222/kategori")
-      .then((response) => {
-        const categoryData = response.data.data;
-        if (Array.isArray(categoryData)) {
-          const categoryNames = categoryData.map((item) => item.nama);
-          setCategories(categoryNames);
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching categories:", error);
-      });
+    .get("http://localhost:3222/kategori")
+    .then((response) => {
+      const categoryData = response.data.data;
+      if (Array.isArray(categoryData)) {
+        // Simpan id_kategori dan nama kategori
+        const categoriesWithIds = categoryData.map((item) => ({
+          id_kategori: item.id_kategori,
+          nama: item.nama,
+        }));
+        setCategories(categoriesWithIds); // Set data dengan id_kategori dan nama
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching categories:", error);
+    });
 
     axios
       .get("http://localhost:3222/produk/all")
@@ -217,58 +221,49 @@ const ProdukPage: React.FC = () => {
     form.resetFields();
     setIsAddModalVisible(true);
   };
-
-    // Contoh fungsi untuk mendapatkan id_kategori
-    const getIdKategoriFromName = async (kategoriName: string): Promise<string | null> => {
-      try {
-        const response = await axios.get(`http://localhost:3222/kategori/find-by-name?nama=${encodeURIComponent(kategoriName)}`);
-        console.log("Respons dari API kategori:", response.data); // Log respons API
     
-        if (response.data && response.data.data) {
-          return response.data.data.id_kategori; // Pastikan ini sesuai dengan respons API
+    const handleOk = async () => {
+      try {
+        const values = await form.validateFields();
+        console.log("Nilai yang diterima dari form:", values); // Debugging
+        console.log("Kategori yang dipilih:", values.id_kategori); // Log id_kategori yang dipilih
+    
+        // Membuat FormData untuk upload file gambar dan data lainnya
+        const formData = new FormData();
+        formData.append("nama_produk", values.nama_produk);
+        formData.append("harga_produk", values.harga_produk);
+        formData.append("stok", values.stok);
+        formData.append("id_kategori", values.id_kategori);
+        formData.append("satuan_produk", values.satuan_produk);
+    
+        // Pastikan gambar dipilih sebelum menambahkan ke formData
+        if (values.gambar_produk && values.gambar_produk.file) {
+          console.log("File yang akan diupload:", values.gambar_produk.file); // Debugging
+          formData.append("gambar_produk", values.gambar_produk.file);
+        } else {
+          console.error("Tidak ada file gambar yang dipilih"); // Debugging
         }
-        return null;
+    
+        // Mengirim request POST ke backend untuk menambahkan produk
+        await axios.post("http://localhost:3222/produk", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+    
+        message.success("Produk berhasil ditambahkan");
+        setIsAddModalVisible(false);
+        form.resetFields();
       } catch (error) {
-        console.error("Gagal mengambil ID kategori:", error);
-        return null;
+        console.error("Error adding product:", error);
+        message.error("Gagal menambahkan produk");
+        if (axios.isAxiosError(error) && error.response) {
+          console.error("Detail kesalahan:", error.response.data);
+        }
       }
     };
     
-  const handleOk = async () => {
-    try {
-      const values = await form.validateFields();
-      console.log("Nilai yang diterima dari form:", values); // Debugging
-      console.log("Kategori yang dipilih:", values.kategori); // Log kategori yang dipilih
-  
-      const id_kategori = await getIdKategoriFromName(values.kategori);
-      if (!id_kategori) {
-        throw new Error("ID kategori tidak ditemukan");
-      }
-  
-      const createProdukDto = {
-        ...values,
-        id_kategori,
-      };
-  
-      await axios.post("http://localhost:3222/produk", createProdukDto, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-  
-      message.success("Produk berhasil ditambahkan");
-      setIsAddModalVisible(false);
-      form.resetFields();
-    } catch (error) {
-      console.error("Error adding product:", error);
-      message.error("Gagal menambahkan produk");
-      if (axios.isAxiosError(error) && error.response) {
-        console.error("Detail kesalahan:", error.response.data);
-      }
-    }
-  };
-  
-
+    
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat("id-ID").format(amount);
   };
@@ -454,8 +449,8 @@ const ProdukPage: React.FC = () => {
           >
             <Select.Option value="semua">Semua</Select.Option>
             {categories.map((category) => (
-              <Select.Option key={category} value={category}>
-                {category}
+              <Select.Option key={category.id_kategori} value={category.id_kategori}>
+                {category.nama}
               </Select.Option>
             ))}
           </Select>
@@ -551,103 +546,88 @@ const ProdukPage: React.FC = () => {
           </Button>,
         ]}
       >
-        <Form form={form} layout="vertical">
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="nama_produk"
-                label="Nama Produk"
-                rules={[
-                  { required: true, message: "Silakan masukkan nama produk!" },
-                ]}
-              >
-                <Input />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="stok"
-                label="Stok"
-                rules={[
-                  { required: true, message: "Silakan masukkan stok produk!" },
-                ]}
-              >
-                <Input type="number" />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="kategori"
-                label="Kategori"
-                rules={[{ required: true, message: "Silakan pilih kategori!" }]}
-              >
-                <Select>
-                  {categories.map((category) => (
-                    <Select.Option key={category} value={category}>
-                      {category}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="harga_produk"
-                label="Harga"
-                rules={[
-                  { required: true, message: "Silakan masukkan harga produk!" },
-                ]}
-              >
-                <Input type="number" />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="gambar_produk"
-                label="Gambar Produk"
-                valuePropName="fileList"
-                getValueFromEvent={({ fileList }: any) => fileList}
-                rules={[
-                  { required: true, message: "Silakan unggah gambar produk!" },
-                ]}
-              >
-                <Upload
-                  name="gambar_produk"
-                  listType="picture"
-                  beforeUpload={() => false} // Prevent automatic upload
-                  showUploadList={{ showRemoveIcon: true }}
-                  accept="image/*"
-                  customRequest={({ file, onSuccess }: any) => {
-                    // File will be handled by form submission
-                    onSuccess && onSuccess(null, file);
-                  }}
-                >
-                  <Button icon={<UploadOutlined />}>Unggah Gambar</Button>
-                </Upload>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="satuan_produk"
-                label="Satuan"
-                rules={[
-                  {
-                    required: true,
-                    message: "Silakan masukkan satuan produk!",
-                  },
-                ]}
-              >
-                <Input />
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
+<Form form={form} layout="vertical">
+  <Row gutter={16}>
+    <Col span={12}>
+      <Form.Item
+        name="nama_produk"
+        label="Nama Produk"
+        rules={[{ required: true, message: "Silakan masukkan nama produk!" }]}
+      >
+        <Input />
+      </Form.Item>
+    </Col>
+    <Col span={12}>
+      <Form.Item
+        name="stok"
+        label="Stok"
+        rules={[{ required: true, message: "Silakan masukkan stok produk!" }]}
+      >
+        <Input type="number" />
+      </Form.Item>
+    </Col>
+  </Row>
+  <Row gutter={16}>
+    <Col span={12}>
+      <Form.Item
+        name="id_kategori"
+        label="Kategori"
+        rules={[{ required: true, message: "Silakan pilih kategori!" }]}
+      >
+        <Select>
+          {categories.map((category) => (
+            <Select.Option key={category.id_kategori} value={category.id_kategori}>
+              {category.nama}
+            </Select.Option>
+          ))}
+        </Select>
+      </Form.Item>
+    </Col>
+    <Col span={12}>
+      <Form.Item
+        name="harga_produk"
+        label="Harga"
+        rules={[{ required: true, message: "Silakan masukkan harga produk!" }]}
+      >
+        <Input type="number" />
+      </Form.Item>
+    </Col>
+  </Row>
+  <Row gutter={16}>
+    <Col span={12}>
+      <Form.Item
+        name="gambar_produk"
+        label="Gambar Produk"
+        valuePropName="fileList"
+        getValueFromEvent={({ fileList }: any) => fileList}
+        rules={[{ required: true, message: "Silakan unggah gambar produk!" }]}
+      >
+        <Upload
+          name="gambar_produk"
+          listType="picture"
+          beforeUpload={() => false}
+          showUploadList={{ showRemoveIcon: true }}
+          accept="image/*"
+          customRequest={({ file, onSuccess }: any) => {
+            onSuccess && onSuccess(null, file);
+          }}
+        >
+          <Button icon={<UploadOutlined />}>Unggah Gambar</Button>
+        </Upload>
+      </Form.Item>
+    </Col>
+    <Col span={12}>
+      <Form.Item
+        name="satuan_produk"
+        label="Satuan"
+        rules={[{ required: true, message: "Silakan masukkan satuan produk!" }]}
+      >
+        <Input />
+      </Form.Item>
+    </Col>
+  </Row>
+</Form>
       </Modal>
-
       <Modal
         title="Edit Produk"
         visible={isEditModalVisible}
