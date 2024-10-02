@@ -11,10 +11,17 @@ import {
   Title,
   Tooltip,
   Legend,
-} from 'chart.js';
+} from "chart.js";
 
 // Daftarkan komponen yang diperlukan dari Chart.js
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 // DashboardPage Component
 const DashboardPage = () => {
@@ -97,7 +104,7 @@ const DashboardPage = () => {
     <div className="p-6 mr-24 ml-60">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mr-5 ml-5">
         {/* Card Jumlah Produk */}
-        <div className="w-full h-[200px] bg-white p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-xl relative">
+        <div className="w-full h-[200px] bg-white p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-xl relative animate-pulseScale animate-glow">
           <h2 className="text-xl font-semibold text-center text-white p-3 absolute top-0 left-0 right-0 rounded-t-xl bg-[#31716c]">
             Jumlah Produk
           </h2>
@@ -116,7 +123,7 @@ const DashboardPage = () => {
         </div>
 
         {/* Card Transaksi */}
-        <div className="w-full h-[200px] bg-white p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-xl relative">
+        <div className="w-full h-[200px] bg-white p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-xl relative animate-pulseScale animate-glow">
           <h2 className="text-xl font-semibold text-center text-white p-3 absolute top-0 left-0 right-0 rounded-t-xl bg-[#0B8494]">
             Transaksi
           </h2>
@@ -137,7 +144,7 @@ const DashboardPage = () => {
         </div>
 
         {/* Card Stok Menipis */}
-        <div className="w-full h-[200px] bg-white p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-xl relative">
+        <div className="w-full h-[200px] bg-white p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-xl relative animate-pulseScale animate-glow">
           <h2 className="text-xl font-semibold text-center text-white p-3 absolute top-0 left-0 right-0 rounded-t-xl bg-[#50B498]">
             Stok Menipis
           </h2>
@@ -162,32 +169,30 @@ const DashboardPage = () => {
         </div>
       </div>
 
-{/* Baris kedua */}
-<div className="grid grid-cols-[3fr,1fr] gap-5 mr-5 ml-5 mt-10">
-  {/* Card Statistik Penjualan Bulanan */}
-  <div className="w-full p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-xl relative flex flex-col h-full">
-    <h2 className="text-xl font-semibold text-center bg-[#294978] absolute top-0 left-0 right-0 text-white p-3 rounded-t-xl">
-      Statistik Penjualan Bulanan
-    </h2>
-    <div className="flex justify-center items-center h-full">
-      <Bar data={chartData} options={chartOptions} height={130} />
-    </div>
-  </div>
+      {/* Baris kedua */}
+      <div className="grid grid-cols-[3fr,1fr] gap-5 mr-5 ml-5 mt-10">
+        {/* Card Statistik Penjualan Bulanan */}
+        <div className="w-full p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-xl relative flex flex-col h-full">
+          <h2 className="text-xl font-semibold text-center bg-[#294978] absolute top-0 left-0 right-0 text-white p-3 rounded-t-xl">
+            Statistik Penjualan Bulanan
+          </h2>
+          <div className="flex justify-center items-center h-full">
+            <Bar data={chartData} options={chartOptions} height={130} />
+          </div>
+        </div>
 
-  {/* Card Omset */}
-  <div className="w-full h-full bg-gradient-to-r from-[#fc7a4a] to-[#ff6a34] p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-xl relative flex flex-col"> 
-    <h2 className="text-xl font-semibold text-center text-white ">
-      Pendapatan Anda
-    </h2>
-    <div className="flex flex-col justify-center items-center h-full">
-      <p className="text-3xl font-bold text-white">
-        Rp {totalOmset.toLocaleString()}
-      </p>
-      <p className="text-sm text-white">Total Pendapatan Bulan Ini</p>
-    </div>
-  </div>
-</div>
-
+        <div className="w-full h-full bg-gradient-to-r from-[#fc7a4a] to-[#ff6a34] p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-xl relative flex flex-col animate-pulseScale animate-glow">
+          <h2 className="text-xl font-semibold text-center text-white ">
+            Pendapatan Anda
+          </h2>
+          <div className="flex flex-col justify-center items-center h-full">
+            <p className="text-3xl font-bold text-white">
+              Rp {totalOmset.toLocaleString()}
+            </p>
+            <p className="text-sm text-white">Total Pendapatan Bulan Ini</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
