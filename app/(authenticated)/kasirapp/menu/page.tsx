@@ -1,6 +1,7 @@
-'use client';
+"use client";
 import React, { useEffect, useState } from "react";
 import { Select, Card, Image, Button } from "antd";
+import { DeleteOutlined } from "@ant-design/icons";
 
 interface Produk {
   id_produk: string;
@@ -8,7 +9,7 @@ interface Produk {
   harga_produk: number;
   gambar_produk: string;
   stok: number;
-  quantity: number; 
+  quantity: number;
   kategori: {
     nama: string;
   };
@@ -21,6 +22,7 @@ const MenuPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [cart, setCart] = useState<Produk[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<string>("Tunai");
+  const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -67,7 +69,9 @@ const MenuPage = () => {
       : products.filter((produk) => produk.kategori.nama === activeButton);
 
   const addToCart = (produk: Produk) => {
-    const existingProduct = cart.find((item) => item.id_produk === produk.id_produk);
+    const existingProduct = cart.find(
+      (item) => item.id_produk === produk.id_produk
+    );
     if (existingProduct) {
       setCart(
         cart.map((item) =>
@@ -79,6 +83,12 @@ const MenuPage = () => {
     } else {
       setCart([...cart, { ...produk, quantity: 1 }]);
     }
+  };
+
+  const handleProductClick = (produk: Produk) => {
+    setSelectedProduct(produk.id_produk); // Tandai produk sebagai yang dipilih
+    addToCart(produk); // Tambahkan ke keranjang
+    setTimeout(() => setSelectedProduct(null), 300); // Hapus efek setelah beberapa waktu
   };
 
   const removeFromCart = (id_produk: string) => {
@@ -97,11 +107,18 @@ const MenuPage = () => {
     );
   };
 
-  const totalHarga = cart.reduce((total, item) => total + item.harga_produk * item.quantity, 0);
+  const totalHarga = cart.reduce(
+    (total, item) => total + item.harga_produk * item.quantity,
+    0
+  );
 
   return (
-    <div className="flex -my-2 w-full h-full max-w-screen overflow-hidden ">
-      <div className="w-3/4 mx-2 h-[calc(100vh-200px)]">
+    <div className="flex ml-0 w-full h-full max-w-screen overflow-hidden">
+      {" "}
+      {/* Mengurangi margin kiri */}
+      <div className="w-[90%] mx-0 h-[calc(100vh-200px)] mr-0">
+        {" "}
+        {/* Menghilangkan margin di sisi kanan */}
         <div className="mb-4">
           <Select
             defaultValue="Semua"
@@ -116,7 +133,6 @@ const MenuPage = () => {
             ))}
           </Select>
         </div>
-
         <div className="h-[calc(100vh-200px)] overflow-hidden">
           <div className="h-full overflow-auto scrollbar-hidden touch-scroll">
             <style jsx>{`
@@ -133,11 +149,15 @@ const MenuPage = () => {
               }
             `}</style>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-2">
               {filteredProducts.map((produk: Produk) => (
                 <Card
                   key={produk.id_produk}
-                  className="shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer"
+                  className={`shadow-lg hover:shadow-2xl transition-transform duration-300 cursor-pointer ${
+                    selectedProduct === produk.id_produk
+                      ? "transform scale-105"
+                      : ""
+                  }`}
                   cover={
                     <Image
                       alt={produk.nama_produk}
@@ -146,12 +166,10 @@ const MenuPage = () => {
                         width: "350px",
                         height: "250px",
                       }}
-                      preview={
-                        false
-                      }
+                      preview={false}
                     />
                   }
-                  onClick={() => addToCart(produk)}
+                  onClick={() => handleProductClick(produk)}
                 >
                   <Card.Meta
                     title={produk.nama_produk}
@@ -167,24 +185,23 @@ const MenuPage = () => {
           </div>
         </div>
       </div>
-
       {/* Keranjang */}
-      <div className="w-[25%] h-[calc(100vh-175px)] p-4 bg-transparent flex flex-col">
+      <div className="w-[25%] h-[calc(100vh-175px)] p-4 bg-transparent flex flex-col mr-0">
         <h2 className="text-lg font-bold mb-4">Pesanan ({cart.length})</h2>
         <div className="flex-grow overflow-auto scrollbar-hidden touch-scroll">
-        <style jsx>{`
-              .scrollbar-hidden {
-                -ms-overflow-style: none; /* IE and Edge */
-                scrollbar-width: none; /* Firefox */
-              }
-              .scrollbar-hidden::-webkit-scrollbar {
-                display: none; /* Chrome, Safari, and Opera */
-              }
-              .touch-scroll {
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch; /* iOS for smooth scrolling */
-              }
-            `}</style>
+          <style jsx>{`
+            .scrollbar-hidden {
+              -ms-overflow-style: none; /* IE and Edge */
+              scrollbar-width: none; /* Firefox */
+            }
+            .scrollbar-hidden::-webkit-scrollbar {
+              display: none; /* Chrome, Safari, and Opera */
+            }
+            .touch-scroll {
+              overflow-y: auto;
+              -webkit-overflow-scrolling: touch; /* iOS for smooth scrolling */
+            }
+          `}</style>
           {cart.length === 0 ? (
             <p>Keranjang Anda kosong</p>
           ) : (
@@ -192,18 +209,41 @@ const MenuPage = () => {
               {cart.map((item, index) => (
                 <li key={index} className="mb-4">
                   <div className="flex justify-between items-center">
-                    <span>{item.nama_produk}</span>
-                    <span>Rp {formatCurrency(item.harga_produk)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
+                    {/* Gambar produk */}
+                    <img
+                      src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
+                      alt={item.nama_produk}
+                      className="w-10 h-10 object-cover mr-4"
+                    />
+
+                    {/* Nama produk */}
+                    <span className="text-xs">{item.nama_produk}</span>
+
+                    {/* Kontrol kuantitas */}
                     <div className="flex items-center">
-                      <Button onClick={() => updateQuantity(item.id_produk, -1)}>-</Button>
-                      <span className="mx-2">{item.quantity}</span>
-                      <Button onClick={() => updateQuantity(item.id_produk, 1)}>+</Button>
+                      <Button
+                        onClick={() => updateQuantity(item.id_produk, -1)}
+                      >
+                        -
+                      </Button>
+                      <span className="">{item.quantity}</span>
+                      <Button onClick={() => updateQuantity(item.id_produk, 1)}>
+                        +
+                      </Button>
                     </div>
-                    <Button type="link" onClick={() => removeFromCart(item.id_produk)} className="text-red-500">
-                      Hapus
-                    </Button>
+
+                    {/* Harga produk */}
+                    <span className="mr-4">
+                      Rp {formatCurrency(item.harga_produk)}
+                    </span>
+
+                    {/* Tombol hapus */}
+                    <Button
+                      type="link"
+                      onClick={() => removeFromCart(item.id_produk)}
+                      className="text-red-500"
+                      icon={<DeleteOutlined />}
+                    />
                   </div>
                 </li>
               ))}
@@ -216,14 +256,14 @@ const MenuPage = () => {
         </div>
 
         <div className="mt-4">
-          <Button 
+          <Button
             type={paymentMethod === "Tunai" ? "primary" : "default"}
             onClick={() => setPaymentMethod("Tunai")}
           >
             Tunai
           </Button>
-          <Button 
-            type={paymentMethod === "Qris" ? "primary" : "default"} 
+          <Button
+            type={paymentMethod === "Qris" ? "primary" : "default"}
             onClick={() => setPaymentMethod("Qris")}
             className="ml-2"
           >
@@ -231,9 +271,7 @@ const MenuPage = () => {
           </Button>
         </div>
 
-        <Button className="mt-4 w-full bg-blue-500 text-white">
-          Bayar
-        </Button>
+        <Button className="mt-4 w-full bg-blue-500 text-white">Bayar</Button>
       </div>
     </div>
   );
