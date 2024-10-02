@@ -5,4 +5,19 @@
 /* global.css */
 
 
+.dropdown-enter {
+    @apply opacity-0 transform translate-y-[-10px];
+  }
+  
+  .dropdown-enter-active {
+    @apply opacity-100 transform translate-y-0 transition-opacity transition-transform duration-300;
+  }
+  
+  .dropdown-leave {
+    @apply opacity-100 transform translate-y-0;
+  }
+  
+  .dropdown-leave-active {
+    @apply opacity-0 transform translate-y-[-10px] transition-opacity transition-transform duration-300;
+  }
       
