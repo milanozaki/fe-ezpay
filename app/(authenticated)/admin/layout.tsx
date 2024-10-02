@@ -84,6 +84,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     <div className="flex h-screen overflow-hidden">
       {/* Tambahkan overflow-hidden untuk menghindari scroll pada container utama */}
       {/* Sidebar */}
+      <div
+        className={`bg-white text-black w-60 transform ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } 
+        md:translate-x-0 transition-transform duration-300 md:block shadow-lg flex flex-col justify-center items-center 
+        fixed h-full z-50`}
+      >
         <div className="flex justify-center items-center mb-6 mt-4">
           <Image
             src="/images/logoEzpay.png"
@@ -112,6 +119,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             </li>
           ))}
         </ul>
+      </div>
       {/* Overlay untuk close sidebar di mobile */}
       {isSidebarOpen && (
         <div
