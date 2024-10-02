@@ -1,40 +1,57 @@
-  const handleOk = async () => {
+ const handleUpdateProduk = async () => {
+    if (!selectedProduk) return;
     try {
       const values = await form.validateFields();
+
+      // Membuat FormData untuk upload file gambar dan data lainnya
       const formData = new FormData();
+      formData.append("nama_produk", values.nama_produk);
+      formData.append("harga_produk", values.harga_produk);
+      formData.append("stok", values.stok);
 
-      // Tambahkan semua field dari values ke formData
-      Object.keys(values).forEach((key) => {
-        if (key === "kategori") {
-          // Ganti nama kategori menjadi id_kategori
-          formData.append("id_kategori", values[key]);
-        } else {
-          formData.append(key, values[key]);
-        }
-      });
-
-      // Menambahkan gambar jika ada
-      if (values.gambar_produk && values.gambar_produk.length > 0) {
-        formData.append("gambar_produk", values.gambar_produk[0].originFileObj);
+      // Pastikan gambar dipilih sebelum menambahkan ke formData
+      if (values.gambar_produk && values.gambar_produk.file) {
+        formData.append("gambar_produk", values.gambar_produk.file);
       }
 
-      console.log("Form Data being sent:", Array.from(formData.entries())); // Debugging
+      if (values.status_produk) {
+        formData.append("status_produk", values.status_produk);
+      }
 
-      // Mengirim permintaan POST untuk menambahkan produk
-      await axios.post("http://localhost:3222/produk", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data", // Menentukan tipe konten
-        },
-      });
+      // Mengirim request PUT ke backend untuk update produk
+      const response = await axios.put(
+        `http://localhost:3222/produk/${selectedProduk.id_produk}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-      message.success("Produk berhasil ditambahkan"); // Pesan sukses
-      setIsAddModalVisible(false); // Menutup modal
-      form.resetFields(); // Mereset form
+      // Mengupdate produk dalam state produkList
+      setProdukList((prevList) =>
+        prevList.map((item) =>
+          item.id_produk === selectedProduk.id_produk ? response.data : item
+        )
+      );
+
+      // Setelah berhasil update, menampilkan pesan sukses dan reset form
+      message.success("Produk berhasil diperbarui");
+      setIsEditModalVisible(false);
+      setSelectedProduk(null);
+      form.resetFields();
     } catch (error) {
-      console.error("Error adding product:", error); // Logging kesalahan
-      message.error("Gagal menambahkan produk"); // Pesan kesalahan umum
+      // Handling error untuk Axios
       if (axios.isAxiosError(error) && error.response) {
-        console.error("Detail kesalahan:", error.response.data); // Logging detail kesalahan dari server
+        console.error("Error updating product:", error.response.data);
+        message.error(
+          `Gagal memperbarui produk: ${error.response.data.message}`
+        );
+      } else {
+        // Handling error umum
+        console.error("Unknown error:", error);
+        message.error("Gagal memperbarui produk: Data harus diisi!");
       }
     }
   };

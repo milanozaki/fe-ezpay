@@ -222,46 +222,47 @@ const ProdukPage: React.FC = () => {
     setIsAddModalVisible(true);
   };
     
-    const handleOk = async () => {
-      try {
-        const values = await form.validateFields();
-        console.log("Nilai yang diterima dari form:", values); // Debugging
-        console.log("Kategori yang dipilih:", values.id_kategori); // Log id_kategori yang dipilih
-    
-        // Membuat FormData untuk upload file gambar dan data lainnya
-        const formData = new FormData();
-        formData.append("nama_produk", values.nama_produk);
-        formData.append("harga_produk", values.harga_produk);
-        formData.append("stok", values.stok);
-        formData.append("id_kategori", values.id_kategori);
-        formData.append("satuan_produk", values.satuan_produk);
-    
-        // Pastikan gambar dipilih sebelum menambahkan ke formData
-        if (values.gambar_produk && values.gambar_produk.file) {
-          console.log("File yang akan diupload:", values.gambar_produk.file); // Debugging
-          formData.append("gambar_produk", values.gambar_produk.file);
-        } else {
-          console.error("Tidak ada file gambar yang dipilih"); // Debugging
-        }
-    
-        // Mengirim request POST ke backend untuk menambahkan produk
-        await axios.post("http://localhost:3222/produk", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-    
-        message.success("Produk berhasil ditambahkan");
-        setIsAddModalVisible(false);
-        form.resetFields();
-      } catch (error) {
-        console.error("Error adding product:", error);
-        message.error("Gagal menambahkan produk");
-        if (axios.isAxiosError(error) && error.response) {
-          console.error("Detail kesalahan:", error.response.data);
-        }
+  const handleOk = async () => {
+    try {
+      const values = await form.validateFields();
+      console.log("Nilai yang diterima dari form:", values); // Debugging
+      console.log("Kategori yang dipilih:", values.id_kategori); // Log id_kategori yang dipilih
+  
+      // Membuat FormData untuk upload file gambar dan data lainnya
+      const formData = new FormData();
+      formData.append("nama_produk", values.nama_produk);
+      formData.append("harga_produk", values.harga_produk);
+      formData.append("stok", values.stok);
+      formData.append("id_kategori", values.id_kategori);
+      formData.append("satuan_produk", values.satuan_produk);
+  
+      // Pastikan gambar dipilih dan tambahkan ke formData
+      const file = values.gambar_produk[0]?.originFileObj; // Get the actual file object
+      if (file) {
+        formData.append("gambar_produk", file); // Append the image to FormData
+      } else {
+        message.error("Silakan pilih gambar produk."); // Optional error message if no image is selected
+        return;
       }
-    };
+  
+      // Mengirim request POST ke backend untuk menambahkan produk
+      await axios.post("http://localhost:3222/produk", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+  
+      message.success("Produk berhasil ditambahkan");
+      setIsAddModalVisible(false);
+      form.resetFields();
+    } catch (error) {
+      console.error("Error adding product:", error);
+      message.error("Gagal menambahkan produk");
+      if (axios.isAxiosError(error) && error.response) {
+        console.error("Detail kesalahan:", error.response.data);
+      }
+    }
+  };
     
     
   const formatCurrency = (amount: number): string => {
