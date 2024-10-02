@@ -11,6 +11,8 @@ import { usePathname } from "next/navigation";
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [selectedMenu, setSelectedMenu] = useState<string>("");
+  const [userEmail, setUserEmail] = useState<string>("guest@example.com"); // State for userEmail
+  const [userRole, setUserRole] = useState<string>("Kasir"); // State for userRole
   const pathname = usePathname();
 
   const authenticatedMenu = [
@@ -18,8 +20,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     { name: "Riwayat", path: "/kasirapp/riwayat", icon: <HistoryOutlined size={20} /> },
   ];
 
-  const userEmail = localStorage.getItem('userEmail') || "guest@example.com";
-  const userRole = "Kasir";
   const avatarUrl = "https://mir-s3-cdn-cf.behance.net/project_modules/disp/414d9011889067.5625411b2afd2.png";
 
   const avatarMenu = (
@@ -37,6 +37,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         onClick={() => {
           console.log("Logout button clicked");
           localStorage.removeItem('userEmail');
+          setUserEmail("guest@example.com"); // Reset userEmail state on logout
         }}
       >
         Keluar
@@ -45,6 +46,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   );
 
   useEffect(() => {
+    const storedEmail = localStorage.getItem('userEmail');
+    if (storedEmail) {
+      setUserEmail(storedEmail); // Set the userEmail from localStorage
+    }
+
     const activeMenuItem = authenticatedMenu.find((item) =>
       pathname?.startsWith(item.path)
     );
@@ -118,4 +124,3 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default Layout;
-  

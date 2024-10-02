@@ -1,24 +1,31 @@
-'use client'; // Menandakan komponen ini sebagai Client Component
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation'; // Impor useRouter dari Next.js
+"use client"; // Menandakan komponen ini sebagai Client Component
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation"; // Impor useRouter dari Next.js
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const router = useRouter(); // Inisialisasi router
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    setAccessToken(token); // Set token ke state
+    console.log('Access Token:', token); // Cek token di konsol
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
-      const response = await fetch('http://localhost:3222/auth/login/kasir', {
-        method: 'POST',
+      const response = await fetch("http://localhost:3222/auth/login/kasir", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
       });
@@ -28,25 +35,30 @@ const LoginPage = () => {
       if (!response.ok) {
         // Tampilkan pesan error untuk status 401 (kredensial salah)
         if (response.status === 401) {
-          setError('Email atau password salah. Silakan coba lagi.');
-        } 
+          setError("Email atau password salah. Silakan coba lagi.");
+        }
         // Tampilkan pesan dari backend jika akun tidak aktif
-        else if (data.message === 'Akses ditolak: Akun Anda sedang tidak aktif') {
-          setError('Akun Anda sedang tidak aktif. Hubungi admin.');
+        else if (
+          data.message === "Akses ditolak: Akun Anda sedang tidak aktif"
+        ) {
+          setError("Akun Anda sedang tidak aktif. Hubungi admin.");
         } else {
-          throw new Error('Login gagal');
+          throw new Error("Login gagal");
         }
       } else {
+        // Simpan access token ke local storage
+
         // Cek jika password default dan ada redirect URL
         if (data.redirectUrl) {
           router.push(data.redirectUrl); // Redirect ke halaman edit password kasir dengan ID user
         } else {
-          localStorage.setItem('userEmail', email);
-          router.push('/kasirapp/menu'); // Redirect ke menu kasir jika login sukses
+          localStorage.setItem("userEmail", email);
+          router.push("/kasirapp/menu"); // Redirect ke menu kasir jika login sukses
+          localStorage.setItem("accessToken", data.accessToken); // Ganti 'accessToken' dengan nama field yang sesuai jika berbeda
         }
       }
     } catch (err) {
-      setError('Login gagal. Periksa kredensial Anda dan coba lagi.');
+      setError("Login gagal. Periksa kredensial Anda dan coba lagi.");
     } finally {
       setLoading(false);
     }
@@ -60,17 +72,19 @@ const LoginPage = () => {
         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-[350px] relative">
           {/* Gambar ikon */}
           <div className="relative z-10 flex justify-center mb-6">
-            <img 
+            <img
               src="/images/logoEzpay.png" // Ganti dengan ikon yang sesuai
               alt="Login Icon"
               width={90}
               height={90}
             />
           </div>
-          
+
           {/* Judul login */}
-          <h2 className="relative z-10 text-center text-2xl font-semibold text-gray-800 mb-8">Selamat Datang!</h2>
-  
+          <h2 className="relative z-10 text-center text-2xl font-semibold text-gray-800 mb-8">
+            Selamat Datang!
+          </h2>
+
           {/* Form */}
           <form onSubmit={handleSubmit} className="relative z-10">
             {/* Input Email */}
@@ -84,7 +98,7 @@ const LoginPage = () => {
                 required
               />
             </div>
-  
+
             {/* Input Password */}
             <div className="mb-6">
               <input
@@ -96,7 +110,9 @@ const LoginPage = () => {
                 required
               />
               <div className="text-right mt-2">
-                <a href="#" className="text-sm text-blue-500 hover:underline">Forgot password?</a>
+                <a href="#" className="text-sm text-blue-500 hover:underline">
+                  Forgot password?
+                </a>
               </div>
               {/* Tautan Kembali */}
               <div className="text-left mt-2">
@@ -112,14 +128,12 @@ const LoginPage = () => {
                 </a>
               </div>
             </div>
-  
+
             {/* Error Message */}
             {error && (
-              <div className="text-red-500 text-center mb-4">
-                {error}
-              </div>
+              <div className="text-red-500 text-center mb-4">{error}</div>
             )}
-  
+
             {/* Tombol Login */}
             <div className="flex justify-center">
               <button
@@ -127,13 +141,13 @@ const LoginPage = () => {
                 className="w-full bg-[#4a98b1] text-white py-3 px-4 rounded-2xl hover:bg-[#56a6c0] transition-colors"
                 disabled={loading}
               >
-                {loading ? 'Logging in...' : 'Log in'}
+                {loading ? "Logging in..." : "Log in"}
               </button>
             </div>
           </form>
         </div>
       </div>
-  
+
       {/* Footer copyright */}
       <footer className="text-white text-sm text-center -py-1 mt-5">
         © 2024 Ezpay. All rights reserved.
