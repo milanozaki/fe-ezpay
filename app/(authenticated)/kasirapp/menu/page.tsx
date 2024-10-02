@@ -113,12 +113,10 @@ const MenuPage = () => {
   );
 
   return (
-    <div className="flex ml-0 w-full h-full max-w-screen overflow-hidden">
-      {" "}
+    <div className="flex w-full h-full gap-4 max-w-screen overflow-hidden">
       {/* Mengurangi margin kiri */}
-      <div className="w-[90%] mx-0 h-[calc(100vh-200px)] mr-0">
-        {" "}
-        {/* Menghilangkan margin di sisi kanan */}
+      <div className="w-[75%] h-[calc(100vh-200px)] mr-0 p-0">
+        {/* Menghilangkan margin di sisi kanan dan padding */}
         <div className="mb-4">
           <Select
             defaultValue="Semua"
@@ -148,7 +146,7 @@ const MenuPage = () => {
                 -webkit-overflow-scrolling: touch; /* iOS for smooth scrolling */
               }
             `}</style>
-
+  
             <div className="grid grid-cols-3 gap-2">
               {filteredProducts.map((produk: Produk) => (
                 <Card
@@ -185,8 +183,9 @@ const MenuPage = () => {
           </div>
         </div>
       </div>
+  
       {/* Keranjang */}
-      <div className="w-[25%] h-[calc(100vh-175px)] p-4 bg-transparent flex flex-col mr-0">
+      <div className="w-[25%] h-full p-4 bg-green-200 flex flex-col justify-between">
         <h2 className="text-lg font-bold mb-4">Pesanan ({cart.length})</h2>
         <div className="flex-grow overflow-auto scrollbar-hidden touch-scroll">
           <style jsx>{`
@@ -209,34 +208,31 @@ const MenuPage = () => {
               {cart.map((item, index) => (
                 <li key={index} className="mb-4">
                   <div className="flex justify-between items-center">
-                    {/* Gambar produk */}
-                    <img
-                      src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
-                      alt={item.nama_produk}
-                      className="w-10 h-10 object-cover mr-4"
-                    />
-
                     {/* Nama produk */}
                     <span className="text-xs">{item.nama_produk}</span>
-
+  
                     {/* Kontrol kuantitas */}
                     <div className="flex items-center">
                       <Button
+                        className="border-none bg-transparent"
                         onClick={() => updateQuantity(item.id_produk, -1)}
                       >
                         -
                       </Button>
-                      <span className="">{item.quantity}</span>
-                      <Button onClick={() => updateQuantity(item.id_produk, 1)}>
+                      <span className="mx-2">{item.quantity}</span>
+                      <Button
+                        className="border-none bg-transparent"
+                        onClick={() => updateQuantity(item.id_produk, 1)}
+                      >
                         +
                       </Button>
                     </div>
-
+  
                     {/* Harga produk */}
                     <span className="mr-4">
                       Rp {formatCurrency(item.harga_produk)}
                     </span>
-
+  
                     {/* Tombol hapus */}
                     <Button
                       type="link"
@@ -250,11 +246,11 @@ const MenuPage = () => {
             </ul>
           )}
         </div>
-
+  
         <div className="mt-4 font-bold">
           Total: Rp {formatCurrency(totalHarga)}
         </div>
-
+  
         <div className="mt-4">
           <Button
             type={paymentMethod === "Tunai" ? "primary" : "default"}
@@ -270,11 +266,11 @@ const MenuPage = () => {
             Qris
           </Button>
         </div>
-
+  
         <Button className="mt-4 w-full bg-blue-500 text-white">Bayar</Button>
       </div>
     </div>
   );
-};
+  };
 
 export default MenuPage;
