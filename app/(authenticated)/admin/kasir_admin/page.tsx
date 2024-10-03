@@ -155,7 +155,11 @@ const KasirPage: React.FC = () => {
             setIsModalVisible(true);
             form.resetFields(); // Reset form for adding a new kasir
           }}
-          className="bg-blue-500 text-white"
+          style={{
+            backgroundColor: "#3B8394",
+            color: "#fff",
+            borderRadius: "12px",
+          }}
         >
           + Tambah Kasir
         </Button>
