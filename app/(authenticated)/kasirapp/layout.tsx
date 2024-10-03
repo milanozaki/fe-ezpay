@@ -6,11 +6,12 @@ import { HistoryOutlined } from "@ant-design/icons";
 import { IoFastFoodOutline } from "react-icons/io5";
 import { Avatar, Dropdown, Button, Divider } from "antd";
 import Image from "next/image";
-import { usePathname,useRouter} from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [selectedMenu, setSelectedMenu] = useState<string>("");
+  const [userEmail, setUserEmail] = useState<string>("guest@example.com"); // Set default email
   const pathname = usePathname();
   const router = useRouter();
   const authenticatedMenu = [
@@ -18,7 +19,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     { name: "Riwayat", path: "/kasirapp/riwayat", icon: <HistoryOutlined size={20} /> },
   ];
 
-  const userEmail = localStorage.getItem('userEmail') || "guest@example.com";
   const userRole = "Kasir";
   const avatarUrl = "https://mir-s3-cdn-cf.behance.net/project_modules/disp/414d9011889067.5625411b2afd2.png";
 
@@ -51,6 +51,14 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     );
     if (activeMenuItem) {
       setSelectedMenu(activeMenuItem.name);
+    }
+
+    // Check if in browser before accessing localStorage
+    if (typeof window !== "undefined") {
+      const email = localStorage.getItem('userEmail');
+      if (email) {
+        setUserEmail(email);
+      }
     }
   }, [pathname]);
 
@@ -119,4 +127,3 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default Layout;
-  
