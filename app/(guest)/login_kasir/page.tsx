@@ -1,6 +1,7 @@
 "use client"; // Menandakan komponen ini sebagai Client Component
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation"; // Impor useRouter dari Next.js
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -9,6 +10,7 @@ const LoginPage = () => {
   const [error, setError] = useState("");
   const router = useRouter(); // Inisialisasi router
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -64,6 +66,10 @@ const LoginPage = () => {
     }
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-[#5aa5be] px-4 py-8">
       {/* Konten Utama */}
@@ -100,31 +106,24 @@ const LoginPage = () => {
             </div>
 
             {/* Input Password */}
-            <div className="mb-6">
+            <div className="mb-6 relative">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 pr-10"
                 required
               />
+              <div
+                className="absolute inset-y-0 right-3 flex items-center cursor-pointer pb-7"
+                onClick={togglePasswordVisibility}
+              >
+                {showPassword ? <FaEye size={20} /> :  <FaEyeSlash size={20} />}
+              </div>
               <div className="text-right mt-2">
                 <a href="#" className="text-sm text-blue-500 hover:underline">
                   Forgot password?
-                </a>
-              </div>
-              {/* Tautan Kembali */}
-              <div className="text-left mt-2">
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    router.back(); // Kembali ke halaman sebelumnya
-                  }}
-                  className="text-sm text-blue-500 hover:underline"
-                >
-                  Kembali
                 </a>
               </div>
             </div>
@@ -143,6 +142,19 @@ const LoginPage = () => {
               >
                 {loading ? "Logging in..." : "Log in"}
               </button>
+            </div>
+
+            <div className="text-left mt-6">
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  router.push("/"); // Arahkan ke localhost:3000
+                }}
+                className="text-sm text-blue-500 hover:underline"
+              >
+                Kembali
+              </a>
             </div>
           </form>
         </div>

@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { DatePicker, Table, Button, FloatButton, Modal, Popconfirm } from "antd"; // Import Popconfirm
+import {
+  DatePicker,
+  Table,
+  Button,
+  FloatButton,
+  Modal,
+  Popconfirm,
+} from "antd"; // Import Popconfirm
 import "antd/dist/reset.css";
 import * as XLSX from "xlsx";
 import axios from "axios";
@@ -80,7 +87,18 @@ const RiwayatTransaksiPage = () => {
       dataIndex: "createdAt",
       key: "createdAt",
       render: (text: string) =>
-        text ? new Date(text).toLocaleString() : "N/A",
+        text
+          ? `${new Date(text).toLocaleDateString("id-ID", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}, ${new Date(text).toLocaleTimeString("id-ID", {
+              hour: "2-digit",
+              minute: "2-digit",
+              timeZone: "Asia/Jakarta",
+              timeZoneName: "short",
+            })}`
+          : "N/A",
     },
     {
       title: "Jumlah Item",
@@ -175,7 +193,23 @@ const RiwayatTransaksiPage = () => {
             </p>
             <p>
               <strong>Tanggal & Waktu:</strong>{" "}
-              {new Date(selectedTransaction.createdAt).toLocaleString()}
+              {selectedTransaction.createdAt
+                ? `${new Date(selectedTransaction.createdAt).toLocaleDateString(
+                    "id-ID",
+                    {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    }
+                  )}, ${new Date(
+                    selectedTransaction.createdAt
+                  ).toLocaleTimeString("id-ID", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    timeZone: "Asia/Jakarta",
+                    timeZoneName: "short",
+                  })}`
+                : "N/A"}
             </p>
             <p>
               <strong>User:</strong> {selectedTransaction.user?.nama} (ID:{" "}

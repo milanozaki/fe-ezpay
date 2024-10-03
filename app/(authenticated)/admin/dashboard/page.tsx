@@ -101,7 +101,7 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="p-6 mr-24 ml-60">
+    <div className="p-6 mr-8 ml-60">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mr-5 ml-5">
         {/* Card Jumlah Produk */}
         <div className="w-full h-[200px] bg-white p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-xl relative animate-pulseScale animate-glow">
