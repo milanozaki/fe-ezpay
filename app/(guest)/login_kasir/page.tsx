@@ -9,13 +9,16 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter(); // Inisialisasi router
-  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Cek apakah pengguna sudah memiliki access token saat komponen di-mount
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    setAccessToken(token); // Set token ke state
-    console.log('Access Token:', token); // Cek token di konsol
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      // Tidak melakukan redirect otomatis jika sudah login
+      // Hanya menampilkan pesan atau melakukan logika lain jika diperlukan
+      // router.push("/kasirapp/menu"); // Arahkan ke menu kasir jika sudah login
+    }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,14 +52,14 @@ const LoginPage = () => {
         }
       } else {
         // Simpan access token ke local storage
+        localStorage.setItem("accessToken", data.access_token); // Ganti 'accessToken' jika nama field berbeda
+        localStorage.setItem("userEmail", email); // Simpan email pengguna di local storage
 
         // Cek jika password default dan ada redirect URL
         if (data.redirectUrl) {
           router.push(data.redirectUrl); // Redirect ke halaman edit password kasir dengan ID user
         } else {
-          localStorage.setItem("userEmail", email);
           router.push("/kasirapp/menu"); // Redirect ke menu kasir jika login sukses
-          localStorage.setItem("accessToken", data.accessToken); // Ganti 'accessToken' dengan nama field yang sesuai jika berbeda
         }
       }
     } catch (err) {
@@ -119,7 +122,7 @@ const LoginPage = () => {
                 className="absolute inset-y-0 right-3 flex items-center cursor-pointer pb-7"
                 onClick={togglePasswordVisibility}
               >
-                {showPassword ? <FaEye size={20} /> :  <FaEyeSlash size={20} />}
+                {showPassword ? <FaEye size={20} /> : <FaEyeSlash size={20} />}
               </div>
               <div className="text-right mt-2">
                 <a href="#" className="text-sm text-blue-500 hover:underline">

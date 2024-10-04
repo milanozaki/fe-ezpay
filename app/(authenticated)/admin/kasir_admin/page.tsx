@@ -11,10 +11,11 @@ enum StatusEnum {
 }
 
 interface Kasir {
-  id_kasir: string;
-  nama_kasir: string;
+  id_user: string;
+  nama: string;
   status: StatusEnum;
-  email_kasir: string;
+  email: string;
+  lastLogin: string | null;
 }
 
 const KasirPage: React.FC = () => {
@@ -25,27 +26,42 @@ const KasirPage: React.FC = () => {
   const [isEditMode, setIsEditMode] = useState(false); // Track if we are editing or adding
 
   useEffect(() => {
-    // Fetch kasir list from API
-    axios
-      .get("http://localhost:3222/users/kasir")
-      .then((response) => {
-        setKasirList(response.data.data);
-      })
-      .catch((error) => {
+    const fetchKasirUsers = async () => {
+      try {
+        const response = await axios.get("http://localhost:3222/users/kasir");
+        console.log("Fetched kasir users:", response.data); // Log the response
+        // Check if the data is in the correct structure
+        setKasirList(response.data); // Adjust this if needed based on the API response
+      } catch (error) {
         console.error("Error fetching kasir:", error);
         message.error("Terjadi kesalahan saat mengambil data kasir.");
-      });
+      }
+    };
+
+    fetchKasirUsers();
   }, []);
 
   const handleAddKasir = async (values: any) => {
     try {
-      await axios.post("http://localhost:3222/users/tambah-kasir", values);
+      const response = await axios.post(
+        "http://localhost:3222/users/tambah-kasir",
+        values
+      );
       message.success("Kasir berhasil ditambahkan!");
       setIsModalVisible(false);
       form.resetFields();
-      // Fetch updated kasir list
-      const response = await axios.get("http://localhost:3222/users/kasir");
-      setKasirList(response.data.data);
+
+      // Update kasir list without refetching
+      setKasirList((prevKasirList) => [
+        ...prevKasirList,
+        {
+          id_user: response.data.id_user, // Assuming your backend returns the new kasir ID
+          nama: values.nama,
+          email: values.email,
+          status: values.status,
+          lastLogin: null, // Default or adjust as needed
+        },
+      ]);
     } catch (error: any) {
       console.error("Error adding kasir:", error);
       message.error(
@@ -64,9 +80,15 @@ const KasirPage: React.FC = () => {
       message.success("Status kasir berhasil diubah!");
       setIsModalVisible(false);
       form.resetFields();
-      // Fetch updated kasir list
-      const response = await axios.get("http://localhost:3222/users/kasir");
-      setKasirList(response.data.data);
+
+      // Update kasir list without refetching
+      setKasirList((prevKasirList) =>
+        prevKasirList.map((kasir) =>
+          kasir.id_user === editKasirId
+            ? { ...kasir, status: values.status }
+            : kasir
+        )
+      );
     } catch (error: any) {
       console.error("Error editing kasir:", error);
       message.error(
@@ -79,10 +101,47 @@ const KasirPage: React.FC = () => {
   const openEditModal = (kasir: Kasir) => {
     setIsEditMode(true); // Set mode to edit
     setIsModalVisible(true);
-    setEditKasirId(kasir.id_kasir);
+    setEditKasirId(kasir.id_user);
     form.setFieldsValue({
       status: kasir.status,
     });
+  };
+
+  const isUserOnline = (lastLogin: Date): boolean => {
+    const now = new Date();
+    const diff = (now.getTime() - lastLogin.getTime()) / 1000 / 60; // difference in minutes
+    return diff <= 10; // consider online if logged in within the last 10 minutes
+  };
+
+  const timeAgo = (
+    lastLogin: string | null
+  ): { status: string; isOnline: boolean } => {
+    if (!lastLogin) return { status: "Belum login", isOnline: false }; // Handle null case
+
+    const lastLoginDate = new Date(lastLogin);
+    const now = new Date();
+    const diffInSeconds = Math.floor(
+      (now.getTime() - lastLoginDate.getTime()) / 1000
+    );
+
+    // Check if the kasir is online (logged in within the last 10 minutes)
+    if (diffInSeconds <= 600) {
+      return { status: "Online", isOnline: true }; // Display "Online" if within the last 10 minutes
+    }
+
+    let timeString = "";
+
+    if (diffInSeconds < 60) {
+      timeString = `${diffInSeconds} detik yang lalu`;
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      timeString = `${minutes} menit yang lalu`;
+    } else {
+      const hours = Math.floor(diffInSeconds / 3600);
+      timeString = `${hours} jam yang lalu`;
+    }
+
+    return { status: timeString, isOnline: false };
   };
 
   return (
@@ -107,41 +166,60 @@ const KasirPage: React.FC = () => {
       </div>
 
       <table className="w-full divide-y divide-gray-200">
-  <thead>
-    <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-      <th className="py-3 px-6 text-left font-semibold">No</th>
-      <th className="py-3 px-20 text-left font-semibold">Nama</th>
-      <th className="py-3 px-24 text-left font-semibold">Email</th>
-      <th className="py-3 px-16 text-left font-semibold">Status</th>
-      <th className="py-3 px-6 text-left font-semibold">Aksi</th>
-    </tr>
-  </thead>
-  <tbody className="bg-white divide-y divide-gray-200">
-    {kasirList.map((kasir, index) => (
-      <tr key={kasir.id_kasir}>
-        <td className="py-3 px-6 text-left w-16">{index + 1}</td>
-        <td className="py-3 px-20 text-left">{kasir.nama_kasir}</td>
-        <td className="py-3 px-24 text-left">{kasir.email_kasir}</td> {/* Tampilkan email */}
-        <td
-          className={`py-3 px-16 text-left ${
-            kasir.status === StatusEnum.ACTIVE ? "text-green-600" : "text-red-600"
-          }`}
-        >
-          {kasir.status}
-        </td>
-        <td className="py-3 px-6 text-left">
-          <Button
-            type="primary"
-            onClick={() => openEditModal(kasir)}
-          >
-            Edit Status
-          </Button>
-        </td>
-      </tr>
-    ))}
-  </tbody>
-</table>
-
+        <thead>
+          <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+            <th className="py-3 px-6 text-left font-semibold">No</th>
+            <th className="py-3 px-10 text-left font-semibold">Nama</th>
+            <th className="py-3 px-10 text-left font-semibold">Email</th>
+            <th className="py-3 px-4 text-left font-semibold">Status</th>
+            <th className="py-3 px-16 text-left font-semibold">
+              Terakhir Login
+            </th>
+            <th className="py-3 px-12 text-left font-semibold">Aksi</th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {Array.isArray(kasirList) && kasirList.length > 0 ? (
+            kasirList.map((kasir, index) => {
+              const { status, isOnline } = timeAgo(kasir.lastLogin); // Get status and online check
+              return (
+                <tr key={kasir.id_user}>
+                  <td className="py-3 px-7 text-left w-16">{index + 1}</td>
+                  <td className="py-3 px-10 text-left">{kasir.nama}</td>
+                  <td className="py-3 px-2 text-left">{kasir.email}</td>
+                  <td
+                    className={`py-3 px-4 text-left ${
+                      kasir.status === StatusEnum.ACTIVE
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {kasir.status}
+                  </td>
+                  <td
+                    className={`py-3 px-16 text-left ${
+                      isOnline ? "text-green-600" : "text-black"
+                    }`}
+                  >
+                    {status} {/* Updated to use the status */}
+                  </td>
+                  <td className="py-3 px-6 text-left">
+                    <Button type="primary" onClick={() => openEditModal(kasir)}>
+                      Edit Status
+                    </Button>
+                  </td>
+                </tr>
+              );
+            })
+          ) : (
+            <tr>
+              <td colSpan={6} className="py-3 px-6 text-center">
+                Tidak ada kasir ditemukan
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
 
       {/* Modal for Adding or Editing Kasir */}
       <Modal
