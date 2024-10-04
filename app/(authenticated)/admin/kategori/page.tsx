@@ -7,7 +7,7 @@ import 'antd/dist/reset.css'; // Pastikan Anda mengimpor CSS Ant Design
 import axios from 'axios'; // Import Axios
 
 const KategoriPage = () => {
-  const [kategori, setKategori] = useState<any[]>([]);
+  const [kategori, setKategori] = useState<any[]>([]); // State untuk menyimpan data kategori
   const [loading, setLoading] = useState<boolean>(true); // Menambahkan state loading
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false); // State untuk visibilitas modal
   const [isAddModalVisible, setIsAddModalVisible] = useState<boolean>(false); // State untuk visibilitas modal tambah
@@ -15,10 +15,10 @@ const KategoriPage = () => {
   const [form] = Form.useForm(); // Form instance dari Ant Design
 
   useEffect(() => {
-    // Ambil data dari API
-    axios.get('http://localhost:3222/kategori')
+    // Ambil data dari API dengan endpoint kategori/produk-count
+    axios.get('http://localhost:3222/kategori/produk-count')
       .then((response) => {
-        // Asumsi data yang diterima adalah array dengan objek yang memiliki nama kategori
+        // Asumsi data yang diterima adalah array dengan objek yang memiliki nama kategori dan jumlah produk
         setKategori(response.data.data || []);
         setLoading(false); // Set loading menjadi false setelah data diterima
       })
@@ -74,7 +74,7 @@ const KategoriPage = () => {
         axios.post('http://localhost:3222/kategori', { nama: values.nama })
           .then((response) => {
             // Pastikan response.data mengandung data kategori yang baru ditambahkan
-            const newKategori = { nama: values.nama }; // Sesuaikan dengan struktur data dari API
+            const newKategori = { nama: values.nama, jumlahProduk: 0 }; // Sesuaikan dengan struktur data dari API
             setKategori((prevKategori) => [...prevKategori, newKategori]);
             setIsAddModalVisible(false); // Sembunyikan modal setelah berhasil
             
@@ -131,18 +131,20 @@ const KategoriPage = () => {
           <table className="min-w-full bg-white border-collapse rounded-lg shadow-md">
             <thead>
               <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-                <th className="py-3 px-6 text-left font-semibold w-16">No</th>
-                <th className="py-3 px-6 text-left font-semibold">Nama Kategori</th>
-                <th className="py-3 px-6 text-left font-semibold">Aksi</th>
+                <th className="py-3 px-6 text-center font-semibold w-16">No</th>
+                <th className="py-3 px-6 text-center font-semibold">Nama Kategori</th>
+                <th className="py-3 px-6 text-center font-semibold">Jumlah Produk</th>
+                <th className="py-3 px-6 text-center font-semibold">Aksi</th>
               </tr>
             </thead>
             <tbody className="text-gray-700 text-sm">
               {kategori.length > 0 ? (
                 kategori.map((item, index) => (
                   <tr key={index} className="hover:bg-gray-100 transition duration-200">
-                    <td className="py-3 px-6 text-left w-16">{index + 1}</td>
-                    <td className="py-3 px-6 text-left">{item.nama}</td>
-                    <td className="py-3 px-6 text-left">
+                    <td className="py-3 px-6 text-center w-16">{index + 1}</td>
+                    <td className="py-3 px-6 text-center">{item.kategori}</td>
+                    <td className="py-3 px-6 text-center">{item.jumlahProduk}</td>
+                    <td className="py-3 px-6 text-center">
                       <a
                         href="#"
                         onClick={() => handleEditClick(item.nama)}
@@ -155,7 +157,7 @@ const KategoriPage = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={3} className="py-3 px-6 text-center text-gray-500">
+                  <td colSpan={4} className="py-3 px-6 text-center text-gray-500">
                     Tidak ada data
                   </td>
                 </tr>
@@ -194,8 +196,7 @@ const KategoriPage = () => {
             <Form.Item
               name="nama"
               label="Nama Kategori"
-              rules={[{ required: true, message: 'Masukkan nama kategori' }]}
-            >
+              rules={[{ required: true, message: 'Masukkan nama kategori' }]}>
               <Input />
             </Form.Item>
           </Form>
@@ -218,7 +219,7 @@ const KategoriPage = () => {
           }}
           cancelButtonProps={{
             style: {
-              borderColor: '#d9d9d9',
+              borderColor: '#3B8394',
               color: '#000',
             },
           }}
@@ -230,8 +231,7 @@ const KategoriPage = () => {
             <Form.Item
               name="nama"
               label="Nama Kategori"
-              rules={[{ required: true, message: 'Masukkan nama kategori' }]}
-            >
+              rules={[{ required: true, message: 'Masukkan nama kategori' }]}>
               <Input />
             </Form.Item>
           </Form>
