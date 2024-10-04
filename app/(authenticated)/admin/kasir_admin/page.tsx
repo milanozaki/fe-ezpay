@@ -107,12 +107,6 @@ const KasirPage: React.FC = () => {
     });
   };
 
-  const isUserOnline = (lastLogin: Date): boolean => {
-    const now = new Date();
-    const diff = (now.getTime() - lastLogin.getTime()) / 1000 / 60; // difference in minutes
-    return diff <= 10; // consider online if logged in within the last 10 minutes
-  };
-
   const timeAgo = (
     lastLogin: string | null
   ): { status: string; isOnline: boolean } => {

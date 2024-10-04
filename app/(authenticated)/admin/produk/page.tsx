@@ -29,6 +29,11 @@ import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { debounce } from "lodash";
 
+interface Kategori {
+  id_kategori: string;
+  nama: string;
+}
+
 interface Produk {
   id_produk: string;
   nama_produk: string;
@@ -38,6 +43,7 @@ interface Produk {
   satuan_produk: string;
   kode_produk: string;
   stok: number;
+  kategori: Kategori; // Changed from string to an object of type Kategori
   createdAt: Date;
   updatedAt: Date;
 }
@@ -56,7 +62,9 @@ const ProdukPage: React.FC = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState<boolean>(false);
   const [selectedProduk, setSelectedProduk] = useState<Produk | null>(null);
   const [form] = Form.useForm();
-  const [categories, setCategories] = useState<{ id_kategori: string; nama: string }[]>([]);
+  const [categories, setCategories] = useState<
+    { id_kategori: string; nama: string }[]
+  >([]);
   const [produk, setProduk] = useState<Produk[]>([]);
   const [produkList, setProdukList] = useState<Produk[]>([]);
   const [filteredProduk, setFilteredProduk] = useState<Produk[]>([]);
@@ -72,21 +80,21 @@ const ProdukPage: React.FC = () => {
   useEffect(() => {
     // Fetch kategori dan produk
     axios
-    .get("http://localhost:3222/kategori")
-    .then((response) => {
-      const categoryData = response.data.data;
-      if (Array.isArray(categoryData)) {
-        // Simpan id_kategori dan nama kategori
-        const categoriesWithIds = categoryData.map((item) => ({
-          id_kategori: item.id_kategori,
-          nama: item.nama,
-        }));
-        setCategories(categoriesWithIds); // Set data dengan id_kategori dan nama
-      }
-    })
-    .catch((error) => {
-      console.error("Error fetching categories:", error);
-    });
+      .get("http://localhost:3222/kategori")
+      .then((response) => {
+        const categoryData = response.data.data;
+        if (Array.isArray(categoryData)) {
+          // Simpan id_kategori dan nama kategori
+          const categoriesWithIds = categoryData.map((item) => ({
+            id_kategori: item.id_kategori,
+            nama: item.nama,
+          }));
+          setCategories(categoriesWithIds); // Set data dengan id_kategori dan nama
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching categories:", error);
+      });
 
     axios
       .get("http://localhost:3222/produk/all")
@@ -132,7 +140,7 @@ const ProdukPage: React.FC = () => {
       const response = await axios.get(
         `http://localhost:3222/produk?status=${status}`
       );
-      
+
       const filteredProduk = response.data; // Adjust based on your API response structure
       setFilteredProduk(filteredProduk);
       setTotalProduk(filteredProduk.length);
@@ -198,14 +206,14 @@ const ProdukPage: React.FC = () => {
         const response = await axios.get(
           `http://localhost:3222/kategori/produk/${idKategori}`
         );
-        
+
         const filteredData = response.data;
-  
+
         // Jika tidak ada produk dalam kategori, tampilkan pesan "Produk Kosong"
         if (filteredData.length === 0) {
           message.warning("Tidak ada produk dalam kategori ini");
         }
-  
+
         setSelectedCategory(idKategori);
         setFilteredProduk(filteredData);
         setTotalProduk(filteredData.length);
@@ -216,8 +224,6 @@ const ProdukPage: React.FC = () => {
     }
     setCurrentPage(1);
   };
-  
-  
 
   const handleInfoClick = (item: Produk) => {
     setSelectedProductInfo(item);
@@ -228,13 +234,13 @@ const ProdukPage: React.FC = () => {
     form.resetFields();
     setIsAddModalVisible(true);
   };
-    
+
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
       console.log("Nilai yang diterima dari form:", values); // Debugging
       console.log("Kategori yang dipilih:", values.id_kategori); // Log id_kategori yang dipilih
-  
+
       // Membuat FormData untuk upload file gambar dan data lainnya
       const formData = new FormData();
       formData.append("nama_produk", values.nama_produk);
@@ -242,7 +248,7 @@ const ProdukPage: React.FC = () => {
       formData.append("stok", values.stok);
       formData.append("id_kategori", values.id_kategori);
       formData.append("satuan_produk", values.satuan_produk);
-  
+
       // Pastikan gambar dipilih dan tambahkan ke formData
       const file = values.gambar_produk[0]?.originFileObj; // Get the actual file object
       if (file) {
@@ -251,14 +257,14 @@ const ProdukPage: React.FC = () => {
         message.error("Silakan pilih gambar produk."); // Optional error message if no image is selected
         return;
       }
-  
+
       // Mengirim request POST ke backend untuk menambahkan produk
       await axios.post("http://localhost:3222/produk", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-  
+
       message.success("Produk berhasil ditambahkan");
       setIsAddModalVisible(false);
       form.resetFields();
@@ -270,8 +276,7 @@ const ProdukPage: React.FC = () => {
       }
     }
   };
-    
-    
+
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat("id-ID").format(amount);
   };
@@ -457,75 +462,77 @@ const ProdukPage: React.FC = () => {
           >
             <Select.Option value="semua">Semua</Select.Option>
             {categories.map((category) => (
-              <Select.Option key={category.id_kategori} value={category.id_kategori}>
-              {category.nama}
-            </Select.Option>
-            
+              <Select.Option
+                key={category.id_kategori}
+                value={category.id_kategori}
+              >
+                {category.nama}
+              </Select.Option>
             ))}
           </Select>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-  {paginatedProduk.length === 0 ? (
-    <div className="col-span-full text-center text-gray-500 p-4">
-      Produk kosong.
-    </div>
-  ) : (
-    paginatedProduk.map((item) => (
-      <Card
-        key={item.id_produk}
-        cover={
-          <Image
-            alt={item.nama_produk}
-            src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
-            style={{
-              width: "100%",  // Ensures image takes full width of the card
-              height: "200px", // Set fixed height
-              objectFit: "cover", // Makes the image fill the space without distorting
-            }}
-            preview={false}
-          />
-        }
-        actions={[
-          <Button
-            className="bg-blue-600 text-white hover:bg-blue-400"
-            icon={<EditOutlined />}
-            onClick={() => handleEditClick(item)}
-          >
-            Edit
-          </Button>,
-          <Button
-            className="bg-green-600 text-white hover:bg-green-400"
-            icon={<InfoCircleOutlined />}
-            onClick={() => handleInfoClick(item)}
-          >
-            Info
-          </Button>,
-        ]}
-      >
-        <Card.Meta
-          title={item.nama_produk}
-          description={
-            <div>
-              <span style={{ color: "black" }}>
-                Rp {formatCurrency(item.harga_produk)}
-              </span>
-              <div
-                style={{
-                  color: item.status_produk === "aktif" ? "green" : "red",
-                  marginTop: "4px", // Optional: Add some margin for spacing
-                }}
-              >
-                {item.status_produk}
-              </div>
-            </div>
-          }
-        />
-      </Card>
-    ))
-  )}
-</div>
+        {paginatedProduk.length === 0 ? (
+          <div className="col-span-full text-center text-gray-500 p-4">
+            Produk kosong.
+          </div>
+        ) : (
+          paginatedProduk.map((item) => (
+            <Card
+              key={item.id_produk}
+              cover={
+                <Image
+                  alt={item.nama_produk}
+                  src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
+                  style={{
+                    width: "100%", // Ensures image takes full width of the card
+                    height: "200px", // Set fixed height
+                    objectFit: "cover", // Makes the image fill the space without distorting
+                  }}
+                  preview={false}
+                />
+              }
+              actions={[
+                <Button
+                  className="bg-blue-600 text-white hover:bg-blue-400"
+                  icon={<EditOutlined />}
+                  onClick={() => handleEditClick(item)}
+                >
+                  Edit
+                </Button>,
+                <Button
+                  className="bg-green-600 text-white hover:bg-green-400"
+                  icon={<InfoCircleOutlined />}
+                  onClick={() => handleInfoClick(item)}
+                >
+                  Info
+                </Button>,
+              ]}
+            >
+              <Card.Meta
+                title={item.nama_produk}
+                description={
+                  <div>
+                    <span style={{ color: "black" }}>
+                      Rp {formatCurrency(item.harga_produk)}
+                    </span>
+                    <div
+                      style={{
+                        color: item.status_produk === "aktif" ? "green" : "red",
+                        marginTop: "4px", // Optional: Add some margin for spacing
+                      }}
+                    >
+                      {item.status_produk}
+                    </div>
+                  </div>
+                }
+              />
+            </Card>
+          ))
+        )}
+      </div>
 
       {totalProduk > pageSize && (
         <Pagination
@@ -558,87 +565,103 @@ const ProdukPage: React.FC = () => {
           </Button>,
         ]}
       >
-<Form form={form} layout="vertical">
-  <Row gutter={16}>
-    <Col span={12}>
-      <Form.Item
-        name="nama_produk"
-        label="Nama Produk"
-        rules={[{ required: true, message: "Silakan masukkan nama produk!" }]}
-      >
-        <Input />
-      </Form.Item>
-    </Col>
-    <Col span={12}>
-      <Form.Item
-        name="stok"
-        label="Stok"
-        rules={[{ required: true, message: "Silakan masukkan stok produk!" }]}
-      >
-        <Input type="number" />
-      </Form.Item>
-    </Col>
-  </Row>
-  <Row gutter={16}>
-    <Col span={12}>
-      <Form.Item
-        name="id_kategori"
-        label="Kategori"
-        rules={[{ required: true, message: "Silakan pilih kategori!" }]}
-      >
-        <Select>
-          {categories.map((category) => (
-            <Select.Option key={category.id_kategori} value={category.id_kategori}>
-              {category.nama}
-            </Select.Option>
-          ))}
-        </Select>
-      </Form.Item>
-    </Col>
-    <Col span={12}>
-      <Form.Item
-        name="harga_produk"
-        label="Harga"
-        rules={[{ required: true, message: "Silakan masukkan harga produk!" }]}
-      >
-        <Input type="number" />
-      </Form.Item>
-    </Col>
-  </Row>
-  <Row gutter={16}>
-    <Col span={12}>
-      <Form.Item
-        name="gambar_produk"
-        label="Gambar Produk"
-        valuePropName="fileList"
-        getValueFromEvent={({ fileList }: any) => fileList}
-        rules={[{ required: true, message: "Silakan unggah gambar produk!" }]}
-      >
-        <Upload
-          name="gambar_produk"
-          listType="picture"
-          beforeUpload={() => false}
-          showUploadList={{ showRemoveIcon: true }}
-          accept="image/*"
-          customRequest={({ file, onSuccess }: any) => {
-            onSuccess && onSuccess(null, file);
-          }}
-        >
-          <Button icon={<UploadOutlined />}>Unggah Gambar</Button>
-        </Upload>
-      </Form.Item>
-    </Col>
-    <Col span={12}>
-      <Form.Item
-        name="satuan_produk"
-        label="Satuan"
-        rules={[{ required: true, message: "Silakan masukkan satuan produk!" }]}
-      >
-        <Input />
-      </Form.Item>
-    </Col>
-  </Row>
-</Form>
+        <Form form={form} layout="vertical">
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="nama_produk"
+                label="Nama Produk"
+                rules={[
+                  { required: true, message: "Silakan masukkan nama produk!" },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="stok"
+                label="Stok"
+                rules={[
+                  { required: true, message: "Silakan masukkan stok produk!" },
+                ]}
+              >
+                <Input type="number" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="id_kategori"
+                label="Kategori"
+                rules={[{ required: true, message: "Silakan pilih kategori!" }]}
+              >
+                <Select>
+                  {categories.map((category) => (
+                    <Select.Option
+                      key={category.id_kategori}
+                      value={category.id_kategori}
+                    >
+                      {category.nama}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="harga_produk"
+                label="Harga"
+                rules={[
+                  { required: true, message: "Silakan masukkan harga produk!" },
+                ]}
+              >
+                <Input type="number" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="gambar_produk"
+                label="Gambar Produk"
+                valuePropName="fileList"
+                getValueFromEvent={({ fileList }: any) => fileList}
+                rules={[
+                  { required: true, message: "Silakan unggah gambar produk!" },
+                ]}
+              >
+                <Upload
+                  name="gambar_produk"
+                  listType="picture"
+                  beforeUpload={() => false}
+                  showUploadList={{ showRemoveIcon: true }}
+                  accept="image/*"
+                  customRequest={({ file, onSuccess }: any) => {
+                    onSuccess && onSuccess(null, file);
+                  }}
+                >
+                  <Button icon={<UploadOutlined />}>Unggah Gambar</Button>
+                </Upload>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="satuan_produk"
+                label="Satuan"
+                rules={[
+                  {
+                    required: true,
+                    message: "Silakan masukkan satuan produk!",
+                  },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
       </Modal>
       <Modal
         title="Edit Produk"
@@ -769,6 +792,13 @@ const ProdukPage: React.FC = () => {
                     {selectedProductInfo.nama_produk}
                   </td>
                 </tr>
+                <td className="border-b border-gray-300 px-4 py-2">
+                  Nama Kategori
+                </td>
+                <td className="border-b border-gray-300 px-4 py-2">
+                  {selectedProductInfo.kategori?.nama}{" "}
+                  {/* Mengakses nama kategori */}
+                </td>
                 <tr>
                   <td className="border-b border-gray-300 px-4 py-2">Harga</td>
                   <td className="border-b border-gray-300 px-4 py-2">
