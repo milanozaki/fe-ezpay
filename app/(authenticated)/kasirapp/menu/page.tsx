@@ -23,7 +23,6 @@ const MenuPage = () => {
   const [cart, setCart] = useState<Produk[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<string>("Tunai");
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
-
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -107,6 +106,11 @@ const MenuPage = () => {
     );
   };
 
+  const handleClearCart = () => {
+    // Hapus semua item dari cart
+    setCart([]); 
+  };
+  
   const totalHarga = cart.reduce(
     (total, item) => total + item.harga_produk * item.quantity,
     0
@@ -185,8 +189,8 @@ const MenuPage = () => {
       </div>
   
       {/* Keranjang */}
-      <div className="w-[25%] h-full p-4 bg-green-200 flex flex-col justify-between">
-        <h2 className="text-lg font-bold mb-4">Pesanan ({cart.length})</h2>
+      <div className="w-[25%] h-[calc(100vh-175px)] p-4 bg-blue-100 flex flex-col justify-between">
+          <h2 className="text-lg font-bold mb-4">Pesanan ({cart.length})</h2>
         <div className="flex-grow overflow-auto scrollbar-hidden touch-scroll">
           <style jsx>{`
             .scrollbar-hidden {
@@ -266,8 +270,18 @@ const MenuPage = () => {
             Qris
           </Button>
         </div>
-  
-        <Button className="mt-4 w-full bg-blue-500 text-white">Bayar</Button>
+        <div className="flex mt-4 gap-2">
+          <Button
+          className="w-[60px] h-[40px] bg-white border-none"
+          onClick={handleClearCart}
+          icon={<DeleteOutlined />}
+          title="Hapus semua produk"
+        />
+        <Button className="w-[calc(120%-80px)] h-[40px] bg-blue-500 text-white">
+          Bayar
+        </Button>
+        
+      </div>
       </div>
     </div>
   );
