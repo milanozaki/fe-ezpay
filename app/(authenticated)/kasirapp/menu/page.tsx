@@ -189,7 +189,7 @@ const MenuPage = () => {
       </div>
   
       {/* Keranjang */}
-      <div className="w-[25%] h-[calc(100vh-175px)] p-4 bg-blue-100 flex flex-col justify-between">
+      <div className="w-[25%] h-[calc(100vh-175px)] p-4 flex flex-col justify-between">
           <h2 className="text-lg font-bold mb-4">Pesanan ({cart.length})</h2>
         <div className="flex-grow overflow-auto scrollbar-hidden touch-scroll">
           <style jsx>{`
@@ -208,46 +208,46 @@ const MenuPage = () => {
           {cart.length === 0 ? (
             <p>Keranjang Anda kosong</p>
           ) : (
-            <ul>
-              {cart.map((item, index) => (
-                <li key={index} className="mb-4">
-                  <div className="flex justify-between items-center">
-                    {/* Nama produk */}
-                    <span className="text-xs">{item.nama_produk}</span>
-  
-                    {/* Kontrol kuantitas */}
-                    <div className="flex items-center">
-                      <Button
-                        className="border-none bg-transparent"
-                        onClick={() => updateQuantity(item.id_produk, -1)}
-                      >
-                        -
-                      </Button>
-                      <span className="mx-2">{item.quantity}</span>
-                      <Button
-                        className="border-none bg-transparent"
-                        onClick={() => updateQuantity(item.id_produk, 1)}
-                      >
-                        +
-                      </Button>
-                    </div>
-  
-                    {/* Harga produk */}
-                    <span className="mr-4">
-                      Rp {formatCurrency(item.harga_produk)}
-                    </span>
-  
-                    {/* Tombol hapus */}
-                    <Button
-                      type="link"
-                      onClick={() => removeFromCart(item.id_produk)}
-                      className="text-red-500"
-                      icon={<DeleteOutlined />}
-                    />
-                  </div>
-                </li>
-              ))}
-            </ul>
+        <ul>
+          {cart.map((item, index) => (
+            <li key={index} className="mb-4">
+              <div className="flex justify-between items-center">
+                {/* Nama produk */}
+                <span className="text-sm-bold text-pretty w-1/4 mr-2">{item.nama_produk}</span>
+
+                {/* Kontrol kuantitas */}
+                <div className="flex items-center w-1/4 justify-center">
+                  <Button
+                    className="border-none bg-transparent"
+                    onClick={() => updateQuantity(item.id_produk, -1)}
+                  >
+                    -
+                  </Button>
+                  <span className="mx-2">{item.quantity}</span>
+                  <Button
+                    className="border-none bg-transparent"
+                    onClick={() => updateQuantity(item.id_produk, 1)}
+                  >
+                    +
+                  </Button>
+                </div>
+
+                {/* Harga produk */}
+                <span className="mr-4 w-1/4 text-center">
+                  Rp {formatCurrency(item.harga_produk)}
+                </span>
+
+                {/* Tombol hapus */}
+                <Button
+                  type="link"
+                  onClick={() => removeFromCart(item.id_produk)}
+                  className="text-red-500"
+                  icon={<DeleteOutlined />}
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
           )}
         </div>
   
@@ -256,31 +256,58 @@ const MenuPage = () => {
         </div>
   
         <div className="mt-4">
+          {/* Tombol Tunai */}
           <Button
-            type={paymentMethod === "Tunai" ? "primary" : "default"}
+            type="default"
             onClick={() => setPaymentMethod("Tunai")}
+            style={{
+              backgroundColor: paymentMethod === "Tunai" ? "#3B8394" : undefined,
+              color: paymentMethod === "Tunai" ? "#fff" : "#3B8394",
+              borderColor: paymentMethod === "Tunai" ? "#3B8394" : "#3B8394",
+            }}
           >
             Tunai
           </Button>
+
+          {/* Tombol Qris */}
           <Button
-            type={paymentMethod === "Qris" ? "primary" : "default"}
+            type="default"
             onClick={() => setPaymentMethod("Qris")}
             className="ml-2"
+            style={{
+              backgroundColor: paymentMethod === "Qris" ? "#3B8394" : undefined,
+              color: paymentMethod === "Qris" ? "#fff" : "#3B8394",
+              borderColor: paymentMethod === "Qris" ? "#3B8394" : "#3B8394",
+            }}
           >
             Qris
           </Button>
         </div>
-        <div className="flex mt-4 gap-2">
-          <Button
-          className="w-[60px] h-[40px] bg-white border-none"
-          onClick={handleClearCart}
-          icon={<DeleteOutlined />}
-          title="Hapus semua produk"
-        />
-        <Button className="w-[calc(120%-80px)] h-[40px] bg-blue-500 text-white">
-          Bayar
-        </Button>
         
+        <div className="flex mt-4 w-full gap-2 ">
+        {/* Tombol Hapus Semua Produk */}
+        <div>
+          <button
+            type="button"
+            className="w-full bg-red-500   py-3 px-4 border text-white rounded-md transition-transform transform hover:scale-105 text-sm"
+            onClick={handleClearCart}
+            title="Hapus semua produk"
+            style={{ height: "48px" }} // Set height here
+          >
+            <DeleteOutlined />
+          </button>
+        </div>
+        
+        {/* Tombol Bayar */}
+        <div className="flex-1">
+          <button
+            type="button"
+            className="w-full bg-[#3B8394] text-white py-3 px-4 border border-transparent rounded-md transition-transform transform hover:scale-105 hover:bg-[#389cb0] hover:border-[#389cb0] hover:shadow-lg hover:text-[#e0f7fa] duration-300 text-sm"
+            style={{ height: "48px" }} // Set height here
+          >
+            Bayar
+          </button>
+        </div>
       </div>
       </div>
     </div>

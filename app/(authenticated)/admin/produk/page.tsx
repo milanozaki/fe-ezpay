@@ -412,9 +412,8 @@ const ProdukPage: React.FC = () => {
 
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
-  const paginatedProduk = Array.isArray(filteredProduk)
-    ? filteredProduk.slice(startIndex, endIndex)
-    : [];
+  const paginatedProduk = produk.slice((currentPage - 1) * 12, currentPage * 12);
+
 
   return (
     <div className="p-4 mr-8 ml-64">
@@ -474,75 +473,76 @@ const ProdukPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-        {paginatedProduk.length === 0 ? (
-          <div className="col-span-full text-center text-gray-500 p-4">
-            Produk kosong.
-          </div>
-        ) : (
-          paginatedProduk.map((item) => (
-            <Card
-              key={item.id_produk}
-              cover={
-                <Image
-                  alt={item.nama_produk}
-                  src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
-                  style={{
-                    width: "100%", // Ensures image takes full width of the card
-                    height: "200px", // Set fixed height
-                    objectFit: "cover", // Makes the image fill the space without distorting
-                  }}
-                  preview={false}
-                />
-              }
-              actions={[
-                <Button
-                  className="bg-blue-600 text-white hover:bg-blue-400"
-                  icon={<EditOutlined />}
-                  onClick={() => handleEditClick(item)}
-                >
-                  Edit
-                </Button>,
-                <Button
-                  className="bg-green-600 text-white hover:bg-green-400"
-                  icon={<InfoCircleOutlined />}
-                  onClick={() => handleInfoClick(item)}
-                >
-                  Info
-                </Button>,
-              ]}
-            >
-              <Card.Meta
-                title={item.nama_produk}
-                description={
-                  <div>
-                    <span style={{ color: "black" }}>
-                      Rp {formatCurrency(item.harga_produk)}
-                    </span>
-                    <div
-                      style={{
-                        color: item.status_produk === "aktif" ? "green" : "red",
-                        marginTop: "4px", // Optional: Add some margin for spacing
-                      }}
-                    >
-                      {item.status_produk}
-                    </div>
-                  </div>
-                }
-              />
-            </Card>
-          ))
-        )}
-      </div>
-
-      {totalProduk > pageSize && (
-        <Pagination
-          current={currentPage}
-          total={totalProduk}
-          pageSize={pageSize}
-          onChange={handlePageChange}
-          className="flex justify-end"
+  {paginatedProduk.length === 0 ? (
+    <div className="col-span-full text-center text-gray-500 p-4">
+      Produk kosong.
+    </div>
+  ) : (
+    paginatedProduk.map((item) => (
+      <Card
+        key={item.id_produk}
+        cover={
+          <Image
+            alt={item.nama_produk}
+            src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
+            style={{
+              width: "100%", // Ensures image takes full width of the card
+              height: "200px", // Set fixed height
+              objectFit: "cover", // Makes the image fill the space without distorting
+            }}
+            preview={false}
+          />
+        }
+        actions={[
+          <Button
+            className="bg-blue-600 text-white hover:bg-blue-400"
+            icon={<EditOutlined />}
+            onClick={() => handleEditClick(item)}
+          >
+            Edit
+          </Button>,
+          <Button
+            className="bg-green-600 text-white hover:bg-green-400"
+            icon={<InfoCircleOutlined />}
+            onClick={() => handleInfoClick(item)}
+          >
+            Info
+          </Button>,
+        ]}
+      >
+        <Card.Meta
+          title={item.nama_produk}
+          description={
+            <div>
+              <span style={{ color: "black" }}>
+                Rp {formatCurrency(item.harga_produk)}
+              </span>
+              <div
+                style={{
+                  color: item.status_produk === "aktif" ? "green" : "red",
+                  marginTop: "4px", // Optional: Add some margin for spacing
+                }}
+              >
+                {item.status_produk}
+              </div>
+            </div>
+          }
         />
-      )}
+      </Card>
+    ))
+  )}
+</div>
+
+{totalProduk > pageSize && (
+  <Pagination
+    current={currentPage}
+    total={totalProduk}
+    pageSize={12} // 12 items per page, ensures 3 rows with 4 items per row
+    onChange={handlePageChange}
+    className="flex justify-end"
+  />
+)}
+
 
       <Modal
         title="Tambah Produk"
