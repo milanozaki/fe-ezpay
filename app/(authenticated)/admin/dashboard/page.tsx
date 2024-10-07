@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { CgShoppingBag } from "react-icons/cg";
 import { GrTransaction } from "react-icons/gr";
 import { Bar } from "react-chartjs-2";
+import { GetServerSideProps } from 'next';
 import {
   Chart as ChartJS,
   CategoryScale,

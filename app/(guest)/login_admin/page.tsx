@@ -1,5 +1,5 @@
 "use client"; // Menandakan komponen ini sebagai Client Component
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation"; // Impor useRouter dari Next.js
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
@@ -11,6 +11,17 @@ const LoginPage = () => {
   const router = useRouter(); // Inisialisasi router
   const [showPassword, setShowPassword] = useState(false);
 
+
+
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      // Tidak melakukan redirect otomatis jika sudah login
+      // Hanya menampilkan pesan atau melakukan logika lain jika diperlukan
+      // router.push("/kasirapp/menu"); // Arahkan ke menu kasir jika sudah login
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -18,7 +29,7 @@ const LoginPage = () => {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:3222/auth/login/", {
+      const response = await fetch("http://localhost:3222/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -28,15 +39,24 @@ const LoginPage = () => {
 
       const data = await response.json();
 
-      if (data.redirectUrl) {
-        // Redirect jika toko ditolak
-        router.push(data.redirectUrl);
-      } else if (data.accessToken) {
-        // Simpan accessToken dan redirect ke dashboard
-        localStorage.setItem("accessToken", data.accessToken);
-        router.push("/admin/dashboard");
+      if (!response.ok) {
+        // Show error message for 401 (invalid credentials)
+        if (response.status === 401) {
+          setError("Email atau password salah. Silakan coba lagi.");
+        } else {
+          throw new Error("Login gagal");
+        }
       } else {
-        setError(data.message);
+        // Save access token to local storage
+        localStorage.setItem("accessToken", data.access_token); // Ganti 'accessToken' jika nama field berbeda
+        localStorage.setItem("userEmail", email); // Save user's email in local storage
+
+        // Redirect if necessary
+        if (data.redirectUrl) {
+          router.push(data.redirectUrl); // Redirect to another page (e.g., password change)
+        } else {
+          router.push("/admin/dashboard"); // Redirect to admin dashboard on successful login
+        }
       }
     } catch (err) {
       setError("Login gagal. Periksa kembali kredensial Anda.");
