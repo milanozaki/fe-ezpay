@@ -211,39 +211,41 @@ const MenuPage = () => {
         <ul>
           {cart.map((item, index) => (
             <li key={index} className="mb-4">
-              <div className="flex justify-between items-center">
-                {/* Nama produk */}
-                <span className="text-sm-bold text-pretty w-1/4 mr-2">{item.nama_produk}</span>
+              <div className="border rounded-lg p-4 shadow-md">
+                <div className="flex justify-between items-center">
+                  {/* Nama produk */}
+                  <span className="text-sm-bold text-pretty w-1/4 mr-2">{item.nama_produk}</span>
 
-                {/* Kontrol kuantitas */}
-                <div className="flex items-center w-1/4 justify-center">
+                  {/* Kontrol kuantitas */}
+                  <div className="flex items-center w-1/4 justify-center">
+                    <Button
+                      className="border-none bg-transparent"
+                      onClick={() => updateQuantity(item.id_produk, -1)}
+                    >
+                      -
+                    </Button>
+                    <span className="mx-2">{item.quantity}</span>
+                    <Button
+                      className="border-none bg-transparent"
+                      onClick={() => updateQuantity(item.id_produk, 1)}
+                    >
+                      +
+                    </Button>
+                  </div>
+
+                  {/* Harga produk */}
+                  <span className="ml-1 mr-4 w-1/5 text-center">
+                    Rp {formatCurrency(item.harga_produk)}
+                  </span>
+
+                  {/* Tombol hapus */}
                   <Button
-                    className="border-none bg-transparent"
-                    onClick={() => updateQuantity(item.id_produk, -1)}
-                  >
-                    -
-                  </Button>
-                  <span className="mx-2">{item.quantity}</span>
-                  <Button
-                    className="border-none bg-transparent"
-                    onClick={() => updateQuantity(item.id_produk, 1)}
-                  >
-                    +
-                  </Button>
+                    type="link"
+                    onClick={() => removeFromCart(item.id_produk)}
+                    className="text-red-500 justify-end"
+                    icon={<DeleteOutlined />}
+                  />
                 </div>
-
-                {/* Harga produk */}
-                <span className="mr-4 w-1/4 text-center">
-                  Rp {formatCurrency(item.harga_produk)}
-                </span>
-
-                {/* Tombol hapus */}
-                <Button
-                  type="link"
-                  onClick={() => removeFromCart(item.id_produk)}
-                  className="text-red-500"
-                  icon={<DeleteOutlined />}
-                />
               </div>
             </li>
           ))}

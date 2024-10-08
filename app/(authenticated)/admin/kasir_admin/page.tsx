@@ -182,12 +182,22 @@ const KasirPage: React.FC = () => {
                   <td className="py-3 px-10 text-left">{kasir.nama}</td>
                   <td className="py-3 px-2 text-left">{kasir.email}</td>
                   <td
-                    className={`py-3 px-4 text-left ${
+                    className={`py-2 px-2 text-left flex items-center gap-2 mt-2 mb-2 ${
                       kasir.status === StatusEnum.ACTIVE
-                        ? "text-green-600"
-                        : "text-red-600"
+                        ? " text-green-600"
+                        : " text-red-600"
                     }`}
+                    style={{
+                      borderRadius: "8px", // Tambahkan border radius agar tampilan lebih halus
+                    }}
                   >
+                    {/* Dot untuk menunjukkan status */}
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        kasir.status === StatusEnum.ACTIVE ? "bg-green-600" : "bg-red-600"
+                      }`}
+                    ></span>
+                    {/* Tampilkan status */}
                     {kasir.status}
                   </td>
                   <td

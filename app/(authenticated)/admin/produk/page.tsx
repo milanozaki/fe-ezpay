@@ -486,9 +486,8 @@ const ProdukPage: React.FC = () => {
             alt={item.nama_produk}
             src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
             style={{
-              width: "100%", // Ensures image takes full width of the card
-              height: "200px", // Set fixed height
-              objectFit: "cover", // Makes the image fill the space without distorting
+              width: "350px",
+              height: "250px",
             }}
             preview={false}
           />

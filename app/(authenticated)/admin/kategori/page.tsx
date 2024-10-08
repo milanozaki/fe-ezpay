@@ -141,13 +141,13 @@ const KategoriPage = () => {
               {kategori.length > 0 ? (
                 kategori.map((item, index) => (
                   <tr key={index} className="hover:bg-gray-100 transition duration-200">
-                    <td className="py-3 px-6 text-center w-16">{index + 1}</td>
+                    <td className="py-3 px-6 text-center w-16">{index + 1}.</td>
                     <td className="py-3 px-6 text-center">{item.kategori}</td>
                     <td className="py-3 px-6 text-center">{item.jumlahProduk}</td>
                     <td className="py-3 px-6 text-center">
                       <a
                         href="#"
-                        onClick={() => handleEditClick(item.nama)}
+                        onClick={() => handleEditClick(item.kategori)}
                         className="text-blue-500 hover:text-blue-700 underline"
                       >
                         Edit
