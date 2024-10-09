@@ -119,15 +119,10 @@ const LoginPage = () => {
                 required
               />
               <div
-                className="absolute inset-y-0 right-3 flex items-center cursor-pointer pb-7"
+                className="absolute inset-y-0 right-3 flex items-center cursor-pointer "
                 onClick={togglePasswordVisibility}
               >
                 {showPassword ? <FaEye size={20} /> : <FaEyeSlash size={20} />}
-              </div>
-              <div className="text-right mt-2">
-                <a href="#" className="text-sm text-blue-500 hover:underline">
-                  Forgot password?
-                </a>
               </div>
             </div>
 

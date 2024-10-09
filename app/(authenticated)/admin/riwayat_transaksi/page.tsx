@@ -12,6 +12,7 @@ import {
 import "antd/dist/reset.css";
 import * as XLSX from "xlsx";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 const { RangePicker } = DatePicker;
 
@@ -24,10 +25,34 @@ const RiwayatTransaksiPage = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true); // Add loading state
   const pageSize = 10;
+  const router = useRouter();
+
+  // Function to get cookies by name
+  const getCookie = (name: string) => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(";").shift();
+    return null;
+  };
+
+  // Check if accessToken exists; if not, redirect to login page
+  const accessToken = getCookie("accessToken");
+
+  useEffect(() => {
+    if (!accessToken) {
+      // If accessToken doesn't exist, redirect to login
+      router.push("/login_admin");
+    } else {
+      // Fetch data if accessToken exists
+      fetchData();
+    }
+  }, [accessToken, router]);
 
   // Fetch data from backend with optional date range
   const fetchData = async (startDate = "", endDate = "") => {
+    setLoading(true); // Set loading to true when fetching data
     try {
       const response = await axios.get("http://localhost:3222/transaksi/all", {
         params: {
@@ -48,13 +73,10 @@ const RiwayatTransaksiPage = () => {
       }
     } catch (error) {
       console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false); // Set loading to false when data fetching is complete
     }
   };
-
-  // Fetch all data when component mounts
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   // Show modal with transaction details
   const showModal = (transaction: any) => {
@@ -145,6 +167,10 @@ const RiwayatTransaksiPage = () => {
     XLSX.utils.book_append_sheet(wb, ws, "Riwayat Transaksi");
     XLSX.writeFile(wb, "Riwayat_Transaksi.xlsx");
   };
+
+  if (loading) {
+    return <div>Loading...</div>; // Show loading indicator while fetching data
+  }
 
   return (
     <div className="pt-1 pl-5 pb-5 mr-24 ml-60">
@@ -256,12 +282,10 @@ const RiwayatTransaksiPage = () => {
                   render: (total: number) => `Rp ${formatCurrency(total)}`,
                 },
               ]}
-              rowKey="id_produk"
-              pagination={false}
             />
           </div>
         ) : (
-          <p>Tidak ada detail yang tersedia.</p>
+          <div>Loading...</div>
         )}
       </Modal>
     </div>

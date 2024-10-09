@@ -1,6 +1,7 @@
 'use client'; // Menandakan komponen ini sebagai Client Component
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation'; // Impor useRouter dari Next.js
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -8,6 +9,7 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter(); // Inisialisasi router
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,6 +42,10 @@ const LoginPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
@@ -76,20 +82,22 @@ const LoginPage = () => {
             </div>
 
             {/* Input Password */}
-            <div className="mb-6">
+            <div className="mb-6 relative">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"} // Kondisi untuk mengubah tipe input
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                 required
               />
-              <div className="text-right mt-2">
-                <a href="#" className="text-sm text-blue-500 hover:underline">Forgot password?</a>
+              <div
+                className="absolute inset-y-0 right-3 flex items-center cursor-pointer"
+                onClick={togglePasswordVisibility}
+              >
+                {showPassword ? <FaEye size={20} /> : <FaEyeSlash size={20} />}
               </div>
             </div>
-
             {/* Error Message */}
             {error && (
               <div className="text-red-500 text-center mb-4">

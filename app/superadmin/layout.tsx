@@ -10,6 +10,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false); // Default sidebar tertutup di mobile
   const [selectedMenu, setSelectedMenu] = useState<string>(''); // State untuk menyimpan item yang dipilih dengan default ''
   const [userEmail, setUserEmail] = useState<string>("user@example.com"); // State untuk email pengguna
+  const [avatarBgColor, setAvatarBgColor] = useState<string>(''); // State untuk menyimpan warna background avatar
   const pathname = usePathname(); // Mendapatkan path saat ini
 
   const menuItems = [
@@ -25,6 +26,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         setUserEmail(storedEmail);
       }
     }
+
+    // Menghasilkan warna acak untuk background avatar setiap kali komponen di-mount
+    const randomColor = `#${Math.floor(Math.random()*16777215).toString(16)}`;
+    setAvatarBgColor(randomColor);
   }, []);
 
   // Set selectedMenu berdasarkan URL saat ini
@@ -37,7 +42,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     }
   }, [pathname]); // Gunakan pathname alih-alih asPath
 
-  const avatarUrl = 'https://mir-s3-cdn-cf.behance.net/project_modules/disp/414d9011889067.5625411b2afd2.png';
   const userRole = 'Superadmin'; // Role bisa diubah sesuai kebutuhan
 
   // Menu untuk dropdown avatar dengan ukuran persegi panjang dan background
@@ -45,7 +49,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     <div className="p-4 w-64 bg-white shadow-lg rounded-lg">
       {/* Avatar di tengah */}
       <div className="flex justify-center">
-        <Avatar size={64} src={avatarUrl} />
+        <Avatar size={64} style={{ backgroundColor: avatarBgColor, color: '#fff' }}>
+          {userEmail ? userEmail[0].toUpperCase() : ''}
+        </Avatar>
       </div>
       <div className="mt-2 font-bold text-center">{userEmail}</div>
       <div className="text-gray-500 text-center">{userRole}</div>
@@ -119,9 +125,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           <Dropdown overlay={avatarMenu} trigger={['click']} placement="bottomRight">
             <Avatar
               size="large"
-              style={{ cursor: 'pointer' }}
-              src={avatarUrl} // Ganti dengan URL gambar avatar
-            />
+              style={{ cursor: 'pointer', backgroundColor: avatarBgColor, color: '#fff' }}
+            >
+              {userEmail ? userEmail[0].toUpperCase() : ''}
+            </Avatar>
           </Dropdown>
         </header>
         <main className="flex-1 p-6 bg-gray-100 md:p-10">
