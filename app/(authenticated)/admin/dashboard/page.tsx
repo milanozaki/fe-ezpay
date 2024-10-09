@@ -24,13 +24,33 @@ ChartJS.register(
   Legend
 );
 
+interface MonthlySales {
+  month: string;
+  total: number;
+}
+
 // DashboardPage Component
 const DashboardPage = () => {
   const [stokMenipis, setStokMenipis] = useState<any[]>([]);
   const [jumlahProduk, setJumlahProduk] = useState<number>(0);
   const [jumlahTransaksi, setJumlahTransaksi] = useState<number>(0);
   const [totalOmset, setTotalOmset] = useState<number>(0);
+  const [selectedYear, setSelectedYear] = useState<number>(
+    new Date().getFullYear()
+  );
   const [loading, setLoading] = useState<boolean>(true);
+  const [chartData, setChartData] = useState<any>({
+    labels: [],
+    datasets: [
+      {
+        label: "Penjualan",
+        data: [],
+        backgroundColor: "rgba(51, 47, 208, 1)",
+        borderColor: "rgba(51, 47, 208, 1)",
+        borderWidth: 1,
+      },
+    ],
+  }); // Inisialisasi chartData dengan struktur yang benar
   const router = useRouter(); // hook untuk navigasi
 
   useEffect(() => {
@@ -69,6 +89,34 @@ const DashboardPage = () => {
         );
         const omsetData = await omsetResponse.json();
         setTotalOmset(omsetData);
+
+        // Fetch data penjualan bulanan
+        const monthlySalesResponse = await fetch(
+          "http://localhost:3222/transaksi/monthly-sales"
+        );
+        const monthlySalesData: MonthlySales[] =
+          await monthlySalesResponse.json();
+
+        // Format data untuk chart
+        const labels = monthlySalesData.map((item) => {
+          const date = new Date(item.month);
+          return date.toLocaleString("default", { month: "long" }); // Mengambil nama bulan
+        });
+        const salesData = monthlySalesData.map((item) => item.total); // Ambil total penjualan
+
+        // Set data chart
+        setChartData({
+          labels,
+          datasets: [
+            {
+              label: "Penjualan",
+              data: salesData,
+              backgroundColor: "rgba(51, 47, 208, 1)",
+              borderColor: "rgba(51, 47, 208, 1)",
+              borderWidth: 1,
+            },
+          ],
+        });
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -102,20 +150,6 @@ const DashboardPage = () => {
         text: "Statistik Penjualan Bulanan",
       },
     },
-  };
-
-  // Sample dummy data for the chart
-  const chartData = {
-    labels: ["January", "February", "March", "April", "May", "June", "July"],
-    datasets: [
-      {
-        label: "Penjualan",
-        data: [65, 59, 80, 81, 56, 55, 40],
-        backgroundColor: "rgba(51, 47, 208, 1)",
-        borderColor: "rgba(51, 47, 208, )",
-        borderWidth: 1,
-      },
-    ],
   };
 
   return (
@@ -195,7 +229,11 @@ const DashboardPage = () => {
             Statistik Penjualan Bulanan
           </h2>
           <div className="flex justify-center items-center h-full">
-            <Bar data={chartData} options={chartOptions} height={130} />
+            {chartData.labels.length > 0 ? ( // Pastikan ada data sebelum render
+              <Bar data={chartData} options={chartOptions} height={130} />
+            ) : (
+              <div>Loading chart data...</div>
+            )}
           </div>
         </div>
 

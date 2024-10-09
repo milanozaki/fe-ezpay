@@ -15,12 +15,21 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const router = useRouter();
   const authenticatedMenu = [
-    { name: "Menu", path: "/kasirapp/menu", icon: <IoFastFoodOutline size={20} /> },
-    { name: "Riwayat", path: "/kasirapp/riwayat", icon: <HistoryOutlined size={20} /> },
+    {
+      name: "Menu",
+      path: "/kasirapp/menu",
+      icon: <IoFastFoodOutline size={20} />,
+    },
+    {
+      name: "Riwayat",
+      path: "/kasirapp/riwayat",
+      icon: <HistoryOutlined size={20} />,
+    },
   ];
 
   const userRole = "Kasir";
-  const avatarUrl = "https://mir-s3-cdn-cf.behance.net/project_modules/disp/414d9011889067.5625411b2afd2.png";
+  const avatarUrl =
+    "https://mir-s3-cdn-cf.behance.net/project_modules/disp/414d9011889067.5625411b2afd2.png";
 
   const avatarMenu = (
     <div className="p-4 w-64 bg-white shadow-lg rounded-lg">
@@ -36,8 +45,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         className="w-full -mt-4"
         onClick={() => {
           console.log("Logout button clicked");
-          localStorage.removeItem('userEmail');
-          router.push('/login_kasir');
+          localStorage.removeItem("userEmail");
+          router.push("/login_kasir");
         }}
       >
         Keluar
@@ -55,7 +64,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
     // Check if in browser before accessing localStorage
     if (typeof window !== "undefined") {
-      const email = localStorage.getItem('userEmail');
+      const email = localStorage.getItem("userEmail");
       if (email) {
         setUserEmail(email);
       }
@@ -112,7 +121,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <div className="flex-1 flex flex-col ml-20 ">
         <header className="bg-[#257691] shadow-md top-0 flex justify-between items-center text-white z-50 md:px-8 md:py-6">
           <h1 className="text-xl font-semibold ml-4">{selectedMenu}</h1>
-          <Dropdown overlay={avatarMenu} trigger={["click"]} placement="bottomRight">
+          <Dropdown
+            overlay={avatarMenu}
+            trigger={["click"]}
+            placement="bottomRight"
+          >
             <Avatar
               size="large"
               style={{ cursor: "pointer" }}
