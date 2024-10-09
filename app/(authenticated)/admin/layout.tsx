@@ -71,8 +71,21 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         danger
         className="w-full -mt-4"
         onClick={() => {
-          localStorage.removeItem("userEmail"); // Hapus email dari localStorage
-          router.push("/login_admin"); // Arahkan ke halaman login
+          // Hapus email dan token dari localStorage atau sessionStorage
+          localStorage.removeItem("userEmail"); 
+          localStorage.removeItem("authToken"); // Contoh token yang disimpan
+          localStorage.removeItem("pemilikToko"); 
+          localStorage.removeItem("tokoDto");
+          sessionStorage.clear(); // Membersihkan session
+          document.cookie = "accessToken=; Max-Age=0; Path=/; Secure; SameSite=Strict;"; // Menghapus accessToken dari cookies
+          // Jika ada cookie yang digunakan untuk autentikasi, hapus cookie di sini
+
+          // Anda juga bisa memanggil API logout backend untuk mengakhiri sesi di server
+          // Contoh:
+          // fetch('/api/logout', { method: 'POST', credentials: 'include' })
+
+          // Arahkan ke halaman login setelah logout berhasil
+          router.push("/login_admin");
         }}
       >
         Keluar
