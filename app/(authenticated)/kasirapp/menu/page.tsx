@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Select, Card, Image, Button } from "antd";
+import { Select, Card, Image, Button, message, notification } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
+import Cookies from "js-cookie";
 
 interface Produk {
   id_produk: string;
@@ -21,11 +22,10 @@ const MenuPage = () => {
   const [activeButton, setActiveButton] = useState<string>("Semua");
   const [loading, setLoading] = useState<boolean>(true);
   const [cart, setCart] = useState<Produk[]>([]);
-  const [paymentMethods, setPaymentMethods] = useState<
-    { id: string; nama: string }[]
-  >([]);
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -68,7 +68,7 @@ const MenuPage = () => {
         setPaymentMethods(data);
         // Set default payment method to the first method
         if (data.length > 0) {
-          setPaymentMethod(data[0].id);
+          setPaymentMethod(data[0].id_metode_transaksi);
         }
       } catch (error) {
         console.error("Error fetching payment methods:", error);
@@ -77,9 +77,13 @@ const MenuPage = () => {
 
     fetchPaymentMethods();
   }, []);
+
   const handleCategoryChange = (value: string) => {
     setActiveButton(value);
   };
+
+  const cashMethod = paymentMethods.find((method) => method.nama === "Cash");
+  const qrisMethod = paymentMethods.find((method) => method.nama === "QRIS");
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat("id-ID").format(amount);
@@ -95,6 +99,13 @@ const MenuPage = () => {
       const existingProduct = prevCart.find(
         (item) => item.id_produk === produk.id_produk
       );
+
+      // Cek apakah stok mencukupi
+      if (existingProduct && existingProduct.quantity + 1 > produk.stok) {
+        message.error(`Stok tidak mencukupi untuk ${produk.nama_produk}`);
+        return prevCart; // Tidak menambah ke keranjang
+      }
+
       if (existingProduct) {
         return prevCart.map((item) =>
           item.id_produk === produk.id_produk
@@ -102,6 +113,13 @@ const MenuPage = () => {
             : item
         );
       }
+
+      // Cek stok saat pertama kali ditambahkan ke keranjang
+      if (produk.stok < 1) {
+        message.error(`Stok tidak mencukupi untuk ${produk.nama_produk}`);
+        return prevCart; // Tidak menambah ke keranjang
+      }
+
       return [...prevCart, { ...produk, quantity: 1 }];
     });
   };
@@ -110,6 +128,24 @@ const MenuPage = () => {
     setSelectedProduct(produk.id_produk);
     addToCart(produk);
     setTimeout(() => setSelectedProduct(null), 300);
+  };
+
+  const openSuccessNotification = (result: any) => {
+    const totalHarga = cart.reduce(
+      (total, item) => total + item.harga_produk * item.quantity,
+      0
+    );
+
+    notification.success({
+      message: "Pesanan Berhasil",
+      description: `Pesanan Anda telah berhasil dibuat. 
+                    ID Pesanan: ${result.id_pesanan} 
+                    Metode Transaksi: ${
+                      result.metode_transaksi || paymentMethod
+                    } 
+                    Total Harga: Rp ${formatCurrency(totalHarga)}`, // Menggunakan total harga dari state cart
+      placement: "bottomRight", // Menentukan posisi notifikasi
+    });
   };
 
   const removeFromCart = (id_produk: string) => {
@@ -133,18 +169,16 @@ const MenuPage = () => {
   };
 
   const handleSubmit = async () => {
-    const token = localStorage.getItem('access_token'); // Get token from local storage
-    if (!token) {
-      alert('Token tidak ditemukan. Silakan login kembali.');
-      return;
-    }
+    const token = Cookies.get("access_token"); // Ambil token dari cookie
+    console.log("Token found:", token); // Log token
+
     const pesananData = {
       detil_produk_pesanan: cart.map((item) => ({
         id_produk: item.id_produk,
         jumlah_produk: item.quantity,
       })),
       metode_transaksi_id: paymentMethod, // UUID dari metode pembayaran
-      token, // ganti dengan token valid
+      token, // Ganti dengan token valid
     };
 
     try {
@@ -152,7 +186,7 @@ const MenuPage = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Include token in the header
+          Authorization: `Bearer ${token}`, // Sertakan token di header
         },
         body: JSON.stringify(pesananData),
       });
@@ -162,7 +196,7 @@ const MenuPage = () => {
       }
 
       const result = await response.json();
-      alert("Pesanan berhasil: " + JSON.stringify(result));
+      openSuccessNotification(result); // Panggil notifikasi sukses di sini
       setCart([]); // Bersihkan keranjang setelah pesanan berhasil
     } catch (error) {
       console.error("Error submitting pesanan:", error);
@@ -271,40 +305,40 @@ const MenuPage = () => {
                 <li key={index} className="mb-4">
                   <div className="border rounded-lg p-4 shadow-md">
                     <div className="flex justify-between items-center">
-                      {/* Nama produk */}
-                      <span className="text-sm-bold text-pretty w-1/4 mr-2">
-                        {item.nama_produk}
-                      </span>
-
-                      {/* Kontrol kuantitas */}
-                      <div className="flex items-center w-1/4 justify-center">
-                        <Button
-                          className="border-none bg-transparent"
+                      <div>
+                        <h3 className="font-bold">{item.nama_produk}</h3>
+                        <p>Harga: Rp {formatCurrency(item.harga_produk)}</p>
+                        <p>Jumlah: {item.quantity}</p>
+                      </div>
+                      <Image
+                        alt={item.nama_produk}
+                        src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
+                        style={{ width: "100px", height: "100px" }}
+                        preview={false}
+                      />
+                    </div>
+                    <div className="flex justify-between items-center mt-4">
+                      <div>
+                        <button
                           onClick={() => updateQuantity(item.id_produk, -1)}
+                          className="px-2 py-1 bg-blue-500 text-white rounded-md mr-2"
                         >
                           -
-                        </Button>
-                        <span className="mx-2">{item.quantity}</span>
-                        <Button
-                          className="border-none bg-transparent"
+                        </button>
+                        <button
                           onClick={() => updateQuantity(item.id_produk, 1)}
+                          className="px-2 py-1 bg-blue-500 text-white rounded-md"
                         >
                           +
-                        </Button>
+                        </button>
                       </div>
-
-                      {/* Harga produk */}
-                      <span className="ml-1 mr-4 w-1/5 text-center">
-                        Rp {formatCurrency(item.harga_produk)}
-                      </span>
-
-                      {/* Tombol hapus */}
                       <Button
-                        type="link"
+                        type="primary"
+                        danger
                         onClick={() => removeFromCart(item.id_produk)}
-                        className="text-red-500 justify-end"
-                        icon={<DeleteOutlined />}
-                      />
+                      >
+                        <DeleteOutlined />
+                      </Button>
                     </div>
                   </div>
                 </li>
@@ -312,41 +346,46 @@ const MenuPage = () => {
             </ul>
           )}
         </div>
-
         <div className="mt-4">
-          <hr className="mb-4" />
-          <div className="flex justify-between">
-            <span>Total Harga:</span>
-            <span className="font-bold">Rp {formatCurrency(totalHarga)}</span>
-          </div>
-          <Select
-            value={paymentMethod}
-            style={{ width: "100%" }}
-            onChange={(value) => setPaymentMethod(value)}
-          >
-            {paymentMethods.map((method) => (
-              <Select.Option key={method.id} value={method.id}>
-                {method.nama}
-              </Select.Option>
-            ))}
-          </Select>
+          <h3 className="font-bold mb-2">
+            Total: Rp {formatCurrency(totalHarga)}
+          </h3>
 
-          <Button
-            type="primary"
-            className="mt-4 w-full"
-            onClick={handleSubmit}
-            disabled={cart.length === 0}
-          >
-            Bayar
-          </Button>
-          <Button
-            type="default"
-            className="mt-4 w-full"
-            onClick={handleClearCart}
-            disabled={cart.length === 0}
-          >
-            Kosongkan Keranjang
-          </Button>
+          {/* Metode Pembayaran */}
+          <div className="mb-4">
+            <Select
+              value={paymentMethod}
+              onChange={setPaymentMethod}
+              style={{ width: "100%" }}
+              placeholder="Pilih metode pembayaran"
+            >
+              {paymentMethods.map((method) => (
+                <Select.Option
+                  key={method.id_metode_transaksi}
+                  value={method.id_metode_transaksi}
+                >
+                  {method.nama}
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="flex justify-between gap-2">
+            <button
+              className="w-1/6 px-2 py-1 bg-red-500 text-white rounded-md"
+              onClick={handleClearCart}
+              disabled={cart.length === 0}
+            >
+              <DeleteOutlined />
+            </button>
+            <button
+              className="w-5/6 px-4 py-2 bg-green-500 text-white rounded-md"
+              onClick={handleSubmit}
+              disabled={cart.length === 0}
+            >
+              Bayar
+            </button>
+          </div>
         </div>
       </div>
     </div>
