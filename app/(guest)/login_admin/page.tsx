@@ -11,13 +11,12 @@ const LoginPage = () => {
   const router = useRouter(); // Inisialisasi router
   const [showPassword, setShowPassword] = useState(false);
 
-
-
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("accessToken="));
     if (token) {
-      // Tidak melakukan redirect otomatis jika sudah login
-      // Hanya menampilkan pesan atau melakukan logika lain jika diperlukan
+      // Jika token ditemukan di cookies, tidak melakukan redirect otomatis
       // router.push("/kasirapp/menu"); // Arahkan ke menu kasir jika sudah login
     }
   }, []);
@@ -47,11 +46,16 @@ const LoginPage = () => {
           throw new Error("Login gagal");
         }
       } else {
-        // Save access token to local storage
-        localStorage.setItem("accessToken", data.access_token); // Ganti 'accessToken' jika nama field berbeda
-        localStorage.setItem("userEmail", email); // Save user's email in local storage
+        // Set cookie untuk menyimpan access token
+        const expiresIn = 1; // Set expires dalam 1 hari
+        const date = new Date();
+        date.setTime(date.getTime() + expiresIn * 24 * 60 * 60 * 1000);
+        document.cookie = `accessToken=${data.access_token}; expires=${date.toUTCString()}; path=/`;
 
-        // Redirect if necessary
+        // Save user's email in local storage (opsional)
+        localStorage.setItem("userEmail", email);
+
+        // Redirect jika diperlukan
         if (data.redirectUrl) {
           router.push(data.redirectUrl); // Redirect to another page (e.g., password change)
         } else {

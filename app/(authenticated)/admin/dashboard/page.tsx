@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { CgShoppingBag } from "react-icons/cg";
 import { GrTransaction } from "react-icons/gr";
 import { Bar } from "react-chartjs-2";
-import { GetServerSideProps } from 'next';
+import { useRouter } from "next/navigation"; // untuk navigasi programatik
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -31,8 +31,17 @@ const DashboardPage = () => {
   const [jumlahTransaksi, setJumlahTransaksi] = useState<number>(0);
   const [totalOmset, setTotalOmset] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
+  const router = useRouter(); // hook untuk navigasi
 
   useEffect(() => {
+    const accessToken = getCookie("accessToken");
+
+    if (!accessToken) {
+      // Jika accessToken tidak ada, arahkan ke halaman login
+      router.push("/login_admin");
+      return;
+    }
+
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -68,7 +77,15 @@ const DashboardPage = () => {
     };
 
     fetchData();
-  }, []);
+  }, [router]);
+
+  // Fungsi untuk mengambil nilai dari cookie
+  const getCookie = (name: string) => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(";").shift();
+    return null;
+  };
 
   if (loading) {
     return <div>Loading...</div>;
