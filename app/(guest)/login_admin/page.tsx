@@ -29,53 +29,57 @@ const LoginPage = () => {
     setError("");
 
     try {
-      setLoading(true); // Set loading state (opsional)
-  
-      const response = await fetch("http://localhost:3222/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-  
-      const data = await response.json();
-  
-      if (!response.ok) {
-        // Show error message for 401 (invalid credentials)
-        if (response.status === 401) {
-          setError("Email atau password salah. Silakan coba lagi.");
+        setLoading(true); // Set loading state (opsional)
+
+        const response = await fetch("http://localhost:3222/auth/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            // Show error message for 401 (invalid credentials)
+            if (response.status === 401) {
+                setError("Email atau password salah. Silakan coba lagi.");
+            } else {
+                throw new Error("Login gagal");
+            }
         } else {
-          throw new Error("Login gagal");
+            // Hapus token lama (jika ada)
+            Cookies.remove("access_token");
+
+            // Set cookie untuk menyimpan access token baru
+            const expiresIn = 1; // Set expires dalam 1 hari
+            const date = new Date();
+            date.setTime(date.getTime() + expiresIn * 24 * 60 * 60 * 1000);
+
+            // Simpan token di cookie dengan js-cookie
+            Cookies.set("access_token", data.access_token, { expires: date });
+
+            // Simpan email user di local storage (opsional)
+            localStorage.setItem("userEmail", email);
+
+            // Simpan user dan toko ke sessionStorage
+            sessionStorage.setItem('currentUser', JSON.stringify(data.user)); // Pastikan data.user berisi informasi pengguna
+            sessionStorage.setItem('currentStore', JSON.stringify(data.toko)); // Pastikan data.toko berisi informasi toko
+
+            // Redirect jika diperlukan
+            if (data.redirectUrl) {
+                router.push(data.redirectUrl); // Redirect to another page (e.g., password change)
+            } else {
+                router.push("/admin/dashboard"); // Redirect to admin dashboard on successful login
+            }
         }
-      } else {
-        // Hapus token lama (jika ada)
-        Cookies.remove("access_token");
-  
-        // Set cookie untuk menyimpan access token baru
-        const expiresIn = 1; // Set expires dalam 1 hari
-        const date = new Date();
-        date.setTime(date.getTime() + expiresIn * 24 * 60 * 60 * 1000);
-        
-        // Simpan token di cookie dengan js-cookie
-        Cookies.set("access_token", data.access_token, { expires: date });
-  
-        // Simpan email user di local storage (opsional)
-        localStorage.setItem("userEmail", email);
-  
-        // Redirect jika diperlukan
-        if (data.redirectUrl) {
-          router.push(data.redirectUrl); // Redirect to another page (e.g., password change)
-        } else {
-          router.push("/admin/dashboard"); // Redirect to admin dashboard on successful login
-        }
-      }
     } catch (err) {
-      setError("Login gagal. Periksa kembali kredensial Anda.");
+        setError("Login gagal. Periksa kembali kredensial Anda.");
     } finally {
-      setLoading(false); // Reset loading state (opsional)
+        setLoading(false); // Reset loading state (opsional)
     }
-  };
+};
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);

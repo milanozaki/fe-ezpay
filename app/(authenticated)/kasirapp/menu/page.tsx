@@ -197,6 +197,23 @@ const MenuPage = () => {
 
       const result = await response.json();
       openSuccessNotification(result); // Panggil notifikasi sukses di sini
+
+      // Update stok produk setelah transaksi berhasil
+      setProducts((prevProducts) =>
+        prevProducts.map((product) => {
+          const cartItem = cart.find(
+            (item) => item.id_produk === product.id_produk
+          );
+          if (cartItem) {
+            return {
+              ...product,
+              stok: product.stok - cartItem.quantity, // Kurangi stok produk
+            };
+          }
+          return product;
+        })
+      );
+
       setCart([]); // Bersihkan keranjang setelah pesanan berhasil
     } catch (error) {
       console.error("Error submitting pesanan:", error);
@@ -266,7 +283,30 @@ const MenuPage = () => {
                   onClick={() => handleProductClick(produk)}
                 >
                   <Card.Meta
-                    title={produk.nama_produk}
+                    title={
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <span>{produk.nama_produk}</span>
+                        <span
+                          style={{
+                            color:
+                              produk.stok > 10
+                                ? "green"
+                                : produk.stok > 1
+                                ? "orange"
+                                : "red",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Stok: {produk.stok}
+                        </span>
+                      </div>
+                    }
                     description={
                       <span style={{ color: "black" }}>
                         Rp {formatCurrency(produk.harga_produk)}
