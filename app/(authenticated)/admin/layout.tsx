@@ -20,21 +20,26 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   const router = useRouter(); // Inisialisasi router
 
+  // Menggunakan useEffect untuk cek token saat komponen di-mount
   useEffect(() => {
-    // Mengambil email dari localStorage setelah komponen di-mount
-    if (typeof window !== "undefined") {
+    const token = localStorage.getItem("accessToken");
+
+    if (!token) {
+      router.push("/login_admin"); // Redirect ke halaman login jika tidak ada token
+    } else {
+      // Mengambil email dari localStorage jika token ada
       const storedEmail = localStorage.getItem("userEmail");
       if (storedEmail) {
         setUserEmail(storedEmail);
       }
-    }
 
-    // Set selectedMenu berdasarkan URL saat ini
-    const activeMenuItem = authenticatedMenu.find(item => pathname?.startsWith(item.path));
-    if (activeMenuItem) {
-      setSelectedMenu(activeMenuItem.name);
+      // Set selectedMenu berdasarkan URL saat ini
+      const activeMenuItem = authenticatedMenu.find(item => pathname?.startsWith(item.path));
+      if (activeMenuItem) {
+        setSelectedMenu(activeMenuItem.name);
+      }
     }
-  }, [pathname]);
+  }, [pathname, router]);
 
   const authenticatedMenu = [
     { name: "Dashboard", path: "/admin/dashboard", icon: <AppstoreOutlined /> },
@@ -52,37 +57,27 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     "https://mir-s3-cdn-cf.behance.net/project_modules/disp/414d9011889067.5625411b2afd2.png";
   const userRole = "Admin"; // Role bisa diubah menjadi Kasir atau lainnya sesuai kebutuhan
 
-  // Menu untuk dropdown avatar dengan ukuran persegi panjang dan background
   const avatarMenu = (
     <div className="p-4 w-64 bg-white shadow-lg rounded-lg">
-      {/* Avatar di tengah */}
       <div className="flex justify-center">
         <Avatar size={64} src={avatarUrl} />
       </div>
       <div className="mt-2 font-bold text-center">{userEmail}</div>
       <div className="text-gray-500 text-center">{userRole}</div>
 
-      {/* Garis pemisah */}
       <Divider className="mt-3" />
-
-      {/* Button Logout */}
       <Button
         type="primary"
         danger
         className="w-full -mt-4"
         onClick={() => {
           // Hapus email dan token dari localStorage atau sessionStorage
-          localStorage.removeItem("userEmail"); 
-          localStorage.removeItem("authToken"); // Contoh token yang disimpan
-          localStorage.removeItem("pemilikToko"); 
+          localStorage.removeItem("userEmail");
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("pemilikToko");
           localStorage.removeItem("tokoDto");
-          sessionStorage.clear(); // Membersihkan session
-          document.cookie = "accessToken=; Max-Age=0; Path=/; Secure; SameSite=Strict;"; // Menghapus accessToken dari cookies
-          // Jika ada cookie yang digunakan untuk autentikasi, hapus cookie di sini
-
-          // Anda juga bisa memanggil API logout backend untuk mengakhiri sesi di server
-          // Contoh:
-          // fetch('/api/logout', { method: 'POST', credentials: 'include' })
+          sessionStorage.clear();
+          localStorage.removeItem("accessToken");
 
           // Arahkan ke halaman login setelah logout berhasil
           router.push("/login_admin");
@@ -95,7 +90,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Tambahkan overflow-hidden untuk menghindari scroll pada container utama */}
       {/* Sidebar */}
       <div
         className={`bg-white text-black w-60 transform ${
@@ -133,6 +127,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           ))}
         </ul>
       </div>
+
       {/* Overlay untuk close sidebar di mobile */}
       {isSidebarOpen && (
         <div
@@ -167,7 +162,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
         {/* Content yang bisa di-scroll */}
         <main className="flex-1 p-6 bg-gray-100 overflow-y-auto">
-          {/* Tambahkan overflow-y-auto agar konten bisa di-scroll */}
           {children}
         </main>
       </div>

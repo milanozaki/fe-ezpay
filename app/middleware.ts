@@ -3,7 +3,7 @@
 
 // export function middleware(req: NextRequest) {
 //   // Mengambil token dari cookies secara manual dengan menggunakan headers
-//   const token = req.cookies.get('accessToken') || req.headers.get('cookie')?.split(';').find(c => c.trim().startsWith('accessToken='))?.split('=')[1];
+//   const token = req.cookies.get('accessToken');
 
 //   const { pathname } = req.nextUrl;
 
@@ -17,6 +17,7 @@
 //     pathname.startsWith('/admin/produk') ||
 //     pathname.startsWith('/admin/kasir_admin')
 //   ) {
+//     // Jika tidak ada token, arahkan ke halaman login_admin
 //     if (!token) {
 //       console.log('No token found, redirecting to login_admin');
 //       return NextResponse.redirect(new URL('/login_admin', req.url));

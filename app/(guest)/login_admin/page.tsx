@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation"; // Impor useRouter dari Next.js
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import Cookies from "js-cookie";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -13,11 +12,10 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    const token = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("accessToken="));
+    const token = localStorage.getItem("accessToken");
     if (token) {
-      // Jika token ditemukan di cookies, tidak melakukan redirect otomatis
+      // Tidak melakukan redirect otomatis jika sudah login
+      // Hanya menampilkan pesan atau melakukan logika lain jika diperlukan
       // router.push("/kasirapp/menu"); // Arahkan ke menu kasir jika sudah login
     }
   }, []);
@@ -29,8 +27,6 @@ const LoginPage = () => {
     setError("");
 
     try {
-      setLoading(true); // Set loading state (opsional)
-  
       const response = await fetch("http://localhost:3222/auth/login", {
         method: "POST",
         headers: {
@@ -38,9 +34,9 @@ const LoginPage = () => {
         },
         body: JSON.stringify({ email, password }),
       });
-  
+
       const data = await response.json();
-  
+
       if (!response.ok) {
         // Show error message for 401 (invalid credentials)
         if (response.status === 401) {
@@ -49,21 +45,11 @@ const LoginPage = () => {
           throw new Error("Login gagal");
         }
       } else {
-        // Hapus token lama (jika ada)
-        Cookies.remove("access_token");
-  
-        // Set cookie untuk menyimpan access token baru
-        const expiresIn = 1; // Set expires dalam 1 hari
-        const date = new Date();
-        date.setTime(date.getTime() + expiresIn * 24 * 60 * 60 * 1000);
-        
-        // Simpan token di cookie dengan js-cookie
-        Cookies.set("access_token", data.access_token, { expires: date });
-  
-        // Simpan email user di local storage (opsional)
-        localStorage.setItem("userEmail", email);
-  
-        // Redirect jika diperlukan
+        // Save access token to local storage
+        localStorage.setItem("accessToken", data.access_token); // Ganti 'accessToken' jika nama field berbeda
+        localStorage.setItem("userEmail", email); // Save user's email in local storage
+
+        // Redirect if necessary
         if (data.redirectUrl) {
           router.push(data.redirectUrl); // Redirect to another page (e.g., password change)
         } else {
@@ -73,7 +59,7 @@ const LoginPage = () => {
     } catch (err) {
       setError("Login gagal. Periksa kembali kredensial Anda.");
     } finally {
-      setLoading(false); // Reset loading state (opsional)
+      setLoading(false);
     }
   };
 
@@ -83,28 +69,20 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-[#5aa5be] px-4 py-8">
-      {/* Konten Utama */}
       <div className="flex-grow flex flex-col items-center justify-center">
-        {/* Form login */}
         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-[350px] relative">
-          {/* Gambar ikon */}
           <div className="relative z-10 flex justify-center mb-6">
             <img
-              src="/images/logoEzpay.png" // Ganti dengan ikon yang sesuai
+              src="/images/logoEzpay.png"
               alt="Login Icon"
               width={90}
               height={90}
             />
           </div>
-
-          {/* Judul login */}
           <h2 className="relative z-10 text-center text-2xl font-semibold text-gray-800 mb-8">
             Selamat Datang!
           </h2>
-
-          {/* Form */}
           <form onSubmit={handleSubmit} className="relative z-10">
-            {/* Input Email */}
             <div className="mb-4">
               <input
                 type="email"
@@ -115,8 +93,6 @@ const LoginPage = () => {
                 required
               />
             </div>
-
-            {/* Input Password */}
             <div className="mb-6 relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -127,17 +103,13 @@ const LoginPage = () => {
                 required
               />
               <div
-                className="absolute inset-y-0 right-3 flex items-center cursor-pointer"
+                className="absolute inset-y-0 right-3 flex items-center cursor-pointer pb-7"
                 onClick={togglePasswordVisibility}
               >
                 {showPassword ? <FaEye size={20} /> : <FaEyeSlash size={20} />}
               </div>
             </div>
-            {/* Error Message */}
-            {error && (
-              <div className="text-red-500 text-center mb-4">{error}</div>
-            )}
-            {/* Tombol Login */}
+            {error && <div className="text-red-500 text-center mb-4">{error}</div>}
             <div className="flex justify-center">
               <button
                 type="submit"
@@ -147,7 +119,6 @@ const LoginPage = () => {
                 {loading ? "Logging in..." : "Log in"}
               </button>
             </div>
-
             <div className="text-left mt-6">
               <a
                 href="#"
@@ -163,8 +134,6 @@ const LoginPage = () => {
           </form>
         </div>
       </div>
-
-      {/* Footer copyright */}
       <footer className="text-white text-sm text-center -py-1 mt-5">
         © 2024 Ezpay. All rights reserved.
       </footer>

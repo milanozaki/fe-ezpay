@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import { CgShoppingBag } from "react-icons/cg";
 import { GrTransaction } from "react-icons/gr";
 import { Bar } from "react-chartjs-2";
-import { GetServerSideProps } from 'next';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -13,6 +12,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { useRouter } from "next/navigation";
 
 // Daftarkan komponen yang diperlukan dari Chart.js
 ChartJS.register(
@@ -69,6 +69,8 @@ const DashboardPage = () => {
 
     fetchData();
   }, []);
+
+  
 
   if (loading) {
     return <div>Loading...</div>;

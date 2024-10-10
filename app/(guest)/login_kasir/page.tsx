@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation"; // Impor useRouter dari Next.js
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import Cookies from 'js-cookie';
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -26,7 +25,7 @@ const LoginPage = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
-  
+
     try {
       const response = await fetch("http://localhost:3222/auth/login/kasir", {
         method: "POST",
@@ -35,9 +34,9 @@ const LoginPage = () => {
         },
         body: JSON.stringify({ email, password }),
       });
-  
+
       const data = await response.json();
-  
+
       if (!response.ok) {
         // Tampilkan pesan error untuk status 401 (kredensial salah)
         if (response.status === 401) {
@@ -52,10 +51,10 @@ const LoginPage = () => {
           throw new Error("Login gagal");
         }
       } else {
-        // Simpan access token ke cookie
-        Cookies.set('access_token', data.access_token, { expires: 7 }); // Ganti 'access_token' jika nama field berbeda
-        Cookies.set('user_email', email, { expires: 7 }); // Simpan email pengguna di cookie
-  
+        // Simpan access token ke local storage
+        localStorage.setItem("accessToken", data.access_token); // Ganti 'accessToken' jika nama field berbeda
+        localStorage.setItem("userEmail", email); // Simpan email pengguna di local storage
+
         // Cek jika password default dan ada redirect URL
         if (data.redirectUrl) {
           router.push(data.redirectUrl); // Redirect ke halaman edit password kasir dengan ID user
@@ -120,7 +119,7 @@ const LoginPage = () => {
                 required
               />
               <div
-                className="absolute inset-y-0 right-3 flex items-center cursor-pointer "
+                className="absolute inset-y-0 right-3 flex items-center cursor-pointer pb-7"
                 onClick={togglePasswordVisibility}
               >
                 {showPassword ? <FaEye size={20} /> : <FaEyeSlash size={20} />}
