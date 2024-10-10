@@ -63,9 +63,9 @@ const LoginPage = () => {
   
         // Redirect jika diperlukan
         if (data.redirectUrl) {
-          router.push(data.redirectUrl); // Redirect to another page (e.g., password change)
+          router.push(data.redirectUrl);
         } else {
-          router.push("/admin/dashboard"); // Redirect to admin dashboard on successful login
+          router.push("/admin/dashboard");
         }
       }
     } catch (err) {
