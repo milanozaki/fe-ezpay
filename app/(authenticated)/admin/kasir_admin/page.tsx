@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Button, message, Form, Input, Modal, Select } from "antd";
 import axios from "axios";
-import { useRouter } from "next/navigation";
+
 // Define the enum
 enum StatusEnum {
   ACTIVE = "aktif",
@@ -24,17 +24,8 @@ const KasirPage: React.FC = () => {
   const [form] = Form.useForm();
   const [editKasirId, setEditKasirId] = useState<string | null>(null); // Track ID for edit
   const [isEditMode, setIsEditMode] = useState(false); // Track if we are editing or adding
-  const [loading, setLoading] = useState<boolean>(true);
-  const router = useRouter();
+
   useEffect(() => {
-
-    const accessToken = getCookie("accessToken");
-
-    if (!accessToken) {
-      // Jika accessToken tidak ada, arahkan ke halaman login
-      router.push("/login_admin");
-      return;
-    }
     const fetchKasirUsers = async () => {
       try {
         const response = await axios.get("http://localhost:3222/users/kasir");
@@ -50,16 +41,6 @@ const KasirPage: React.FC = () => {
     fetchKasirUsers();
   }, []);
 
-  const getCookie = (name: string) => {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()?.split(";").shift();
-    return null;
-  };
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
   const handleAddKasir = async (values: any) => {
     try {
       const response = await axios.post(

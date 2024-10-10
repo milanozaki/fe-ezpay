@@ -5,7 +5,6 @@ import { Button, Modal, Input, Form, notification } from 'antd'; // Import notif
 import { PlusOutlined } from '@ant-design/icons'; // Import icon Plus dari Ant Design
 import 'antd/dist/reset.css'; // Pastikan Anda mengimpor CSS Ant Design
 import axios from 'axios'; // Import Axios
-import { useRouter } from 'next/navigation';
 
 const KategoriPage = () => {
   const [kategori, setKategori] = useState<any[]>([]); // State untuk menyimpan data kategori
@@ -14,17 +13,8 @@ const KategoriPage = () => {
   const [isAddModalVisible, setIsAddModalVisible] = useState<boolean>(false); // State untuk visibilitas modal tambah
   const [currentNama, setCurrentNama] = useState<string>(''); // State untuk menyimpan nama kategori yang sedang diedit
   const [form] = Form.useForm(); // Form instance dari Ant Design
-  const router = useRouter(); 
-
 
   useEffect(() => {
-    const accessToken = getCookie("accessToken");
-
-    if (!accessToken) {
-      // Jika accessToken tidak ada, arahkan ke halaman login
-      router.push("/login_admin");
-      return;
-    }
     // Ambil data dari API dengan endpoint kategori/produk-count
     axios.get('http://localhost:3222/kategori/produk-count')
       .then((response) => {
@@ -38,16 +28,6 @@ const KategoriPage = () => {
       });
   }, []);
 
-  const getCookie = (name: string) => {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()?.split(";").shift();
-    return null;
-  };
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
   const handleEditClick = (namaKategori: string) => {
     setCurrentNama(namaKategori); // Set nama kategori yang akan diedit
     form.setFieldsValue({ nama: namaKategori }); // Set nilai form
