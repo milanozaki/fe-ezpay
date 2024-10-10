@@ -28,6 +28,7 @@ import {
 import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { debounce } from "lodash";
+import { useRouter } from "next/navigation";
 
 interface Kategori {
   id_kategori: string;
@@ -66,6 +67,7 @@ const ProdukPage: React.FC = () => {
     { id_kategori: string; nama: string }[]
   >([]);
   const [produk, setProduk] = useState<Produk[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [produkList, setProdukList] = useState<Produk[]>([]);
   const [filteredProduk, setFilteredProduk] = useState<Produk[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -75,9 +77,18 @@ const ProdukPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("ASC");
 
+  const router = useRouter();
+
   // const { data: dataProduct } = productRepository.hooks.useProduct();
   // console.log(dataProduct?.data.length, "dp");
   useEffect(() => {
+    const accessToken = getCookie("accessToken");
+
+    if (!accessToken) {
+      // Jika accessToken tidak ada, arahkan ke halaman login
+      router.push("/login_admin");
+      return;
+    }
     // Fetch kategori dan produk
     axios
       .get("http://localhost:3222/kategori")
@@ -135,6 +146,16 @@ const ProdukPage: React.FC = () => {
     }
   };
 
+  const getCookie = (name: string) => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(";").shift();
+    return null;
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
   const fetchProdukByStatus = async (status: StatusEnum) => {
     try {
       const response = await axios.get(
