@@ -21,25 +21,25 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter(); // Inisialisasi router
 
   // Menggunakan useEffect untuk cek token saat komponen di-mount
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+  // useEffect(() => {
+  //   const token = localStorage.getItem("accessToken");
 
-    if (!token) {
-      router.push("/login_admin"); // Redirect ke halaman login jika tidak ada token
-    } else {
-      // Mengambil email dari localStorage jika token ada
-      const storedEmail = localStorage.getItem("userEmail");
-      if (storedEmail) {
-        setUserEmail(storedEmail);
-      }
+  //   if (!token) {
+  //     router.push("/login_admin"); // Redirect ke halaman login jika tidak ada token
+  //   } else {
+  //     // Mengambil email dari localStorage jika token ada
+  //     const storedEmail = localStorage.getItem("userEmail");
+  //     if (storedEmail) {
+  //       setUserEmail(storedEmail);
+  //     }
 
-      // Set selectedMenu berdasarkan URL saat ini
-      const activeMenuItem = authenticatedMenu.find(item => pathname?.startsWith(item.path));
-      if (activeMenuItem) {
-        setSelectedMenu(activeMenuItem.name);
-      }
-    }
-  }, [pathname, router]);
+  //     // Set selectedMenu berdasarkan URL saat ini
+  //     const activeMenuItem = authenticatedMenu.find(item => pathname?.startsWith(item.path));
+  //     if (activeMenuItem) {
+  //       setSelectedMenu(activeMenuItem.name);
+  //     }
+  //   }
+  // }, [pathname, router]);
 
   const authenticatedMenu = [
     { name: "Dashboard", path: "/admin/dashboard", icon: <AppstoreOutlined /> },
