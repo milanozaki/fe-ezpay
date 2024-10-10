@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation"; // Impor useRouter dari Next.js
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import Cookies from "js-cookie";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -28,6 +29,8 @@ const LoginPage = () => {
     setError("");
 
     try {
+      setLoading(true); // Set loading state (opsional)
+  
       const response = await fetch("http://localhost:3222/auth/login", {
         method: "POST",
         headers: {
@@ -35,9 +38,9 @@ const LoginPage = () => {
         },
         body: JSON.stringify({ email, password }),
       });
-
+  
       const data = await response.json();
-
+  
       if (!response.ok) {
         // Show error message for 401 (invalid credentials)
         if (response.status === 401) {
@@ -46,15 +49,20 @@ const LoginPage = () => {
           throw new Error("Login gagal");
         }
       } else {
-        // Set cookie untuk menyimpan access token
+        // Hapus token lama (jika ada)
+        Cookies.remove("access_token");
+  
+        // Set cookie untuk menyimpan access token baru
         const expiresIn = 1; // Set expires dalam 1 hari
         const date = new Date();
         date.setTime(date.getTime() + expiresIn * 24 * 60 * 60 * 1000);
-        document.cookie = `accessToken=${data.access_token}; expires=${date.toUTCString()}; path=/`;
-
-        // Save user's email in local storage (opsional)
+        
+        // Simpan token di cookie dengan js-cookie
+        Cookies.set("access_token", data.access_token, { expires: date });
+  
+        // Simpan email user di local storage (opsional)
         localStorage.setItem("userEmail", email);
-
+  
         // Redirect jika diperlukan
         if (data.redirectUrl) {
           router.push(data.redirectUrl); // Redirect to another page (e.g., password change)
@@ -65,7 +73,7 @@ const LoginPage = () => {
     } catch (err) {
       setError("Login gagal. Periksa kembali kredensial Anda.");
     } finally {
-      setLoading(false);
+      setLoading(false); // Reset loading state (opsional)
     }
   };
 
