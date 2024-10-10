@@ -1,6 +1,7 @@
 "use client"; // Menandakan komponen ini sebagai Client Component
 import React, { useState, useEffect } from "react";
 import Link from "next/link"; // Import Link dari next/link
+import Cookies from "js-cookie"; // Import js-cookie untuk menangani cookies
 import {
   HistoryOutlined,
   AppstoreOutlined,
@@ -17,29 +18,30 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const [selectedMenu, setSelectedMenu] = useState<string>(""); // State untuk menyimpan item yang dipilih
   const [userEmail, setUserEmail] = useState<string>("user@example.com"); // State untuk email pengguna
   const pathname = usePathname(); // Mendapatkan path saat ini
-
   const router = useRouter(); // Inisialisasi router
 
   // Menggunakan useEffect untuk cek token saat komponen di-mount
-  // useEffect(() => {
-  //   const token = localStorage.getItem("accessToken");
+  useEffect(() => {
+    const token = Cookies.get("accessToken"); // Ambil accessToken dari cookies
 
-  //   if (!token) {
-  //     router.push("/login_admin"); // Redirect ke halaman login jika tidak ada token
-  //   } else {
-  //     // Mengambil email dari localStorage jika token ada
-  //     const storedEmail = localStorage.getItem("userEmail");
-  //     if (storedEmail) {
-  //       setUserEmail(storedEmail);
-  //     }
+    if (!token) {
+      router.push("/login_admin"); // Redirect ke halaman login jika tidak ada token
+    } else {
+      // Mengambil email dari localStorage atau cookies jika token ada
+      const storedEmail = localStorage.getItem("userEmail");
+      if (storedEmail) {
+        setUserEmail(storedEmail);
+      }
 
-  //     // Set selectedMenu berdasarkan URL saat ini
-  //     const activeMenuItem = authenticatedMenu.find(item => pathname?.startsWith(item.path));
-  //     if (activeMenuItem) {
-  //       setSelectedMenu(activeMenuItem.name);
-  //     }
-  //   }
-  // }, [pathname, router]);
+      // Set selectedMenu berdasarkan URL saat ini
+      const activeMenuItem = authenticatedMenu.find(item =>
+        pathname?.startsWith(item.path)
+      );
+      if (activeMenuItem) {
+        setSelectedMenu(activeMenuItem.name);
+      }
+    }
+  }, [pathname, router]);
 
   const authenticatedMenu = [
     { name: "Dashboard", path: "/admin/dashboard", icon: <AppstoreOutlined /> },
@@ -71,13 +73,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         danger
         className="w-full -mt-4"
         onClick={() => {
-          // Hapus email dan token dari localStorage atau sessionStorage
-          localStorage.removeItem("userEmail");
-          localStorage.removeItem("authToken");
-          localStorage.removeItem("pemilikToko");
-          localStorage.removeItem("tokoDto");
-          sessionStorage.clear();
-          localStorage.removeItem("accessToken");
+          // Hapus access token dari cookies
+          Cookies.remove("accessToken");
 
           // Arahkan ke halaman login setelah logout berhasil
           router.push("/login_admin");
