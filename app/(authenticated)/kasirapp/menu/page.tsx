@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Select, Card, Image, Button, message, notification } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
+import Cookies from "js-cookie";
 
 interface Produk {
   id_produk: string;
@@ -168,9 +169,10 @@ const MenuPage = () => {
   };
 
   const handleSubmit = async () => {
-    const token = localStorage.getItem("access_token"); // Ganti cookies dengan localStorage
-    console.log("Token found:", token); // Log token
   
+    const token = Cookies.get("access_token"); // Ambil token dari cookie
+    console.log("Token found:", token); // Log token
+
     const pesananData = {
       detil_produk_pesanan: cart.map((item) => ({
         id_produk: item.id_produk,
@@ -179,7 +181,7 @@ const MenuPage = () => {
       metode_transaksi_id: paymentMethod, // UUID dari metode pembayaran
       token, // Ganti dengan token valid
     };
-  
+
     try {
       const response = await fetch("http://localhost:3222/pesanan", {
         method: "POST",
@@ -189,19 +191,36 @@ const MenuPage = () => {
         },
         body: JSON.stringify(pesananData),
       });
-  
+
       if (!response.ok) {
         throw new Error("Gagal menyimpan pesanan");
       }
-  
+
       const result = await response.json();
       openSuccessNotification(result); // Panggil notifikasi sukses di sini
+
+      // Update stok produk setelah transaksi berhasil
+      setProducts((prevProducts) =>
+        prevProducts.map((product) => {
+          const cartItem = cart.find(
+            (item) => item.id_produk === product.id_produk
+          );
+          if (cartItem) {
+            return {
+              ...product,
+              stok: product.stok - cartItem.quantity, // Kurangi stok produk
+            };
+          }
+          return product;
+        })
+      );
+
       setCart([]); // Bersihkan keranjang setelah pesanan berhasil
     } catch (error) {
       console.error("Error submitting pesanan:", error);
     }
   };
-  
+
   const totalHarga = cart.reduce(
     (total, item) => total + item.harga_produk * item.quantity,
     0
