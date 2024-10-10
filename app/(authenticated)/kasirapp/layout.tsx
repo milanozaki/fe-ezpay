@@ -7,6 +7,7 @@ import { IoFastFoodOutline } from "react-icons/io5";
 import { Avatar, Dropdown, Button, Divider } from "antd";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import Cookies from "js-cookie"; // Import Cookies
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
@@ -45,8 +46,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         className="w-full -mt-4"
         onClick={() => {
           console.log("Logout button clicked");
-          localStorage.removeItem("userEmail");
-          router.push("/login_kasir");
+          localStorage.removeItem("userEmail"); // Hapus email dari localStorage
+          Cookies.remove("access_token"); // Hapus accessToken dari cookies
+          router.push("/login_kasir"); // Redirect ke halaman login
         }}
       >
         Keluar
@@ -64,12 +66,18 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
     // Check if in browser before accessing localStorage
     if (typeof window !== "undefined") {
-      const email = localStorage.getItem("userEmail");
-      if (email) {
-        setUserEmail(email);
+      const token = Cookies.get("access_token"); // Ambil access_token dari cookies
+      if (!token) {
+        router.push("/login_kasir"); // Redirect ke halaman login jika tidak ada token
+      } else {
+        // Mengambil email dari localStorage atau cookies jika token ada
+        const storedEmail = localStorage.getItem("userEmail");
+        if (storedEmail) {
+          setUserEmail(storedEmail);
+        }
       }
     }
-  }, [pathname]);
+  }, [pathname, router]);
 
   return (
     <div className="flex min-h-screen overflow-hidden">
@@ -140,3 +148,4 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default Layout;
+  

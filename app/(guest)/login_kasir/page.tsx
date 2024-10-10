@@ -54,7 +54,8 @@ const LoginPage = () => {
       } else {
         // Simpan access token ke cookie
         Cookies.set('access_token', data.access_token, { expires: 7 }); // Ganti 'access_token' jika nama field berbeda
-        Cookies.set('user_email', email, { expires: 7 }); // Simpan email pengguna di cookie
+        localStorage.setItem('userEmail', email); // Simpan email pengguna di localStorage
+
   
         // Cek jika password default dan ada redirect URL
         if (data.redirectUrl) {

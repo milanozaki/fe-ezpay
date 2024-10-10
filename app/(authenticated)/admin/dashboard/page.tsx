@@ -54,13 +54,6 @@ const DashboardPage = () => {
   const router = useRouter(); // hook untuk navigasi
 
   useEffect(() => {
-    const accessToken = getCookie("accessToken");
-
-    if (!accessToken) {
-      // Jika accessToken tidak ada, arahkan ke halaman login
-      router.push("/login_admin");
-      return;
-    }
 
     const fetchData = async () => {
       try {
