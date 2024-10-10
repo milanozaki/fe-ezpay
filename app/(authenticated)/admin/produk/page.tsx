@@ -28,6 +28,7 @@ import {
 import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { debounce } from "lodash";
+import Cookies from 'js-cookie';
 
 interface Kategori {
   id_kategori: string;
@@ -96,20 +97,74 @@ const ProdukPage: React.FC = () => {
         console.error("Error fetching categories:", error);
       });
 
-    axios
-      .get("http://localhost:3222/produk/all")
-      .then((response) => {
-        const produkData = response.data.data;
-        if (Array.isArray(produkData)) {
-          setProduk(produkData);
-          setFilteredProduk(produkData);
-          setTotalProduk(produkData.length);
+      const fetchProductsByToko = async () => {
+        try {
+          // Ambil token dari session atau cookies
+          const token = Cookies.get("access_token");
+          const email = Cookies.get("user_email"); // asumsikan email disimpan dalam cookie setelah login
+  
+          if (!token || !email) {
+            throw new Error("Token atau email tidak ditemukan, silakan login.");
+          }
+  
+          // Pertama, dapatkan id_user berdasarkan email
+          const userResponse = await axios.get(
+            `http://localhost:3222/users/email/${email}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+  
+          const userData = userResponse.data;
+          const id_user = userData.id_user;
+  
+          if (!id_user) {
+            throw new Error("User tidak ditemukan berdasarkan email.");
+          }
+  
+          // Kedua, dapatkan id_toko berdasarkan id_user
+          const tokoResponse = await axios.get(
+            `http://localhost:3222/toko/user/${id_user}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+  
+          const tokoData = tokoResponse.data;
+          const id_toko = tokoData.id_toko;
+  
+          if (!id_toko) {
+            throw new Error("Toko tidak ditemukan untuk user ini.");
+          }
+  
+          // Ketiga, dapatkan produk berdasarkan id_toko
+          const produkResponse = await axios.get(
+            `http://localhost:3222/produk/toko/${id_toko}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+  
+          const produkData = produkResponse.data.data;
+  
+          if (Array.isArray(produkData)) {
+            setProduk(produkData);
+            setFilteredProduk(produkData);
+            setTotalProduk(produkData.length);
+          }
+        } catch (error) {
+          console.error("Error fetching produk:", error);
         }
-      })
-      .catch((error) => {
-        console.error("Error fetching produk:", error);
-      });
-  }, []);
+      };
+  
+      fetchProductsByToko();
+    }, []);
 
   useEffect(() => {
     if (selectedProduk) {

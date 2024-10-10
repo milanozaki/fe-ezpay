@@ -14,7 +14,7 @@ const LoginPage = () => {
 
   // Cek apakah pengguna sudah memiliki access token saat komponen di-mount
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem("access_token");
     if (token) {
       // Tidak melakukan redirect otomatis jika sudah login
       // Hanya menampilkan pesan atau melakukan logika lain jika diperlukan
