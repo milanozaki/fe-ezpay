@@ -48,15 +48,15 @@ const LoginPage = () => {
         }
       } else {
         // Hapus token lama (jika ada)
-        Cookies.remove("access_token");
+        localStorage.removeItem("accessToken");
   
-        // Set cookie untuk menyimpan access token baru
+        // Set localStorage untuk menyimpan access token baru
         const expiresIn = 1; // Set expires dalam 1 hari
         const date = new Date();
         date.setTime(date.getTime() + expiresIn * 24 * 60 * 60 * 1000);
         
-        // Simpan token di cookie dengan js-cookie
-        Cookies.set("access_token", data.access_token, { expires: date });
+        // Simpan token di localStorage
+        localStorage.setItem("accessToken", data.access_token);
   
         // Simpan email user di local storage (opsional)
         localStorage.setItem("userEmail", email);
@@ -73,7 +73,7 @@ const LoginPage = () => {
     } finally {
       setLoading(false); // Reset loading state (opsional)
     }
-};
+  };
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);

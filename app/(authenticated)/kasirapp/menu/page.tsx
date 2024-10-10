@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Select, Card, Image, Button } from "antd";
+import { Select, Card, Image, Button, message, notification } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 
 interface Produk {
@@ -21,8 +21,10 @@ const MenuPage = () => {
   const [activeButton, setActiveButton] = useState<string>("Semua");
   const [loading, setLoading] = useState<boolean>(true);
   const [cart, setCart] = useState<Produk[]>([]);
-  const [paymentMethod, setPaymentMethod] = useState<string>("Tunai");
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -37,6 +39,10 @@ const MenuPage = () => {
       }
     };
 
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
@@ -50,13 +56,33 @@ const MenuPage = () => {
       }
     };
 
-    fetchCategories();
     fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    const fetchPaymentMethods = async () => {
+      try {
+        const response = await fetch("http://localhost:3222/metode-transaksi");
+        const data = await response.json();
+        setPaymentMethods(data);
+        // Set default payment method to the first method
+        if (data.length > 0) {
+          setPaymentMethod(data[0].id_metode_transaksi);
+        }
+      } catch (error) {
+        console.error("Error fetching payment methods:", error);
+      }
+    };
+
+    fetchPaymentMethods();
   }, []);
 
   const handleCategoryChange = (value: string) => {
     setActiveButton(value);
   };
+
+  const cashMethod = paymentMethods.find((method) => method.nama === "Cash");
+  const qrisMethod = paymentMethods.find((method) => method.nama === "QRIS");
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat("id-ID").format(amount);
@@ -68,26 +94,57 @@ const MenuPage = () => {
       : products.filter((produk) => produk.kategori.nama === activeButton);
 
   const addToCart = (produk: Produk) => {
-    const existingProduct = cart.find(
-      (item) => item.id_produk === produk.id_produk
-    );
-    if (existingProduct) {
-      setCart(
-        cart.map((item) =>
+    setCart((prevCart) => {
+      const existingProduct = prevCart.find(
+        (item) => item.id_produk === produk.id_produk
+      );
+
+      // Cek apakah stok mencukupi
+      if (existingProduct && existingProduct.quantity + 1 > produk.stok) {
+        message.error(`Stok tidak mencukupi untuk ${produk.nama_produk}`);
+        return prevCart; // Tidak menambah ke keranjang
+      }
+
+      if (existingProduct) {
+        return prevCart.map((item) =>
           item.id_produk === produk.id_produk
             ? { ...item, quantity: item.quantity + 1 }
             : item
-        )
-      );
-    } else {
-      setCart([...cart, { ...produk, quantity: 1 }]);
-    }
+        );
+      }
+
+      // Cek stok saat pertama kali ditambahkan ke keranjang
+      if (produk.stok < 1) {
+        message.error(`Stok tidak mencukupi untuk ${produk.nama_produk}`);
+        return prevCart; // Tidak menambah ke keranjang
+      }
+
+      return [...prevCart, { ...produk, quantity: 1 }];
+    });
   };
 
   const handleProductClick = (produk: Produk) => {
-    setSelectedProduct(produk.id_produk); // Tandai produk sebagai yang dipilih
-    addToCart(produk); // Tambahkan ke keranjang
-    setTimeout(() => setSelectedProduct(null), 300); // Hapus efek setelah beberapa waktu
+    setSelectedProduct(produk.id_produk);
+    addToCart(produk);
+    setTimeout(() => setSelectedProduct(null), 300);
+  };
+
+  const openSuccessNotification = (result: any) => {
+    const totalHarga = cart.reduce(
+      (total, item) => total + item.harga_produk * item.quantity,
+      0
+    );
+
+    notification.success({
+      message: "Pesanan Berhasil",
+      description: `Pesanan Anda telah berhasil dibuat. 
+                    ID Pesanan: ${result.id_pesanan} 
+                    Metode Transaksi: ${
+                      result.metode_transaksi || paymentMethod
+                    } 
+                    Total Harga: Rp ${formatCurrency(totalHarga)}`, // Menggunakan total harga dari state cart
+      placement: "bottomRight", // Menentukan posisi notifikasi
+    });
   };
 
   const removeFromCart = (id_produk: string) => {
@@ -107,14 +164,13 @@ const MenuPage = () => {
   };
 
   const handleClearCart = () => {
-    // Hapus semua item dari cart
-    setCart([]); 
+    setCart([]);
   };
 
   const handleSubmit = async () => {
-    const token = Cookies.get("access_token"); // Ambil token dari cookie
+    const token = localStorage.getItem("access_token"); // Ganti cookies dengan localStorage
     console.log("Token found:", token); // Log token
-
+  
     const pesananData = {
       detil_produk_pesanan: cart.map((item) => ({
         id_produk: item.id_produk,
@@ -123,7 +179,7 @@ const MenuPage = () => {
       metode_transaksi_id: paymentMethod, // UUID dari metode pembayaran
       token, // Ganti dengan token valid
     };
-
+  
     try {
       const response = await fetch("http://localhost:3222/pesanan", {
         method: "POST",
@@ -133,11 +189,11 @@ const MenuPage = () => {
         },
         body: JSON.stringify(pesananData),
       });
-
+  
       if (!response.ok) {
         throw new Error("Gagal menyimpan pesanan");
       }
-
+  
       const result = await response.json();
       openSuccessNotification(result); // Panggil notifikasi sukses di sini
       setCart([]); // Bersihkan keranjang setelah pesanan berhasil
@@ -145,7 +201,7 @@ const MenuPage = () => {
       console.error("Error submitting pesanan:", error);
     }
   };
-
+  
   const totalHarga = cart.reduce(
     (total, item) => total + item.harga_produk * item.quantity,
     0
@@ -185,7 +241,7 @@ const MenuPage = () => {
                 -webkit-overflow-scrolling: touch; /* iOS for smooth scrolling */
               }
             `}</style>
-  
+
             <div className="grid grid-cols-3 gap-2">
               {filteredProducts.map((produk: Produk) => (
                 <Card
@@ -245,10 +301,10 @@ const MenuPage = () => {
           </div>
         </div>
       </div>
-  
+
       {/* Keranjang */}
-      <div className="w-[25%] h-[calc(100vh-175px)] p-4 bg-blue-100 flex flex-col justify-between">
-          <h2 className="text-lg font-bold mb-4">Pesanan ({cart.length})</h2>
+      <div className="w-[25%] h-[calc(100vh-175px)] p-4 flex flex-col justify-between">
+        <h2 className="text-lg font-bold mb-4">Pesanan ({cart.length})</h2>
         <div className="flex-grow overflow-auto scrollbar-hidden touch-scroll">
           <style jsx>{`
             .scrollbar-hidden {
@@ -269,80 +325,93 @@ const MenuPage = () => {
             <ul>
               {cart.map((item, index) => (
                 <li key={index} className="mb-4">
-                  <div className="flex justify-between items-center">
-                    {/* Nama produk */}
-                    <span className="text-xs">{item.nama_produk}</span>
-  
-                    {/* Kontrol kuantitas */}
-                    <div className="flex items-center">
+                  <div className="border rounded-lg p-4 shadow-md">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-bold">{item.nama_produk}</h3>
+                        <p>Harga: Rp {formatCurrency(item.harga_produk)}</p>
+                        <p>Jumlah: {item.quantity}</p>
+                      </div>
+                      <Image
+                        alt={item.nama_produk}
+                        src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
+                        style={{ width: "100px", height: "100px" }}
+                        preview={false}
+                      />
+                    </div>
+                    <div className="flex justify-between items-center mt-4">
+                      <div>
+                        <button
+                          onClick={() => updateQuantity(item.id_produk, -1)}
+                          className="px-2 py-1 bg-blue-500 text-white rounded-md mr-2"
+                        >
+                          -
+                        </button>
+                        <button
+                          onClick={() => updateQuantity(item.id_produk, 1)}
+                          className="px-2 py-1 bg-blue-500 text-white rounded-md"
+                        >
+                          +
+                        </button>
+                      </div>
                       <Button
-                        className="border-none bg-transparent"
-                        onClick={() => updateQuantity(item.id_produk, -1)}
+                        type="primary"
+                        danger
+                        onClick={() => removeFromCart(item.id_produk)}
                       >
-                        -
-                      </Button>
-                      <span className="mx-2">{item.quantity}</span>
-                      <Button
-                        className="border-none bg-transparent"
-                        onClick={() => updateQuantity(item.id_produk, 1)}
-                      >
-                        +
+                        <DeleteOutlined />
                       </Button>
                     </div>
-  
-                    {/* Harga produk */}
-                    <span className="mr-4">
-                      Rp {formatCurrency(item.harga_produk)}
-                    </span>
-  
-                    {/* Tombol hapus */}
-                    <Button
-                      type="link"
-                      onClick={() => removeFromCart(item.id_produk)}
-                      className="text-red-500"
-                      icon={<DeleteOutlined />}
-                    />
                   </div>
                 </li>
               ))}
             </ul>
           )}
         </div>
-  
-        <div className="mt-4 font-bold">
-          Total: Rp {formatCurrency(totalHarga)}
-        </div>
-  
         <div className="mt-4">
-          <Button
-            type={paymentMethod === "Tunai" ? "primary" : "default"}
-            onClick={() => setPaymentMethod("Tunai")}
-          >
-            Tunai
-          </Button>
-          <Button
-            type={paymentMethod === "Qris" ? "primary" : "default"}
-            onClick={() => setPaymentMethod("Qris")}
-            className="ml-2"
-          >
-            Qris
-          </Button>
+          <h3 className="font-bold mb-2">
+            Total: Rp {formatCurrency(totalHarga)}
+          </h3>
+
+          {/* Metode Pembayaran */}
+          <div className="mb-4">
+            <Select
+              value={paymentMethod}
+              onChange={setPaymentMethod}
+              style={{ width: "100%" }}
+              placeholder="Pilih metode pembayaran"
+            >
+              {paymentMethods.map((method) => (
+                <Select.Option
+                  key={method.id_metode_transaksi}
+                  value={method.id_metode_transaksi}
+                >
+                  {method.nama}
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="flex justify-between gap-2">
+            <button
+              className="w-1/6 px-2 py-1 bg-red-500 text-white rounded-md"
+              onClick={handleClearCart}
+              disabled={cart.length === 0}
+            >
+              <DeleteOutlined />
+            </button>
+            <button
+              className="w-5/6 px-4 py-2 bg-green-500 text-white rounded-md"
+              onClick={handleSubmit}
+              disabled={cart.length === 0}
+            >
+              Bayar
+            </button>
+          </div>
         </div>
-        <div className="flex mt-4 gap-2">
-          <Button
-          className="w-[60px] h-[40px] bg-white border-none"
-          onClick={handleClearCart}
-          icon={<DeleteOutlined />}
-          title="Hapus semua produk"
-        />
-        <Button className="w-[calc(120%-80px)] h-[40px] bg-blue-500 text-white">
-          Bayar
-        </Button>
-        
-      </div>
       </div>
     </div>
   );
-  };
+};
 
 export default MenuPage;
