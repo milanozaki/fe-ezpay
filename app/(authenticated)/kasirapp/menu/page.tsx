@@ -110,7 +110,42 @@ const MenuPage = () => {
     // Hapus semua item dari cart
     setCart([]); 
   };
-  
+
+  const handleSubmit = async () => {
+    const token = Cookies.get("access_token"); // Ambil token dari cookie
+    console.log("Token found:", token); // Log token
+
+    const pesananData = {
+      detil_produk_pesanan: cart.map((item) => ({
+        id_produk: item.id_produk,
+        jumlah_produk: item.quantity,
+      })),
+      metode_transaksi_id: paymentMethod, // UUID dari metode pembayaran
+      token, // Ganti dengan token valid
+    };
+
+    try {
+      const response = await fetch("http://localhost:3222/pesanan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // Sertakan token di header
+        },
+        body: JSON.stringify(pesananData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Gagal menyimpan pesanan");
+      }
+
+      const result = await response.json();
+      openSuccessNotification(result); // Panggil notifikasi sukses di sini
+      setCart([]); // Bersihkan keranjang setelah pesanan berhasil
+    } catch (error) {
+      console.error("Error submitting pesanan:", error);
+    }
+  };
+
   const totalHarga = cart.reduce(
     (total, item) => total + item.harga_produk * item.quantity,
     0
@@ -174,7 +209,30 @@ const MenuPage = () => {
                   onClick={() => handleProductClick(produk)}
                 >
                   <Card.Meta
-                    title={produk.nama_produk}
+                    title={
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <span>{produk.nama_produk}</span>
+                        <span
+                          style={{
+                            color:
+                              produk.stok > 10
+                                ? "green"
+                                : produk.stok > 1
+                                ? "orange"
+                                : "red",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Stok: {produk.stok}
+                        </span>
+                      </div>
+                    }
                     description={
                       <span style={{ color: "black" }}>
                         Rp {formatCurrency(produk.harga_produk)}
