@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation"; // Impor useRouter dari Next.js
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Cookies from 'js-cookie';
+import { notification } from 'antd'; // Import notification dari Ant Design
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -39,37 +40,66 @@ const LoginPage = () => {
       const data = await response.json();
   
       if (!response.ok) {
-        // Tampilkan pesan error untuk status 401 (kredensial salah)
-        if (response.status === 401) {
-          setError("Email atau password salah. Silakan coba lagi.");
-        }
-        // Tampilkan pesan dari backend jika akun tidak aktif
-        else if (
-          data.message === "Akses ditolak: Akun Anda sedang tidak aktif"
-        ) {
-          setError("Akun Anda sedang tidak aktif. Hubungi admin.");
-        } else {
-          throw new Error("Login gagal");
+        // Cek jika ada message dari backend
+        if (data.message) {
+          if (data.message === "Password salah") {
+            notification.error({
+              message: 'Login Gagal',
+              description: 'Password salah. Periksa kembali kredensial Anda.',
+              placement: 'topRight',
+            });
+          } else if (data.message === "Akses ditolak: Akun Anda sedang tidak aktif") {
+            notification.warning({
+              message: 'Akun Tidak Aktif',
+              description: 'Akun Anda sedang tidak aktif. Hubungi admin.',
+              placement: 'topRight',
+            });
+          } else {
+            // Pesan error lain
+            notification.error({
+              message: 'Login Gagal',
+              description: data.message || 'Terjadi kesalahan saat login.',
+              placement: 'topRight',
+            });
+          }
         }
       } else {
-        // Simpan access token ke cookie
-        Cookies.set('access_token', data.access_token, { expires: 7 }); // Ganti 'access_token' jika nama field berbeda
+        // Jika login berhasil
+        Cookies.set('access_token', data.access_token, { expires: 7 });
         localStorage.setItem('userEmail', email); // Simpan email pengguna di localStorage
-
   
-        // Cek jika password default dan ada redirect URL
+        notification.success({
+          message: 'Login Berhasil',
+          description: 'Anda berhasil login.',
+          placement: 'topRight',
+        });
+  
         if (data.redirectUrl) {
-          router.push(data.redirectUrl); // Redirect ke halaman edit password kasir dengan ID user
+          notification.warning({
+            message: 'Perlu Perubahan Password',
+            description: 'Anda perlu mengubah password akun terlebih dahulu.',
+            placement: 'topRight',
+          });
+  
+          setTimeout(() => {
+            router.push(data.redirectUrl); // Redirect ke halaman edit password kasir dengan ID user
+          }, 2000); // Setelah 2 detik
         } else {
-          router.push("/kasirapp/menu"); // Redirect ke menu kasir jika login sukses
+          router.push("/kasirapp/menu");
         }
       }
     } catch (err) {
       setError("Login gagal. Periksa kredensial Anda dan coba lagi.");
+      notification.error({
+        message: 'Login Gagal',
+        description: 'Terjadi kesalahan saat login.',
+        placement: 'topRight',
+      });
     } finally {
       setLoading(false);
     }
   };
+  
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -121,23 +151,12 @@ const LoginPage = () => {
                 required
               />
               <div
-                className="absolute inset-y-0 right-3 flex items-center cursor-pointer pb-7"
+                className="absolute inset-y-0 right-3 flex items-center cursor-pointer"
                 onClick={togglePasswordVisibility}
               >
                 {showPassword ? <FaEye size={20} /> : <FaEyeSlash size={20} />}
               </div>
-              <div className="text-right mt-2">
-                <a href="#" className="text-sm text-blue-500 hover:underline">
-                  Forgot password?
-                </a>
-              </div>
             </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="text-red-500 text-center mb-4">{error}</div>
-            )}
-
             {/* Tombol Login */}
             <div className="flex justify-center">
               <button

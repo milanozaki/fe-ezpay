@@ -296,12 +296,12 @@ const MenuPage = () => {
                         <span
                           style={{
                             color:
-                              produk.stok > 10
+                              produk.stok > 5
                                 ? "green"
-                                : produk.stok > 1
+                                : produk.stok > 0
                                 ? "orange"
                                 : "red",
-                            fontWeight: "bold",
+                            fontWeight: "medium",
                           }}
                         >
                           Stok: {produk.stok}

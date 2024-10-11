@@ -1,6 +1,6 @@
 "use client"; // Menandakan komponen ini sebagai Client Component
 import React, { useState, useEffect } from "react";
-import Link from "next/link"; // Import Link dari next/link
+import Link from "next/link";
 import {
   HistoryOutlined,
   AppstoreOutlined,
@@ -8,38 +8,53 @@ import {
 } from "@ant-design/icons";
 import { IoBagHandleOutline } from "react-icons/io5";
 import { AiOutlineProfile } from "react-icons/ai";
-import { Avatar, Dropdown, Button, Divider } from "antd"; // Import Avatar, Dropdown, Button, dan Divider dari Ant Design
-import { useRouter, usePathname } from "next/navigation"; // Import useRouter dan usePathname dari next/navigation
-import Image from "next/image"; // Import Image dari next/image
+import { Avatar, Dropdown, Button, Divider, notification } from "antd"; // Mengimpor notification dari Ant Design
+import { useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
+import Cookies from "js-cookie";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false); // Default sidebar tertutup di mobile
-  const [selectedMenu, setSelectedMenu] = useState<string>(""); // State untuk menyimpan item yang dipilih
-  const [userEmail, setUserEmail] = useState<string>("user@example.com"); // State untuk email pengguna
-  const pathname = usePathname(); // Mendapatkan path saat ini
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [selectedMenu, setSelectedMenu] = useState<string>("");
+  const [userEmail, setUserEmail] = useState<string>("user@example.com");
 
-  const router = useRouter(); // Inisialisasi router
+  const pathname = usePathname();
+  const router = useRouter();
 
-  // Menggunakan useEffect untuk cek token saat komponen di-mount
-  // useEffect(() => {
-  //   const token = localStorage.getItem("accessToken");
+  // Fungsi untuk menampilkan notifikasi
+  const openNotification = () => {
+    notification.warning({
+      message: "Akses Ditolak",
+      description: "Anda tidak memiliki token. Silakan login kembali.",
+      placement: "topRight", // Posisi notifikasi
+      duration: 2, // Notifikasi akan hilang dalam 2 detik
+    });
+  };
 
-  //   if (!token) {
-  //     router.push("/login_admin"); // Redirect ke halaman login jika tidak ada token
-  //   } else {
-  //     // Mengambil email dari localStorage jika token ada
-  //     const storedEmail = localStorage.getItem("userEmail");
-  //     if (storedEmail) {
-  //       setUserEmail(storedEmail);
-  //     }
+  useEffect(() => {
+    const token = Cookies.get("accessToken");
 
-  //     // Set selectedMenu berdasarkan URL saat ini
-  //     const activeMenuItem = authenticatedMenu.find(item => pathname?.startsWith(item.path));
-  //     if (activeMenuItem) {
-  //       setSelectedMenu(activeMenuItem.name);
-  //     }
-  //   }
-  // }, [pathname, router]);
+    if (!token) {
+      openNotification(); // Panggil fungsi notifikasi jika token tidak ada
+
+      // Redirect ke halaman login setelah notifikasi muncul
+      setTimeout(() => {
+        router.push("/login_admin");
+      }, 2500); // Tunggu 2.5 detik sebelum redirect
+    } else {
+      const storedEmail = localStorage.getItem("userEmail");
+      if (storedEmail) {
+        setUserEmail(storedEmail);
+      }
+
+      const activeMenuItem = authenticatedMenu.find((item) =>
+        pathname?.startsWith(item.path)
+      );
+      if (activeMenuItem) {
+        setSelectedMenu(activeMenuItem.name);
+      }
+    }
+  }, [pathname, router]);
 
   const authenticatedMenu = [
     { name: "Dashboard", path: "/admin/dashboard", icon: <AppstoreOutlined /> },
@@ -55,7 +70,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   const avatarUrl =
     "https://mir-s3-cdn-cf.behance.net/project_modules/disp/414d9011889067.5625411b2afd2.png";
-  const userRole = "Admin"; // Role bisa diubah menjadi Kasir atau lainnya sesuai kebutuhan
+  const userRole = "Admin";
 
   const avatarMenu = (
     <div className="p-4 w-64 bg-white shadow-lg rounded-lg">
@@ -71,15 +86,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         danger
         className="w-full -mt-4"
         onClick={() => {
-          // Hapus email dan token dari localStorage atau sessionStorage
           localStorage.removeItem("userEmail");
           localStorage.removeItem("authToken");
           localStorage.removeItem("pemilikToko");
           localStorage.removeItem("tokoDto");
           sessionStorage.clear();
-          localStorage.removeItem("accessToken");
+          Cookies.remove("accessToken");
 
-          // Arahkan ke halaman login setelah logout berhasil
           router.push("/login_admin");
         }}
       >
@@ -90,7 +103,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Sidebar */}
       <div
         className={`bg-white text-black w-60 transform ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -115,7 +127,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             >
               <Link
                 href={item.path}
-                onClick={() => setSelectedMenu(item.name)} // Perbarui state ketika item diklik
+                onClick={() => setSelectedMenu(item.name)}
                 className={`flex items-center text-[#4998b3] hover:text-white ${
                   selectedMenu === item.name ? "font-bold" : ""
                 }`}
@@ -128,42 +140,31 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         </ul>
       </div>
 
-      {/* Overlay untuk close sidebar di mobile */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black opacity-50 md:hidden"
-          onClick={() => setIsSidebarOpen(false)} // Tutup sidebar jika overlay diklik
+          onClick={() => setIsSidebarOpen(false)}
         ></div>
       )}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
         <header className="bg-[#257691] shadow-md p-4 flex justify-between items-center text-white sticky top-0 z-10">
-          {/* Menambahkan sticky dan top-0 */}
           <button
             className="md:hidden text-white text-2xl"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)} // Toggle sidebar ketika tombol hamburger diklik
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           >
             ☰
           </button>
-          <h1 className="text-xl font-semibold ml-72 mb-0">{selectedMenu}</h1> {/* Menampilkan item yang dipilih */}
-          {/* Avatar di pojok kanan */}
+          <h1 className="text-xl font-semibold ml-72 mb-0">{selectedMenu}</h1>
           <Dropdown
             overlay={avatarMenu}
             trigger={["click"]}
             placement="bottomRight"
           >
-            <Avatar
-              size="large"
-              style={{ cursor: "pointer" }}
-              src={avatarUrl} // Ganti dengan URL gambar avatar
-            />
+            <Avatar size="large" style={{ cursor: "pointer" }} src={avatarUrl} />
           </Dropdown>
         </header>
 
-        {/* Content yang bisa di-scroll */}
-        <main className="flex-1 p-6 bg-gray-100 overflow-y-auto">
-          {children}
-        </main>
+        <main className="flex-1 p-6 bg-gray-100 overflow-y-auto">{children}</main>
       </div>
     </div>
   );
