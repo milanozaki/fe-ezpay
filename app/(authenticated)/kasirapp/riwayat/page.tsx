@@ -8,6 +8,7 @@ import axios from "axios";
 
 const { RangePicker } = DatePicker;
 
+// Fungsi untuk memformat angka menjadi mata uang
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat("id-ID").format(amount);
 };
@@ -17,23 +18,28 @@ const RiwayatTransaksiPage = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState<any[]>([]);
+  const [totalItems, setTotalItems] = useState(0); // Tambahkan state untuk total item
   const pageSize = 10;
 
-  const fetchData = async (startDate = "", endDate = "") => {
+  // Fungsi untuk mengambil data transaksi
+  const fetchData = async (startDate = "", endDate = "", page = currentPage, limit = pageSize) => {
     try {
       const response = await axios.get("http://localhost:3222/transaksi/all", {
         params: {
           startDate,
           endDate,
+          page,
+          limit, // Kirimkan limit ke backend
         },
       });
-      if (Array.isArray(response.data)) {
+      if (response.data) {
         setData(
-          response.data.map((item: any, index: number) => ({
+          response.data.data.map((item: any, index: number) => ({
             ...item,
             key: index,
           }))
         );
+        setTotalItems(response.data.total); // Set total items dari response
       } else {
         console.error("Data is not in array format:", response.data);
       }
@@ -43,9 +49,10 @@ const RiwayatTransaksiPage = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData(); // Mengambil data saat komponen dimuat
   }, []);
 
+  // Menampilkan modal untuk detail transaksi
   const showModal = (transaction: any) => {
     setSelectedTransaction(transaction);
     setIsModalVisible(true);
@@ -59,21 +66,22 @@ const RiwayatTransaksiPage = () => {
     setIsModalVisible(false);
   };
 
+  // Mengatur tanggal dari RangePicker
   const handleDateChange = (dates: any, dateStrings: [string, string]) => {
     if (dateStrings[0] && dateStrings[1]) {
-      fetchData(dateStrings[0], dateStrings[1]);
+      fetchData(dateStrings[0], dateStrings[1], 1); // Reset ke halaman 1 saat filter tanggal
     } else {
-      fetchData();
+      fetchData(); // Mengambil data tanpa filter tanggal
     }
   };
 
+  // Definisi kolom tabel
   const columns = [
     {
       title: "Tanggal & Waktu",
       dataIndex: "createdAt",
       key: "createdAt",
-      render: (text: string) =>
-        text ? new Date(text).toLocaleString() : "N/A",
+      render: (text: string) => (text ? new Date(text).toLocaleString() : "N/A"),
     },
     {
       title: "Jumlah Item",
@@ -104,13 +112,10 @@ const RiwayatTransaksiPage = () => {
 
   const onPageChange = (page: number) => {
     setCurrentPage(page);
+    fetchData("", "", page); // Ambil data untuk halaman yang dipilih
   };
 
-  const paginatedData = data.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
+  // Fungsi untuk mengekspor data ke Excel
   const exportToExcel = () => {
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -121,7 +126,7 @@ const RiwayatTransaksiPage = () => {
   return (
     <div
       className="pt-0 pb-6 px-8 relative"
-      style={{ overflowY: "auto", maxHeight: "90vh", overflowX: "hidden" }} // Tambahkan overflowX: "hidden"
+      style={{ overflowY: "auto", maxHeight: "90vh", overflowX: "hidden" }}
     >
       <div className="flex items-center justify-between mb-4">
         <div>
@@ -129,7 +134,6 @@ const RiwayatTransaksiPage = () => {
           <RangePicker onChange={handleDateChange} className="mb-4" />
         </div>
         <div className="relative">
-          {/* Export Button */}
           <FloatButton
             tooltip={<div>Export to Excel</div>}
             style={{ position: "absolute", top: 0, right: 0 }}
@@ -140,14 +144,14 @@ const RiwayatTransaksiPage = () => {
       <div className="relative w-full bg-white p-4 shadow-lg rounded-lg">
         <Table
           columns={columns}
-          dataSource={paginatedData}
+          dataSource={data}
           pagination={{
             current: currentPage,
             pageSize,
-            total: data.length,
+            total: totalItems, // Total item yang diterima dari backend
             onChange: onPageChange,
           }}
-          scroll={{ x: "max-content" }} // Menambahkan properti scroll untuk tabel jika diperlukan
+          scroll={{ x: "max-content" }} 
         />
       </div>
 
@@ -225,3 +229,4 @@ const RiwayatTransaksiPage = () => {
 };
 
 export default RiwayatTransaksiPage;
+

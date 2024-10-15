@@ -23,83 +23,83 @@ const LoginPage = () => {
     }
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-  
-    try {
-      const response = await fetch("http://localhost:3222/auth/login/kasir", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-  
-      const data = await response.json();
-  
-      if (!response.ok) {
-        // Cek jika ada message dari backend
-        if (data.message) {
-          if (data.message === "Password salah") {
-            notification.error({
-              message: 'Login Gagal',
-              description: 'Password salah. Periksa kembali kredensial Anda.',
-              placement: 'topRight',
-            });
-          } else if (data.message === "Akses ditolak: Akun Anda sedang tidak aktif") {
-            notification.warning({
-              message: 'Akun Tidak Aktif',
-              description: 'Akun Anda sedang tidak aktif. Hubungi admin.',
-              placement: 'topRight',
-            });
-          } else {
-            // Pesan error lain
-            notification.error({
-              message: 'Login Gagal',
-              description: data.message || 'Terjadi kesalahan saat login.',
-              placement: 'topRight',
-            });
-          }
-        }
-      } else {
-        // Jika login berhasil
-        Cookies.set('access_token', data.access_token, { expires: 7 });
-        localStorage.setItem('userEmail', email); // Simpan email pengguna di localStorage
-  
-        notification.success({
-          message: 'Login Berhasil',
-          description: 'Anda berhasil login.',
-          placement: 'topRight',
-        });
-  
-        if (data.redirectUrl) {
-          notification.warning({
-            message: 'Perlu Perubahan Password',
-            description: 'Anda perlu mengubah password akun terlebih dahulu.',
-            placement: 'topRight',
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
+
+  try {
+    const response = await fetch("http://localhost:3222/auth/login/kasir", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (data.message) {
+        if (data.message === "Password salah") {
+          notification.error({
+            message: "Login Gagal",
+            description: "Password salah. Periksa kembali kredensial Anda.",
+            placement: "topRight",
           });
-  
-          setTimeout(() => {
-            router.push(data.redirectUrl); // Redirect ke halaman edit password kasir dengan ID user
-          }, 2000); // Setelah 2 detik
+        } else if (data.message === "Akun Anda sedang tidak aktif") {
+          notification.warning({
+            message: "Akun Tidak Aktif",
+            description: "Akun Anda sedang tidak aktif. Hubungi admin.",
+            placement: "topRight",
+          });
         } else {
-          router.push("/kasirapp/menu");
+          notification.error({
+            message: "Login Gagal",
+            description: data.message || "Terjadi kesalahan saat login.",
+            placement: "topRight",
+          });
         }
       }
-    } catch (err) {
-      setError("Login gagal. Periksa kredensial Anda dan coba lagi.");
-      notification.error({
-        message: 'Login Gagal',
-        description: 'Terjadi kesalahan saat login.',
-        placement: 'topRight',
-      });
-    } finally {
-      setLoading(false);
+    } else {
+      Cookies.set("access_token", data.access_token, { expires: 7 });
+      localStorage.setItem("userEmail", email);
+
+      // Cek jika password default dan ada redirect URL
+      if (data.redirectUrl) {
+        // Tampilkan notifikasi perubahan password
+        notification.warning({
+          message: "Perubahan Password Diperlukan",
+          description:
+            "Anda login dengan password default. Harap ubah password Anda.",
+          placement: "topRight",
+        });
+
+        // Redirect ke halaman edit password
+        router.push(data.redirectUrl);
+      } else {
+        // Hanya tampilkan notifikasi login berhasil jika bukan password default
+        notification.success({
+          message: "Login Berhasil",
+          description: "Anda berhasil login.",
+          placement: "topRight",
+        });
+
+        // Redirect ke halaman menu kasir
+        router.push("/kasirapp/menu");
+      }
     }
-  };
-  
+  } catch (err) {
+    setError("Login gagal. Periksa kredensial Anda dan coba lagi.");
+    notification.error({
+      message: "Login Gagal",
+      description: "Terjadi kesalahan saat login.",
+      placement: "topRight",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
