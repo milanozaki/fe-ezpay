@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 const EditPasswordPage = () => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(''); // State untuk email
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -12,7 +12,11 @@ const EditPasswordPage = () => {
   const searchParams = useSearchParams();
   const userId = searchParams?.get('id'); // Mengambil ID dari query params
 
+  // Ambil email dari localStorage saat komponen dimuat
   useEffect(() => {
+    const savedEmail = localStorage.getItem('userEmail'); 
+    if (savedEmail) setEmail(savedEmail); // Setel email jika ada di localStorage
+
     if (!userId) {
       router.push('/login_kasir'); // Redirect jika userId tidak ada
     }
@@ -57,6 +61,7 @@ const EditPasswordPage = () => {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-lg"
               required
+              readOnly // Pastikan input email tidak bisa diubah
             />
           </div>
 
