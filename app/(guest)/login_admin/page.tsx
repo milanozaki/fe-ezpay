@@ -36,13 +36,13 @@ const LoginPage = () => {
       // Jika token ditemukan di cookies, tidak melakukan redirect otomatis
     }
   }, []);
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     setLoading(true);
     setError("");
-
+  
     try {
       const response = await fetch("http://localhost:3222/auth/login", {
         method: "POST",
@@ -51,9 +51,9 @@ const LoginPage = () => {
         },
         body: JSON.stringify({ email, password }),
       });
-
+  
       const data = await response.json();
-
+  
       if (!response.ok) {
         if (response.status === 401) {
           openNotification("error", "Login Gagal", "Email atau password salah.");
@@ -64,9 +64,13 @@ const LoginPage = () => {
         const expiresIn = 1; // Days
         const date = new Date();
         date.setTime(date.getTime() + expiresIn * 24 * 60 * 60 * 1000);
+        
+        // Simpan accessToken ke cookie dengan masa berlaku 1 hari
         document.cookie = `accessToken=${data.access_token}; expires=${date.toUTCString()}; path=/`;
-
-        localStorage.setItem("userEmail", email);
+  
+        // Simpan email ke cookie dengan masa berlaku 1 hari
+        document.cookie = `userEmail=${email}; expires=${date.toUTCString()}; path=/`;
+  
         openNotification("success", "Login Berhasil", "Anda berhasil masuk.");
         router.push("/admin/dashboard");
       }
@@ -76,7 +80,7 @@ const LoginPage = () => {
       setLoading(false);
     }
   };
-
+  
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
