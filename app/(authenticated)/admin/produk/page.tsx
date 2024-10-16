@@ -97,67 +97,34 @@ const ProdukPage: React.FC = () => {
         console.error("Error fetching categories:", error);
       });
 
-    const fetchProductsByToko = async () => {
+    const fetchProdukByToko = async () => {
       try {
-        // Ambil token dari session atau cookies
-        const token = Cookies.get("access_token");
-        const email = Cookies.get("user_email");
+        const accessToken = Cookies.get("accessToken");
+        const id_user = Cookies.get("id_user");
 
-        console.log("Token:", token);
-        console.log("Email:", email);
+        console.log("Access Token:", accessToken); // Log untuk debugging
+        console.log("ID User:", id_user); // Log untuk debugging
 
-        if (!token || !email) {
-          throw new Error("Token atau email tidak ditemukan, silakan login.");
-        }
-
-        // Pertama, dapatkan id_user berdasarkan email
-        const userResponse = await axios.get(
-          `http://localhost:3222/users/email/${email}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        const userData = userResponse.data;
-        const id_user = userData.id_user;
-
-        if (!id_user) {
-          throw new Error("User tidak ditemukan berdasarkan email.");
-        }
-
-        // Kedua, dapatkan id_toko berdasarkan id_user
+        // Dapatkan id_toko berdasarkan id_user
         const tokoResponse = await axios.get(
           `http://localhost:3222/toko/user/${id_user}`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${accessToken}` },
           }
         );
 
-        const tokoData = tokoResponse.data;
-        const id_toko = tokoData.id_toko;
+        const id_toko = tokoResponse.data.id_toko; // Pastikan endpoint mengembalikan id_toko
 
-        if (!id_toko) {
-          throw new Error("Toko tidak ditemukan untuk user ini.");
-        }
-
-        // Ketiga, dapatkan produk berdasarkan id_toko
+        // Fetch produk berdasarkan id_toko
         const produkResponse = await axios.get(
           `http://localhost:3222/produk/toko/${id_toko}`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${accessToken}` },
           }
         );
 
         const produkData = produkResponse.data.data;
-
         if (Array.isArray(produkData)) {
-          console.log("Produk Data:", produkData); // Tambahkan log untuk melihat produk di console
           setProduk(produkData);
           setFilteredProduk(produkData);
           setTotalProduk(produkData.length);
@@ -167,7 +134,7 @@ const ProdukPage: React.FC = () => {
       }
     };
 
-    fetchProductsByToko();
+    fetchProdukByToko();
   }, []);
 
   useEffect(() => {
@@ -540,7 +507,7 @@ const ProdukPage: React.FC = () => {
         ) : (
           filteredProduk.map((item) => (
             <Card
-              key={item.id_produk}
+              key={item.id_produk} // Pastikan id_produk unik
               cover={
                 <Image
                   alt={item.nama_produk}
@@ -575,7 +542,8 @@ const ProdukPage: React.FC = () => {
                 description={
                   <div>
                     <span style={{ color: "black" }}>
-                      Rp {formatCurrency(item.harga_produk)}
+                      Rp {formatCurrency(item.harga_produk)}{" "}
+                      {/* Pastikan formatCurrency berfungsi dengan baik */}
                     </span>
                     <div
                       style={{

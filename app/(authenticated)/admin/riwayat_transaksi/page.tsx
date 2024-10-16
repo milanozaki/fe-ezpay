@@ -170,16 +170,71 @@ const RiwayatTransaksiPage = () => {
 
       <Modal
         title="Detail Transaksi"
-        visible={isModalVisible}
+        open={isModalVisible}
         onOk={handleOk}
         onCancel={handleCancel}
-        footer={null}
+        width={800}
       >
-        {selectedTransaction && (
+        {selectedTransaction ? (
           <div>
-            <h4>Detail:</h4>
-            <pre>{JSON.stringify(selectedTransaction, null, 2)}</pre>
+            <p>
+              <strong>ID Transaksi:</strong> {selectedTransaction.id_transaksi}
+            </p>
+            <p>
+              <strong>Tanggal & Waktu:</strong>{" "}
+              {new Date(selectedTransaction.createdAt).toLocaleString()}
+            </p>
+            <p>
+              <strong>User:</strong> {selectedTransaction.user?.nama} (ID:{" "}
+              {selectedTransaction.user?.id_user})
+            </p>
+            <p>
+              <strong>Jumlah Item:</strong> {selectedTransaction.jumlah_produk}
+            </p>
+            <p>
+              <strong>Metode Pembayaran:</strong>{" "}
+              {selectedTransaction.metodeTransaksi?.join(", ")}
+            </p>
+            <p>
+              <strong>Total Pembayaran:</strong> Rp{" "}
+              {selectedTransaction.totalHarga
+                ? formatCurrency(selectedTransaction.totalHarga)
+                : "N/A"}
+            </p>
+
+            <Table
+              dataSource={selectedTransaction.produkDetail}
+              columns={[
+                {
+                  title: "Kode Produk",
+                  dataIndex: "kode_produk",
+                  key: "kode_produk",
+                },
+                {
+                  title: "Nama Produk",
+                  dataIndex: "nama_produk",
+                  key: "nama_produk",
+                },
+                { title: "Jumlah", dataIndex: "jumlah", key: "jumlah" },
+                {
+                  title: "Harga",
+                  dataIndex: "harga",
+                  key: "harga",
+                  render: (total: number) => `Rp ${formatCurrency(total)}`,
+                },
+                {
+                  title: "Total",
+                  dataIndex: "total",
+                  key: "total",
+                  render: (total: number) => `Rp ${formatCurrency(total)}`,
+                },
+              ]}
+              rowKey="id_produk"
+              pagination={false}
+            />
           </div>
+        ) : (
+          <p>Tidak ada detail yang tersedia.</p>
         )}
       </Modal>
     </div>
