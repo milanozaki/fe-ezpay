@@ -100,20 +100,29 @@ const ProdukPage: React.FC = () => {
     const fetchProdukByToko = async () => {
       try {
         const accessToken = Cookies.get("accessToken");
-        const id_user = Cookies.get("id_user");
+        const id_user = Cookies.get("id_user"); // Ambil id_user dari cookie
 
-        console.log("Access Token:", accessToken); // Log untuk debugging
-        console.log("ID User:", id_user); // Log untuk debugging
+        console.log("Access Token:", accessToken); // Debugging
+        console.log("ID User:", id_user); // Debugging
 
-        // Dapatkan id_toko berdasarkan id_user
-        const tokoResponse = await axios.get(
+        if (!id_user) {
+          throw new Error("ID User tidak ditemukan.");
+        }
+
+        // Dapatkan data pengguna berdasarkan id_user
+        const userResponse = await axios.get(
           `http://localhost:3222/toko/user/${id_user}`,
           {
             headers: { Authorization: `Bearer ${accessToken}` },
           }
         );
 
-        const id_toko = tokoResponse.data.id_toko; // Pastikan endpoint mengembalikan id_toko
+        console.log("User Response:", userResponse.data); // Debugging
+        const id_toko = userResponse.data.toko.id_toko; // Ambil id_toko dari objek toko
+
+        if (!id_toko) {
+          throw new Error("ID Toko tidak ditemukan.");
+        }
 
         // Fetch produk berdasarkan id_toko
         const produkResponse = await axios.get(
@@ -123,9 +132,9 @@ const ProdukPage: React.FC = () => {
           }
         );
 
-        const produkData = produkResponse.data.data;
+        const produkData = produkResponse.data;
+        console.log("Produk Response:", produkResponse.data); // Log the entire response
         if (Array.isArray(produkData)) {
-          setProduk(produkData);
           setFilteredProduk(produkData);
           setTotalProduk(produkData.length);
         }
