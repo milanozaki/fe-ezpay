@@ -64,6 +64,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     } else {
       Cookies.set("access_token", data.access_token, { expires: 7 });
       localStorage.setItem("userEmail", email);
+      localStorage.setItem("userName", data.nama || "");
 
       // Cek jika password default dan ada redirect URL
       if (data.redirectUrl) {
