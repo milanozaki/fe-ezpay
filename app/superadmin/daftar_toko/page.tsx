@@ -24,27 +24,43 @@ const KelolaAkunpage = () => {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false); // State untuk modal
 
   useEffect(() => {
-    // Fungsi untuk mengambil data dari API
     const fetchData = async () => {
-      setLoading(true); // Set loading true saat fetch data
-      setError(null); // Reset error saat memulai fetch
+      setLoading(true);
+      setError(null);
       try {
-        const response = await fetch('http://localhost:3222/toko/approved'); // Ganti dengan endpoint API Anda
+        const response = await fetch('http://localhost:3222/toko/approved');
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
         const result = await response.json();
-        setData(result);
+        console.log(result); // Debugging
+  
+        // Transformasi data agar aman dari array user yang kosong
+        setData(
+          result.map((item: any) => ({
+            id_toko: item.id_toko,
+            nama_toko: item.nama_toko,
+            alamat_toko: item.alamat_toko,
+            deskripsi_toko: item.deskripsi_toko,
+            foto: item.foto,
+            tanggal: item.createdAt,
+            user: item.user.length > 0
+              ? item.user[0]
+              : { nama: 'N/A', email: 'N/A', no_handphone: 'N/A' }, // Default jika user kosong
+          }))
+        );
       } catch (error: any) {
+        console.error('Error fetching data:', error);
         setError(error.message);
-        setData([]); // Reset data jika ada error
+        setData([]);
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchData();
   }, []);
+  
 
   const handleDetailClick = (item: TableData) => {
     setSelectedToko(item);

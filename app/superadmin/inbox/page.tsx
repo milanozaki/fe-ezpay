@@ -34,7 +34,8 @@ const InboxPage = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const result = await response.json();
-        console.log(result); // Cek apakah data user sudah ada
+        console.log(result); // Debugging
+  
         setData(
           result.map((item: any) => ({
             id_toko: item.id_toko,
@@ -43,11 +44,11 @@ const InboxPage = () => {
             deskripsi_toko: item.deskripsi_toko,
             alamat_toko: item.alamat_toko,
             foto: item.foto,
-            user: {
-              nama: item.user?.nama || "",
-              email: item.user?.email || "",
-              no_handphone: item.user?.no_handphone || "",
-            },
+            user: item.user[0] || {
+              nama: "",
+              email: "",
+              no_handphone: "",
+            }, // Akses elemen pertama dari array user
           }))
         );
       } catch (error: any) {
@@ -59,6 +60,7 @@ const InboxPage = () => {
     };
     fetchData();
   }, []);
+  
 
   const handleDetailClick = (item: TableData) => {
     console.log("Detail Clicked:", item); // Debugging
