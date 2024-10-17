@@ -157,10 +157,25 @@ const ProdukPage: React.FC = () => {
     }
   }, [selectedProduk, form]);
 
-  const fetchProduk = async (value: string) => {
+  // const fetchProduk = async (value: string) => {
+  //   try {
+  //     const response = await axios.get(
+  //       `http://localhost:3222/produk/search?nama_produk=${value}`
+  //     );
+  //     const searchResult = response.data;
+  //     setFilteredProduk(searchResult);
+  //     setTotalProduk(searchResult.length);
+  //   } catch (error) {
+  //     console.error("Error searching products:", error);
+  //   }
+  // };
+
+
+  const fetchProduk = async (value: any) => {
     try {
+      const idToko = localStorage.getItem('id_toko'); // Mengambil id_toko dari localStorage
       const response = await axios.get(
-        `http://localhost:3222/produk/search?nama_produk=${value}`
+        `http://localhost:3222/produk/search?nama_produk=${value}&id_toko=${idToko}`
       );
       const searchResult = response.data;
       setFilteredProduk(searchResult);

@@ -54,7 +54,6 @@ const DashboardPage = () => {
   const router = useRouter(); // hook untuk navigasi
 
   useEffect(() => {
-
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -202,12 +201,12 @@ const DashboardPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {stokMenipis.slice(0, 2).map((item, index) => (
+                {/* {stokMenipis.slice(0, 2).map((item, index) => (
                   <tr key={index}>
                     <td className="border-t p-2">{item.nama_produk}</td>
                     <td className="border-t p-2">{item.stok}</td>
                   </tr>
-                ))}
+                ))} */}
               </tbody>
             </table>
           </div>
