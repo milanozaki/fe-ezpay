@@ -60,32 +60,32 @@ const LoginPage = () => {
             } else {
                 throw new Error(data.message || "Login gagal");
             }
-        } else {
-            const expiresIn = 1; // Days
-            const date = new Date();
-            date.setTime(date.getTime() + expiresIn * 24 * 60 * 60 * 1000);
-
-            // Simpan accessToken ke cookie
-            document.cookie = `accessToken=${data.access_token}; expires=${date.toUTCString()}; path=/`;
-
-            // Simpan email ke cookie
-            document.cookie = `userEmail=${email}; expires=${date.toUTCString()}; path=/`;
-
-            // Simpan id_user ke cookie
-            document.cookie = `id_user=${data.id_user}; expires=${date.toUTCString()}; path=/`;
-
-            // Redirect ke halaman dashboard atau URL yang ditentukan
-            const redirectUrl = data.redirect || "/admin/dashboard"; 
-            openNotification("success", "Login Berhasil", "Anda berhasil masuk.");
-            router.push(redirectUrl);
+            return; // Keluar agar tidak lanjut jika gagal
         }
+
+        const expiresIn = 1; // Hari
+        const date = new Date();
+        date.setTime(date.getTime() + expiresIn * 24 * 60 * 60 * 1000);
+
+        // Simpan accessToken dan email ke cookie
+        document.cookie = `accessToken=${data.access_token}; expires=${date.toUTCString()}; path=/`;
+        document.cookie = `userEmail=${email}; expires=${date.toUTCString()}; path=/`;
+
+        // Simpan id_user dan id_toko ke localStorage
+        localStorage.setItem("id_user", data.id_user);
+        localStorage.setItem("id_toko", data.id_toko);
+
+        // Redirect ke halaman dashboard atau URL yang ditentukan
+        const redirectUrl = data.redirect || "/admin/dashboard";
+        openNotification("success", "Login Berhasil", "Anda berhasil masuk.");
+        router.push(redirectUrl);
     } catch (err) {
         openNotification("error", "Login Gagal", "Terjadi kesalahan. Silakan coba lagi.");
     } finally {
         setLoading(false);
     }
 };
-  
+
   
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);

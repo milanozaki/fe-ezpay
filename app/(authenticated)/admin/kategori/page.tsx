@@ -12,21 +12,48 @@ const KategoriPage = () => {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false); // State untuk visibilitas modal
   const [isAddModalVisible, setIsAddModalVisible] = useState<boolean>(false); // State untuk visibilitas modal tambah
   const [currentNama, setCurrentNama] = useState<string>(''); // State untuk menyimpan nama kategori yang sedang diedit
+  const [idToko, setIdToko] = useState<string>(''); // State untuk menyimpan id_toko
   const [form] = Form.useForm(); // Form instance dari Ant Design
 
   useEffect(() => {
-    // Ambil data dari API dengan endpoint kategori/produk-count
-    axios.get('http://localhost:3222/kategori/produk-count')
-      .then((response) => {
-        // Asumsi data yang diterima adalah array dengan objek yang memiliki nama kategori dan jumlah produk
-        setKategori(response.data.data || []);
-        setLoading(false); // Set loading menjadi false setelah data diterima
-      })
-      .catch((error) => {
-        console.error('Error fetching data:', error);
-        setLoading(false); // Set loading menjadi false jika ada error
+    // Mengambil id_toko dari local storage
+    const idToko = localStorage.getItem('id_toko'); // Pastikan ID toko disimpan di local storage
+
+    if (!idToko) {
+      notification.error({
+        message: 'Error',
+        description: 'ID Toko tidak ditemukan di local storage.',
       });
+      setLoading(false);
+      return;
+    }
+
+    // Ambil data kategori berdasarkan id_toko
+    const fetchKategoriByToko = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3222/kategori/kategori-by-toko?id_toko=${encodeURIComponent(idToko)}`);
+        setKategori(response.data.data || []);
+      } catch (error: any) { // Use 'any' to specify that error can be of any type
+        console.error('Error fetching kategori:', error);
+        notification.error({
+          message: 'Error',
+          description: error.response?.data?.message || 'Gagal mengambil kategori.',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchKategoriByToko();
   }, []);
+
+  if (loading) {
+    return <div>Loading...</div>; // Tampilkan loading
+  }
+
+  if (loading) {
+    return <div>Loading...</div>; // Tampilkan loading
+  }
 
   const handleEditClick = (namaKategori: string) => {
     setCurrentNama(namaKategori); // Set nama kategori yang akan diedit
@@ -60,7 +87,13 @@ const KategoriPage = () => {
             });
           })
           .catch((error) => {
+            // Menangani kesalahan pada permintaan
             console.error('Error updating data:', error.response?.data || error.message);
+            notification.error({
+              message: 'Gagal',
+              description: error.response?.data?.message || 'Terjadi kesalahan saat memperbarui kategori.',
+              duration: 3,
+            });
           });
       })
       .catch((info) => {
@@ -69,12 +102,25 @@ const KategoriPage = () => {
   };
 
   const handleOkAdd = () => {
+    // Ambil id_toko dari local storage
+    const idToko = localStorage.getItem('id_toko');
+  
+    // Validasi id_toko
+    if (!idToko) {
+      notification.error({
+        message: 'Gagal',
+        description: 'ID Toko tidak ditemukan. Silakan coba lagi.',
+        duration: 3,
+      });
+      return;
+    }
+  
     form.validateFields()
       .then((values) => {
-        axios.post('http://localhost:3222/kategori', { nama: values.nama })
+        axios.post(`http://localhost:3222/kategori?id_toko=${encodeURIComponent(idToko)}`, { nama: values.nama })
           .then((response) => {
             // Pastikan response.data mengandung data kategori yang baru ditambahkan
-            const newKategori = { nama: values.nama, jumlahProduk: 0 }; // Sesuaikan dengan struktur data dari API
+            const newKategori = { nama: response.data.data.nama, jumlahProduk: 0 }; // Ambil nama dari response
             setKategori((prevKategori) => [...prevKategori, newKategori]);
             setIsAddModalVisible(false); // Sembunyikan modal setelah berhasil
             
@@ -86,13 +132,19 @@ const KategoriPage = () => {
             });
           })
           .catch((error) => {
-            console.error('Error adding data:', error);
+            console.error('Error adding data:', error.response?.data || error.message);
+            notification.error({
+              message: 'Gagal',
+              description: error.response?.data?.message || 'Terjadi kesalahan saat menambahkan kategori.',
+              duration: 3,
+            });
           });
       })
       .catch((info) => {
         console.log('Validate Failed:', info);
       });
   };
+  
 
   const handleCancel = () => {
     setIsModalVisible(false); // Sembunyikan modal
@@ -138,31 +190,23 @@ const KategoriPage = () => {
               </tr>
             </thead>
             <tbody className="text-gray-700 text-sm">
-              {kategori.length > 0 ? (
-                kategori.map((item, index) => (
-                  <tr key={index} className="hover:bg-gray-100 transition duration-200">
-                    <td className="py-3 px-6 text-center w-16">{index + 1}.</td>
-                    <td className="py-3 px-6 text-center">{item.kategori}</td>
-                    <td className="py-3 px-6 text-center">{item.jumlahProduk}</td>
-                    <td className="py-3 px-6 text-center">
-                      <a
-                        href="#"
-                        onClick={() => handleEditClick(item.kategori)}
-                        className="text-blue-500 hover:text-blue-700 underline"
-                      >
-                        Edit
-                      </a>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={4} className="py-3 px-6 text-center text-gray-500">
-                    Tidak ada data
-                  </td>
-                </tr>
-              )}
-            </tbody>
+        {kategori.length > 0 ? (
+          kategori.map((item, index) => (
+            <tr key={item.id_kategori} className="hover:bg-gray-100 transition duration-200">
+              <td className="py-3 px-6 text-center w-16">{index + 1}.</td>
+              <td className="py-3 px-6 text-center">{item.kategori}</td> {/* Assuming you have kategori property */}
+              <td className="py-3 px-6 text-center">{item.jumlahProduk}</td>
+              <td className="py-3 px-6 text-center">
+                <Button onClick={() => handleEditClick(item.id_kategori)} type="link">Edit</Button>
+              </td>
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td colSpan={4} className="py-3 px-6 text-center">Tidak ada kategori</td>
+          </tr>
+        )}
+      </tbody>
           </table>
         </div>
 
@@ -191,13 +235,13 @@ const KategoriPage = () => {
           <Form
             form={form}
             layout="vertical"
-            initialValues={{ nama: currentNama }}
           >
             <Form.Item
               name="nama"
               label="Nama Kategori"
-              rules={[{ required: true, message: 'Masukkan nama kategori' }]}>
-              <Input />
+              rules={[{ required: true, message: 'Masukkan nama kategori' }]}
+            >
+              <Input placeholder="Masukkan nama kategori" />
             </Form.Item>
           </Form>
         </Modal>
@@ -208,7 +252,7 @@ const KategoriPage = () => {
           visible={isAddModalVisible}
           onOk={handleOkAdd}
           onCancel={handleCancel}
-          okText="Simpan"
+          okText="Tambah"
           cancelText="Batal"
           okButtonProps={{
             style: {
@@ -231,8 +275,9 @@ const KategoriPage = () => {
             <Form.Item
               name="nama"
               label="Nama Kategori"
-              rules={[{ required: true, message: 'Masukkan nama kategori' }]}>
-              <Input />
+              rules={[{ required: true, message: 'Masukkan nama kategori' }]}
+            >
+              <Input placeholder="Masukkan nama kategori" />
             </Form.Item>
           </Form>
         </Modal>
