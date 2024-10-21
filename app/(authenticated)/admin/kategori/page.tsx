@@ -8,16 +8,15 @@ import axios from 'axios'; // Import Axios
 
 const KategoriPage = () => {
   const [kategori, setKategori] = useState<any[]>([]); // State untuk menyimpan data kategori
-  const [loading, setLoading] = useState<boolean>(true); // Menambahkan state loading
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(false); // State untuk visibilitas modal
-  const [isAddModalVisible, setIsAddModalVisible] = useState<boolean>(false); // State untuk visibilitas modal tambah
-  const [currentNama, setCurrentNama] = useState<string>(''); // State untuk menyimpan nama kategori yang sedang diedit
-  const [idToko, setIdToko] = useState<string>(''); // State untuk menyimpan id_toko
+  const [loading, setLoading] = useState<boolean>(true); // State loading
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false); // State untuk visibilitas modal edit
+  const [isAddModalVisible, setIsAddModalVisible] = useState<boolean>(false); // State modal tambah kategori
+  const [currentNama, setCurrentNama] = useState<string>(''); // Nama kategori saat ini
+  const [currentIdKategori, setCurrentIdKategori] = useState<number | null>(null); // ID kategori saat ini
   const [form] = Form.useForm(); // Form instance dari Ant Design
 
   useEffect(() => {
-    // Mengambil id_toko dari local storage
-    const idToko = localStorage.getItem('id_toko'); // Pastikan ID toko disimpan di local storage
+    const idToko = localStorage.getItem('id_toko'); // Ambil id_toko dari local storage
 
     if (!idToko) {
       notification.error({
@@ -28,12 +27,13 @@ const KategoriPage = () => {
       return;
     }
 
-    // Ambil data kategori berdasarkan id_toko
     const fetchKategoriByToko = async () => {
       try {
-        const response = await axios.get(`http://localhost:3222/kategori/kategori-by-toko?id_toko=${encodeURIComponent(idToko)}`);
+        const response = await axios.get(
+          `http://localhost:3222/kategori/kategori-by-toko?id_toko=${encodeURIComponent(idToko)}`
+        );
         setKategori(response.data.data || []);
-      } catch (error: any) { // Use 'any' to specify that error can be of any type
+      } catch (error: any) {
         console.error('Error fetching kategori:', error);
         notification.error({
           message: 'Error',
@@ -47,138 +47,113 @@ const KategoriPage = () => {
     fetchKategoriByToko();
   }, []);
 
-  if (loading) {
-    return <div>Loading...</div>; // Tampilkan loading
-  }
-
-  if (loading) {
-    return <div>Loading...</div>; // Tampilkan loading
-  }
-
-  const handleEditClick = (namaKategori: string) => {
-    setCurrentNama(namaKategori); // Set nama kategori yang akan diedit
-    form.setFieldsValue({ nama: namaKategori }); // Set nilai form
-    setIsModalVisible(true); // Tampilkan modal
-  };
-
-  const handleAddClick = () => {
-    form.resetFields(); // Reset form
-    setIsAddModalVisible(true); // Tampilkan modal tambah
+  const handleEditClick = (id: number, nama: string) => {
+    setCurrentIdKategori(id); // Simpan ID kategori
+    setCurrentNama(nama); // Simpan nama kategori
+    form.setFieldsValue({ nama }); // Isi form dengan nama kategori
+    setIsModalVisible(true); // Tampilkan modal edit
   };
 
   const handleOkEdit = () => {
-    form.validateFields()
-      .then((values) => {
-        axios.put(`http://localhost:3222/kategori/update/${encodeURIComponent(currentNama)}`, { namaBaru: values.nama })
-          .then(() => {
-            // Update kategori setelah berhasil
-            setKategori((prevKategori) =>
-              prevKategori.map((item) =>
-                item.nama === currentNama ? { ...item, nama: values.nama } : item
-              )
-            );
-            setIsModalVisible(false); // Sembunyikan modal setelah berhasil
-            
-            // Tampilkan notifikasi setelah edit berhasil
-            notification.success({
-              message: 'Berhasil',
-              description: 'Kategori berhasil diedit.',
-              duration: 3, // Durasi dalam detik
-            });
-          })
-          .catch((error) => {
-            // Menangani kesalahan pada permintaan
-            console.error('Error updating data:', error.response?.data || error.message);
-            notification.error({
-              message: 'Gagal',
-              description: error.response?.data?.message || 'Terjadi kesalahan saat memperbarui kategori.',
-              duration: 3,
-            });
+    form.validateFields().then((values) => {
+      axios
+        .put(`http://localhost:3222/kategori/update/${encodeURIComponent(currentIdKategori!)}`, {
+          namaBaru: values.nama,
+        })
+        .then(() => {
+          setKategori((prevKategori) =>
+            prevKategori.map((item) =>
+              item.id_kategori === currentIdKategori
+                ? { ...item, kategori: values.nama }
+                : item
+            )
+          );
+          setIsModalVisible(false);
+          notification.success({
+            message: 'Berhasil',
+            description: 'Kategori berhasil diedit.',
+            duration: 3,
           });
-      })
-      .catch((info) => {
-        console.log('Validate Failed:', info);
-      });
+        })
+        .catch((error) => {
+          console.error('Error updating data:', error);
+          notification.error({
+            message: 'Gagal',
+            description: error.response?.data?.message || 'Gagal memperbarui kategori.',
+          });
+        });
+    });
+  };
+
+  const handleAddClick = () => {
+    form.resetFields();
+    setIsAddModalVisible(true);
   };
 
   const handleOkAdd = () => {
-    // Ambil id_toko dari local storage
     const idToko = localStorage.getItem('id_toko');
-  
-    // Validasi id_toko
+
     if (!idToko) {
       notification.error({
         message: 'Gagal',
-        description: 'ID Toko tidak ditemukan. Silakan coba lagi.',
+        description: 'ID Toko tidak ditemukan.',
         duration: 3,
       });
       return;
     }
-  
-    form.validateFields()
-      .then((values) => {
-        axios.post(`http://localhost:3222/kategori?id_toko=${encodeURIComponent(idToko)}`, { nama: values.nama })
-          .then((response) => {
-            // Pastikan response.data mengandung data kategori yang baru ditambahkan
-            const newKategori = { nama: response.data.data.nama, jumlahProduk: 0 }; // Ambil nama dari response
-            setKategori((prevKategori) => [...prevKategori, newKategori]);
-            setIsAddModalVisible(false); // Sembunyikan modal setelah berhasil
-            
-            // Tampilkan notifikasi setelah tambah berhasil
-            notification.success({
-              message: 'Berhasil',
-              description: 'Kategori berhasil ditambahkan.',
-              duration: 3, // Durasi dalam detik
-            });
-          })
-          .catch((error) => {
-            console.error('Error adding data:', error.response?.data || error.message);
-            notification.error({
-              message: 'Gagal',
-              description: error.response?.data?.message || 'Terjadi kesalahan saat menambahkan kategori.',
-              duration: 3,
-            });
+
+    form.validateFields().then((values) => {
+      axios
+        .post(`http://localhost:3222/kategori?id_toko=${encodeURIComponent(idToko)}`, {
+          nama: values.nama,
+        })
+        .then((response) => {
+          const newKategori = { nama: response.data.data.nama, jumlahProduk: 0 };
+          setKategori((prevKategori) => [...prevKategori, newKategori]);
+          setIsAddModalVisible(false);
+          notification.success({
+            message: 'Berhasil',
+            description: 'Kategori berhasil ditambahkan.',
+            duration: 3,
           });
-      })
-      .catch((info) => {
-        console.log('Validate Failed:', info);
-      });
+        })
+        .catch((error) => {
+          console.error('Error adding data:', error);
+          notification.error({
+            message: 'Gagal',
+            description: error.response?.data?.message || 'Gagal menambahkan kategori.',
+          });
+        });
+    });
   };
-  
 
   const handleCancel = () => {
-    setIsModalVisible(false); // Sembunyikan modal
-    setIsAddModalVisible(false); // Sembunyikan modal tambah
+    setIsModalVisible(false);
+    setIsAddModalVisible(false);
   };
 
   if (loading) {
-    return <div className="text-center">Loading...</div>; // Menampilkan pesan loading saat data sedang di-fetch
+    return <div>Loading...</div>;
   }
 
   return (
     <div className="mt-3 flex justify-center mr-20 ml-64">
       <div className="relative w-full max-w-7xl">
-        {/* Button Tambah */}
         <div className="flex justify-start mt-2">
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
-            className="flex items-center gap-1"
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
             onClick={handleAddClick}
             style={{
               backgroundColor: '#3B8394',
-              borderColor: 'blue-500',
-              color: '#fff',
               borderRadius: '12px',
               padding: '10px 20px',
-              transition: 'background-color 0.1s, border-color 0.3s',
             }}
           >
             Tambah
           </Button>
         </div>
 
-        {/* Tabel Kategori */}
         <div className="mt-5 overflow-x-auto">
           <table className="min-w-full bg-white border-collapse rounded-lg shadow-md">
             <thead>
@@ -190,27 +165,33 @@ const KategoriPage = () => {
               </tr>
             </thead>
             <tbody className="text-gray-700 text-sm">
-        {kategori.length > 0 ? (
-          kategori.map((item, index) => (
-            <tr key={item.id_kategori} className="hover:bg-gray-100 transition duration-200">
-              <td className="py-3 px-6 text-center w-16">{index + 1}.</td>
-              <td className="py-3 px-6 text-center">{item.kategori}</td> {/* Assuming you have kategori property */}
-              <td className="py-3 px-6 text-center">{item.jumlahProduk}</td>
-              <td className="py-3 px-6 text-center">
-                <Button onClick={() => handleEditClick(item.id_kategori)} type="link">Edit</Button>
-              </td>
-            </tr>
-          ))
-        ) : (
-          <tr>
-            <td colSpan={4} className="py-3 px-6 text-center">Tidak ada kategori</td>
-          </tr>
-        )}
-      </tbody>
+              {kategori.length > 0 ? (
+                kategori.map((item, index) => (
+                  <tr key={item.id_kategori} className="hover:bg-gray-100">
+                    <td className="py-3 px-6 text-center w-16">{index + 1}.</td>
+                    <td className="py-3 px-6 text-center">{item.kategori}</td>
+                    <td className="py-3 px-6 text-center">{item.jumlahProduk}</td>
+                    <td className="py-3 px-6 text-center">
+                      <Button
+                        onClick={() => handleEditClick(item.id_kategori, item.kategori)}
+                        type="link"
+                      >
+                        Edit
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="py-3 px-6 text-center">
+                    Tidak ada kategori
+                  </td>
+                </tr>
+              )}
+            </tbody>
           </table>
         </div>
 
-        {/* Modal Edit Kategori */}
         <Modal
           title="Edit Kategori"
           visible={isModalVisible}
@@ -218,24 +199,8 @@ const KategoriPage = () => {
           onCancel={handleCancel}
           okText="Simpan"
           cancelText="Batal"
-          okButtonProps={{
-            style: {
-              backgroundColor: '#3B8394',
-              borderColor: '#3B8394',
-              color: '#fff',
-            },
-          }}
-          cancelButtonProps={{
-            style: {
-              borderColor: '#3B8394',
-              color: '#000',
-            },
-          }}
         >
-          <Form
-            form={form}
-            layout="vertical"
-          >
+          <Form form={form} layout="vertical">
             <Form.Item
               name="nama"
               label="Nama Kategori"
@@ -246,7 +211,6 @@ const KategoriPage = () => {
           </Form>
         </Modal>
 
-        {/* Modal Tambah Kategori */}
         <Modal
           title="Tambah Kategori"
           visible={isAddModalVisible}
@@ -254,24 +218,8 @@ const KategoriPage = () => {
           onCancel={handleCancel}
           okText="Tambah"
           cancelText="Batal"
-          okButtonProps={{
-            style: {
-              backgroundColor: '#3B8394',
-              borderColor: '#3B8394',
-              color: '#fff',
-            },
-          }}
-          cancelButtonProps={{
-            style: {
-              borderColor: '#3B8394',
-              color: '#000',
-            },
-          }}
         >
-          <Form
-            form={form}
-            layout="vertical"
-          >
+          <Form form={form} layout="vertical">
             <Form.Item
               name="nama"
               label="Nama Kategori"

@@ -62,8 +62,8 @@ const DashboardPage = () => {
         const stokResponse = await fetch(
           "http://localhost:3222/produk/filter-stok"
         );
-        const stokData = await stokResponse.json();
-        setStokMenipis(stokData);
+        // const stokData = await stokResponse.json();
+        // setStokMenipis(stokData);
 
         const jumlahResponse = await fetch(
           "http://localhost:3222/produk/count"
@@ -121,16 +121,16 @@ const DashboardPage = () => {
   }, [router]);
 
   // Fungsi untuk mengambil nilai dari cookie
-  const getCookie = (name: string) => {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()?.split(";").shift();
-    return null;
-  };
+  // const getCookie = (name: string) => {
+  //   const value = `; ${document.cookie}`;
+  //   const parts = value.split(`; ${name}=`);
+  //   if (parts.length === 2) return parts.pop()?.split(";").shift();
+  //   return null;
+  // };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  // if (loading) {
+  //   return <div>Loading...</div>;
+  // }
 
   const chartOptions = {
     responsive: true,
