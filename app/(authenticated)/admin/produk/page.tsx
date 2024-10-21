@@ -157,10 +157,11 @@ const ProdukPage: React.FC = () => {
     }
   }, [selectedProduk, form]);
 
-  const fetchProduk = async (value: string) => {
+  const fetchProduk = async (value: any) => {
     try {
+      const idToko = localStorage.getItem("id_toko"); // Mengambil id_toko dari localStorage
       const response = await axios.get(
-        `http://localhost:3222/produk/search?nama_produk=${value}`
+        `http://localhost:3222/produk/search?nama_produk=${value}&id_toko=${idToko}`
       );
       const searchResult = response.data;
       setFilteredProduk(searchResult);
@@ -170,13 +171,14 @@ const ProdukPage: React.FC = () => {
     }
   };
 
-  const fetchProdukByStatus = async (status: StatusEnum) => {
+  const fetchProdukByStatus = async (status: any) => {
     try {
+      const idToko = localStorage.getItem("id_toko"); // Mengambil id_toko dari localStorage
       const response = await axios.get(
-        `http://localhost:3222/produk?status=${status}`
+        `http://localhost:3222/produk/aktif?status=${status}&id_toko=${idToko}` // URL yang dimodifikasi
       );
 
-      const filteredProduk = response.data; // Adjust based on your API response structure
+      const filteredProduk = response.data; // Sesuaikan dengan struktur respons API Anda
       setFilteredProduk(filteredProduk);
       setTotalProduk(filteredProduk.length);
     } catch (error) {
@@ -184,33 +186,31 @@ const ProdukPage: React.FC = () => {
     }
   };
 
-  const fetchProdukByStok = async (order: "ASC" | "DESC") => {
-    let url = `http://localhost:3222/produk/by-stok?sort=${order}`;
+  useEffect(() => {
+    fetchProdukByStatus(status); // Memanggil fungsi dengan status yang diberikan
+  }, [status]);
 
-    if (selectedCategory) {
-      url += `&kategori=${selectedCategory}`;
-    }
+  const fetchProdukByStok = async (order: "ASC" | "DESC") => {
+    const idToko = localStorage.getItem("id_toko"); // Mengambil id_toko dari localStorage
+    const url = `http://localhost:3222/produk/by-stok?sort=${order}&id_toko=${idToko}`;
 
     try {
       const response = await axios.get(url);
-      const sortedProduk = response.data; // Adjust based on your API response
+      const sortedProduk = response.data; // Sesuaikan dengan struktur respons API Anda
       setFilteredProduk(sortedProduk);
       setTotalProduk(sortedProduk.length);
     } catch (error) {
-      console.error("Error fetching products by price:", error);
+      console.error("Error fetching products by stock:", error);
     }
   };
 
   const fetchProdukByHarga = async (order: "ASC" | "DESC") => {
-    let url = `http://localhost:3222/produk/by-harga?sort=${order}`;
-
-    if (selectedCategory) {
-      url += `&kategori=${selectedCategory}`;
-    }
+    const idToko = localStorage.getItem("id_toko"); // Mengambil id_toko dari localStorage
+    const url = `http://localhost:3222/produk/by-harga?sort=${order}&id_toko=${idToko}`;
 
     try {
       const response = await axios.get(url);
-      const sortedProduk = response.data; // Adjust based on your API response
+      const sortedProduk = response.data; // Sesuaikan dengan struktur respons API Anda
       setFilteredProduk(sortedProduk);
       setTotalProduk(sortedProduk.length);
     } catch (error) {
@@ -231,35 +231,6 @@ const ProdukPage: React.FC = () => {
     debouncedSearch(value);
   };
 
-  const handleFilterByCategory = async (idKategori: string) => {
-    if (idKategori === "semua") {
-      setSelectedCategory(null);
-      setFilteredProduk(produk);
-      setTotalProduk(produk.length);
-    } else {
-      try {
-        const response = await axios.get(
-          `http://localhost:3222/kategori/produk/${idKategori}`
-        );
-
-        const filteredData = response.data;
-
-        // Jika tidak ada produk dalam kategori, tampilkan pesan "Produk Kosong"
-        if (filteredData.length === 0) {
-          message.warning("Tidak ada produk dalam kategori ini");
-        }
-
-        setSelectedCategory(idKategori);
-        setFilteredProduk(filteredData);
-        setTotalProduk(filteredData.length);
-      } catch (error) {
-        console.error("Error filtering products by category:", error);
-        message.error("Terjadi kesalahan saat memfilter produk");
-      }
-    }
-    setCurrentPage(1);
-  };
-
   const handleInfoClick = (item: Produk) => {
     setSelectedProductInfo(item);
     setIsInfoModalVisible(true);
@@ -268,6 +239,37 @@ const ProdukPage: React.FC = () => {
   const handleAddClick = () => {
     form.resetFields();
     setIsAddModalVisible(true);
+  };
+
+  const handleFilterByCategory = async (idKategori: any) => {
+    const idToko = localStorage.getItem('id_toko');
+
+    if (idKategori === "semua") {
+      // Reset selected category
+      setSelectedCategory(null);
+      
+      // Set all products to be displayed
+      setFilteredProduk(produk);
+      
+      // Set total number of products
+      setTotalProduk(produk.length);
+      
+      return;
+    }
+
+    try {
+      const response = await axios.get(`http://localhost:3222/kategori/by-kategori?id_kategori=${idKategori}&id_toko=${idToko}`);
+      const filteredData = response.data;
+
+      if (filteredData.length === 0) {
+        message.warning("Tidak ada produk dalam kategori ini");
+      }
+
+      setFilteredProduk(filteredData);
+    } catch (error) {
+      console.error("Error filtering products by category:", error);
+      message.error("Terjadi kesalahan saat memfilter produk");
+    }
   };
 
   const handleOk = async () => {
@@ -493,7 +495,7 @@ const ProdukPage: React.FC = () => {
           <Select
             defaultValue="semua"
             style={{ width: 150, marginRight: 5 }}
-            onChange={(value) => handleFilterByCategory(value)}
+            onChange={handleFilterByCategory}
           >
             <Select.Option value="semua">Semua</Select.Option>
             {categories.map((category) => (
