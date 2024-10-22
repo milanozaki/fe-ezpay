@@ -13,6 +13,8 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import axios from 'axios';
+import { message } from 'antd'; // Jika kamu menggunakan Ant Design untuk notifikasi
 
 // Daftarkan komponen yang diperlukan dari Chart.js
 ChartJS.register(
@@ -38,6 +40,8 @@ const DashboardPage = () => {
   const [selectedYear, setSelectedYear] = useState<number>(
     new Date().getFullYear()
   );
+  const [produkCount, setProdukCount] = useState(0);
+  const idToko = localStorage.getItem('id_toko'); // Ambil id_toko dari localStorage
   const [loading, setLoading] = useState<boolean>(true);
   const [chartData, setChartData] = useState<any>({
     labels: [],
@@ -64,11 +68,11 @@ const DashboardPage = () => {
         // const stokData = await stokResponse.json();
         // setStokMenipis(stokData);
 
-        const jumlahResponse = await fetch(
-          "http://localhost:3222/produk/count"
-        );
-        const jumlahData = await jumlahResponse.json();
-        setJumlahProduk(jumlahData.jumlahProduk);
+        // const jumlahResponse = await fetch(
+        //   "http://localhost:3222/produk/count"
+        // );
+        // const jumlahData = await jumlahResponse.json();
+        // setJumlahProduk(jumlahData.jumlahProduk);
 
         const transaksiResponse = await fetch(
           "http://localhost:3222/transaksi/count"
@@ -119,6 +123,20 @@ const DashboardPage = () => {
     fetchData();
   }, [router]);
 
+  const fetchProdukCount = async () => {
+    try {
+      const response = await axios.get(`http://localhost:3222/produk/count?id_toko=${idToko}`);
+      setProdukCount(response.data);
+    } catch (error) {
+      console.error("Error fetching produk count:", error);
+      message.error("Terjadi kesalahan saat mengambil jumlah produk");
+    }
+  };
+
+  useEffect(() => {
+    fetchProdukCount();
+  }, [idToko]); // Dependensi jika idToko berubah, panggil ulang
+
   // Fungsi untuk mengambil nilai dari cookie
   // const getCookie = (name: string) => {
   //   const value = `; ${document.cookie}`;
@@ -161,7 +179,7 @@ const DashboardPage = () => {
             </div>
             <div className="mr-12">
               <p className="text-sm text-gray-500">Total produk </p>
-              <p className="text-3xl font-bold text-gray-900">{jumlahProduk}</p>
+              <p className="text-3xl font-bold text-gray-900">{produkCount}</p>
             </div>
           </div>
         </div>
