@@ -12,9 +12,9 @@ enum StatusEnum {
 
 interface Kasir {
   id_user: string;
-  nama: string;
+  nama_kasir: string;
   status: StatusEnum;
-  email: string;
+  email_kasir: string;
   lastLogin: string | null;
 }
 
@@ -24,22 +24,37 @@ const KasirPage: React.FC = () => {
   const [form] = Form.useForm();
   const [editKasirId, setEditKasirId] = useState<string | null>(null); // Track ID for edit
   const [isEditMode, setIsEditMode] = useState(false); // Track if we are editing or adding
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchKasirUsers = async () => {
-      try {
-        const response = await axios.get("http://localhost:3222/users/kasir");
-        console.log("Fetched kasir users:", response.data); // Log the response
-        // Check if the data is in the correct structure
-        setKasirList(response.data); // Adjust this if needed based on the API response
-      } catch (error) {
-        console.error("Error fetching kasir:", error);
-        message.error("Terjadi kesalahan saat mengambil data kasir.");
+    const idToko = localStorage.getItem("id_toko");
+
+    const fetchKasir = async () => {
+      if (idToko) {
+        try {
+          const response = await axios.get(
+            `http://localhost:3222/users/kasir?id_toko=${idToko}`
+          );
+          console.log(response.data.data); // Cek apa yang diterima
+          setKasirList(response.data.data);
+        } catch (error) {
+          console.error("Error fetching kasir data:", error);
+          message.error("Terjadi kesalahan saat mengambil data kasir");
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        message.error("ID Toko tidak ditemukan!");
+        setLoading(false);
       }
     };
 
-    fetchKasirUsers();
-  }, []);
+    fetchKasir();
+  }, []); // Kosongkan dependency array untuk hanya dieksekusi sekali saat mount
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   const handleAddKasir = async (values: any) => {
     try {
@@ -56,8 +71,8 @@ const KasirPage: React.FC = () => {
         ...prevKasirList,
         {
           id_user: response.data.id_user, // Assuming your backend returns the new kasir ID
-          nama: values.nama,
-          email: values.email,
+          nama_kasir: values.nama,
+          email_kasir: values.email,
           status: values.status,
           lastLogin: null, // Default or adjust as needed
         },
@@ -163,10 +178,10 @@ const KasirPage: React.FC = () => {
         <thead>
           <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
             <th className="py-3 px-6 text-left font-semibold">No</th>
-            <th className="py-3 px-10 text-left font-semibold">Nama</th>
+            <th className="py-3 px-16 text-left font-semibold">Nama</th>
             <th className="py-3 px-10 text-left font-semibold">Email</th>
-            <th className="py-3 px-4 text-left font-semibold">Status</th>
-            <th className="py-3 px-16 text-left font-semibold">
+            <th className="py-3 px-10 text-left font-semibold">Status</th>
+            <th className="py-3 px-20 text-left font-semibold">
               Terakhir Login
             </th>
             <th className="py-3 px-12 text-left font-semibold">Aksi</th>
@@ -179,33 +194,39 @@ const KasirPage: React.FC = () => {
               return (
                 <tr key={kasir.id_user}>
                   <td className="py-3 px-7 text-left w-16">{index + 1}</td>
-                  <td className="py-3 px-10 text-left">{kasir.nama}</td>
-                  <td className="py-3 px-2 text-left">{kasir.email}</td>
+                  <td className="py-3 px-16 text-left">
+                    {kasir.nama_kasir}
+                  </td>{" "}
+                  {/* Ganti nama dengan nama_kasir */}
+                  <td className="py-3 px-2 text-left">
+                    {kasir.email_kasir}
+                  </td>{" "}
+                  {/* Ganti email dengan email_kasir */}
                   <td
-                    className={`py-2 px-2 text-left flex items-center gap-2 mt-2 mb-2 ${
+                    className={`py-2 px-8 text-left flex items-center gap-2 mt-2 mb-2 ${
                       kasir.status === StatusEnum.ACTIVE
-                        ? " text-green-600"
-                        : " text-red-600"
+                        ? "text-green-600"
+                        : "text-red-600"
                     }`}
                     style={{
                       borderRadius: "8px", // Tambahkan border radius agar tampilan lebih halus
                     }}
                   >
-                    {/* Dot untuk menunjukkan status */}
                     <span
                       className={`w-2 h-2 rounded-full ${
-                        kasir.status === StatusEnum.ACTIVE ? "bg-green-600" : "bg-red-600"
+                        kasir.status === StatusEnum.ACTIVE
+                          ? "bg-green-600"
+                          : "bg-red-600"
                       }`}
                     ></span>
-                    {/* Tampilkan status */}
                     {kasir.status}
                   </td>
                   <td
-                    className={`py-3 px-16 text-left ${
+                    className={`py-3 px-24 text-left ${
                       isOnline ? "text-green-600" : "text-black"
                     }`}
                   >
-                    {status} {/* Updated to use the status */}
+                    {status}
                   </td>
                   <td className="py-3 px-6 text-left">
                     <Button type="primary" onClick={() => openEditModal(kasir)}>
