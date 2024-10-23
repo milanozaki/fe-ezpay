@@ -58,36 +58,42 @@ const KasirPage: React.FC = () => {
 
   const handleAddKasir = async (values: any) => {
     try {
-      const response = await axios.post(
-        "http://localhost:3222/users/tambah-kasir",
-        values
-      );
-      message.success("Kasir berhasil ditambahkan!");
+      const idToko = localStorage.getItem('id_toko'); // Ambil id_toko dari localStorage
+  
+      // Menggunakan URL dengan query parameter
+      const response = await axios.post(`http://localhost:3222/users/tambah-kasir?id_toko=${idToko}`, values);
+  
+      message.success('Kasir berhasil ditambahkan!');
       setIsModalVisible(false);
       form.resetFields();
-
-      // Update kasir list without refetching
+  
+      // Update daftar kasir
       setKasirList((prevKasirList) => [
         ...prevKasirList,
         {
-          id_user: response.data.id_user, // Assuming your backend returns the new kasir ID
+          id_user: response.data.id_kasir,
           nama_kasir: values.nama,
           email_kasir: values.email,
           status: values.status,
-          lastLogin: null, // Default or adjust as needed
+          lastLogin: null,
         },
       ]);
-    } catch (error: any) {
-      console.error("Error adding kasir:", error);
-      message.error(
-        error.response?.data?.message ||
-          "Terjadi kesalahan saat menambahkan kasir."
-      );
+    } catch (error: unknown) {
+      console.error('Error adding kasir:', error);
+  
+      if (axios.isAxiosError(error) && error.response) {
+        message.error(
+          error.response.data.message || 'Terjadi kesalahan saat menambahkan kasir.'
+        );
+      } else {
+        message.error('Terjadi kesalahan yang tidak terduga.');
+      }
     }
   };
+  
 
   const handleEditKasir = async (values: any) => {
-    if (!editKasirId) return;
+    if (!editKasirId) return; 
     try {
       await axios.put(`http://localhost:3222/users/edit-kasir/${editKasirId}`, {
         status: values.status,
