@@ -137,7 +137,7 @@ const RiwayatTransaksiPage = () => {
   };
 
   return (
-    <div className="pt-1 pl-5 pb-5 mr-24 ml-60">
+    <div className="pt-1 pl-5 pb-5 mr-16 ml-60">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm mb-4">Pilih Tanggal</h3>

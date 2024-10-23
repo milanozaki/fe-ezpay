@@ -13,8 +13,8 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import axios from 'axios';
-import { message } from 'antd'; // Jika kamu menggunakan Ant Design untuk notifikasi
+import axios from "axios";
+import { message } from "antd"; // Jika kamu menggunakan Ant Design untuk notifikasi
 
 // Daftarkan komponen yang diperlukan dari Chart.js
 ChartJS.register(
@@ -31,17 +31,22 @@ interface MonthlySales {
   total: number;
 }
 
+interface Produk {
+  id_produk: string;
+  nama_produk: string;
+  stok: number;
+}
+
 // DashboardPage Component
 const DashboardPage = () => {
-  const [stokMenipis, setStokMenipis] = useState<any[]>([]);
-  const [jumlahProduk, setJumlahProduk] = useState<number>(0);
+  const [produk, setProduk] = useState<Produk[]>([]);
   const [jumlahTransaksi, setJumlahTransaksi] = useState<number>(0);
   const [totalOmset, setTotalOmset] = useState<number>(0);
   const [selectedYear, setSelectedYear] = useState<number>(
     new Date().getFullYear()
   );
   const [produkCount, setProdukCount] = useState(0);
-  const idToko = localStorage.getItem('id_toko'); // Ambil id_toko dari localStorage
+  const idToko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
   const [loading, setLoading] = useState<boolean>(true);
   const [chartData, setChartData] = useState<any>({
     labels: [],
@@ -62,17 +67,9 @@ const DashboardPage = () => {
       try {
         setLoading(true);
 
-        const stokResponse = await fetch(
-          "http://localhost:3222/produk/filter-stok"
-        );
-        // const stokData = await stokResponse.json();
-        // setStokMenipis(stokData);
-
-        // const jumlahResponse = await fetch(
-        //   "http://localhost:3222/produk/count"
+        // const stokResponse = await fetch(
+        //   "http://localhost:3222/produk/filter-stok"
         // );
-        // const jumlahData = await jumlahResponse.json();
-        // setJumlahProduk(jumlahData.jumlahProduk);
 
         const transaksiResponse = await fetch(
           "http://localhost:3222/transaksi/count"
@@ -125,7 +122,9 @@ const DashboardPage = () => {
 
   const fetchProdukCount = async () => {
     try {
-      const response = await axios.get(`http://localhost:3222/produk/count?id_toko=${idToko}`);
+      const response = await axios.get(
+        `http://localhost:3222/produk/count?id_toko=${idToko}`
+      );
       setProdukCount(response.data);
     } catch (error) {
       console.error("Error fetching produk count:", error);
@@ -136,6 +135,17 @@ const DashboardPage = () => {
   useEffect(() => {
     fetchProdukCount();
   }, [idToko]); // Dependensi jika idToko berubah, panggil ulang
+
+  useEffect(() => {
+    axios
+      .get(`http://localhost:3222/produk/filter-min-stok/toko/${idToko}`)
+      .then((response) => {
+        setProduk(response.data); // Simpan data produk yang diterima
+      })
+      .catch((error) => {
+        console.error("Error fetching produk:", error);
+      });
+  }, [idToko]);
 
   // Fungsi untuk mengambil nilai dari cookie
   // const getCookie = (name: string) => {
@@ -219,12 +229,12 @@ const DashboardPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {/* {stokMenipis.slice(0, 2).map((item, index) => (
+                {produk.slice(0, 2).map((item, index) => (
                   <tr key={index}>
                     <td className="border-t p-2">{item.nama_produk}</td>
                     <td className="border-t p-2">{item.stok}</td>
                   </tr>
-                ))} */}
+                ))}
               </tbody>
             </table>
           </div>
