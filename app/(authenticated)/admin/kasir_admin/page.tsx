@@ -58,15 +58,18 @@ const KasirPage: React.FC = () => {
 
   const handleAddKasir = async (values: any) => {
     try {
-      const idToko = localStorage.getItem('id_toko'); // Ambil id_toko dari localStorage
-  
+      const idToko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
+
       // Menggunakan URL dengan query parameter
-      const response = await axios.post(`http://localhost:3222/users/tambah-kasir?id_toko=${idToko}`, values);
-  
-      message.success('Kasir berhasil ditambahkan!');
+      const response = await axios.post(
+        `http://localhost:3222/users/tambah-kasir?id_toko=${idToko}`,
+        values
+      );
+
+      message.success("Kasir berhasil ditambahkan!");
       setIsModalVisible(false);
       form.resetFields();
-  
+
       // Update daftar kasir
       setKasirList((prevKasirList) => [
         ...prevKasirList,
@@ -79,21 +82,21 @@ const KasirPage: React.FC = () => {
         },
       ]);
     } catch (error: unknown) {
-      console.error('Error adding kasir:', error);
-  
+      console.error("Error adding kasir:", error);
+
       if (axios.isAxiosError(error) && error.response) {
         message.error(
-          error.response.data.message || 'Terjadi kesalahan saat menambahkan kasir.'
+          error.response.data.message ||
+            "Terjadi kesalahan saat menambahkan kasir."
         );
       } else {
-        message.error('Terjadi kesalahan yang tidak terduga.');
+        message.error("Terjadi kesalahan yang tidak terduga.");
       }
     }
   };
-  
 
   const handleEditKasir = async (values: any) => {
-    if (!editKasirId) return; 
+    if (!editKasirId) return;
     try {
       await axios.put(`http://localhost:3222/users/edit-kasir/${editKasirId}`, {
         status: values.status,
@@ -252,7 +255,7 @@ const KasirPage: React.FC = () => {
         </tbody>
       </table>
 
-      {/* Modal for Adding or Editing Kasir */}
+     {/* Modal for Adding or Editing Kasir */}
       <Modal
         title={editKasirId ? "Edit Status Kasir" : "Tambah Kasir"}
         visible={isModalVisible}
