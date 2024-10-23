@@ -71,7 +71,7 @@ const LoginPage = () => {
         document.cookie = `accessToken=${data.access_token}; expires=${date.toUTCString()}; path=/`;
         document.cookie = `id_user=${data.id_user}; expires=${date.toUTCString()}; path=/`;
 
-        // Simpan id_user dan id_toko ke localStorage
+        // Simpan email dan id_toko ke localStorage
         localStorage.setItem("userEmail", data.email);
         localStorage.setItem("id_toko", data.id_toko);
 
