@@ -76,34 +76,31 @@ const ProdukPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("ASC");
 
-  // const { data: dataProduct } = productRepository.hooks.useProduct();
-  // console.log(dataProduct?.data.length, "dp");
   useEffect(() => {
-    // Fetch kategori dan produk
-    axios
-      .get("http://localhost:3222/kategori")
-      .then((response) => {
-        const categoryData = response.data.data;
-        if (Array.isArray(categoryData)) {
-          // Simpan id_kategori dan nama kategori
-          const categoriesWithIds = categoryData.map((item) => ({
-            id_kategori: item.id_kategori,
-            nama: item.nama,
-          }));
-          setCategories(categoriesWithIds); // Set data dengan id_kategori dan nama
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching categories:", error);
-      });
-
-    const fetchProdukByToko = async () => {
+    const fetchData = async () => {
       try {
+        const idToko = localStorage.getItem('id_toko'); // Ambil id_toko dari localStorage
+        if (!idToko) {
+          throw new Error("ID Toko tidak ditemukan di localStorage.");
+        }
+
+        // Fetch kategori
+        const categoryResponse = await axios.get(
+          `http://localhost:3222/kategori/kategori-by-toko?id_toko=${encodeURIComponent(idToko)}`
+        );
+
+        const categoryData = categoryResponse.data.data;
+        if (Array.isArray(categoryData)) {
+          const categoriesWithIds = categoryData.map((item: any) => ({
+            id_kategori: item.idKategori, // Ubah sesuai dengan struktur data JSON
+            nama: item.kategori,           // Ubah sesuai dengan struktur data JSON
+          }));
+          setCategories(categoriesWithIds); // Set data kategori
+        }
+
+        // Fetch produk
         const accessToken = Cookies.get("accessToken");
         const id_user = Cookies.get("id_user"); // Ambil id_user dari cookie
-
-        console.log("Access Token:", accessToken); // Debugging
-        console.log("ID User:", id_user); // Debugging
 
         if (!id_user) {
           throw new Error("ID User tidak ditemukan.");
@@ -117,7 +114,6 @@ const ProdukPage: React.FC = () => {
           }
         );
 
-        console.log("User Response:", userResponse.data); // Debugging
         const id_toko = userResponse.data.toko.id_toko; // Ambil id_toko dari objek toko
 
         if (!id_toko) {
@@ -133,19 +129,18 @@ const ProdukPage: React.FC = () => {
         );
 
         const produkData = produkResponse.data;
-        console.log("Produk Response:", produkResponse.data); // Log the entire response
         if (Array.isArray(produkData)) {
-          setFilteredProduk(produkData);
+          setProduk(produkData); // Set produk ke state produk
+          setFilteredProduk(produkData); // Juga set filteredProduk ke produkData untuk ditampilkan pertama kali
           setTotalProduk(produkData.length);
         }
       } catch (error) {
-        console.error("Error fetching produk:", error);
+        console.error("Error fetching data:", error);
       }
     };
 
-    fetchProdukByToko();
+    fetchData();
   }, []);
-
   useEffect(() => {
     if (selectedProduk) {
       form.setFieldsValue({
@@ -243,28 +238,28 @@ const ProdukPage: React.FC = () => {
 
   const handleFilterByCategory = async (idKategori: any) => {
     const idToko = localStorage.getItem('id_toko');
-
+  
     if (idKategori === "semua") {
       // Reset selected category
       setSelectedCategory(null);
       
       // Set all products to be displayed
-      setFilteredProduk(produk);
+      setFilteredProduk(produk); // Ambil semua produk dari state produk
       
       // Set total number of products
       setTotalProduk(produk.length);
       
       return;
     }
-
+  
     try {
       const response = await axios.get(`http://localhost:3222/kategori/by-kategori?id_kategori=${idKategori}&id_toko=${idToko}`);
-      const filteredData = response.data;
-
+      const filteredData = response.data; // Pastikan data yang diterima benar
+  
       if (filteredData.length === 0) {
         message.warning("Tidak ada produk dalam kategori ini");
       }
-
+  
       setFilteredProduk(filteredData);
     } catch (error) {
       console.error("Error filtering products by category:", error);
@@ -492,21 +487,21 @@ const ProdukPage: React.FC = () => {
             value={searchQuery}
             onChange={handleSearchChange}
           />
-          <Select
-            defaultValue="semua"
-            style={{ width: 150, marginRight: 5 }}
-            onChange={handleFilterByCategory}
-          >
-            <Select.Option value="semua">Semua</Select.Option>
-            {categories.map((category) => (
-              <Select.Option
-                key={category.id_kategori}
-                value={category.id_kategori}
-              >
-                {category.nama}
-              </Select.Option>
-            ))}
-          </Select>
+    <Select
+      defaultValue="semua"
+      onChange={handleFilterByCategory}
+      style={{ width: 150 }}
+    >
+      <Select.Option value="semua">Semua</Select.Option>
+      {categories.map((category) => (
+        <Select.Option
+          key={category.id_kategori}
+          value={category.id_kategori}
+        >
+          {category.nama} {/* Pastikan menggunakan category.nama */}
+        </Select.Option>
+      ))}
+    </Select>
         </div>
       </div>
 
