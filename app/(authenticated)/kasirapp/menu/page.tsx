@@ -4,16 +4,24 @@ import { Select, Card, Image, Button, message, notification } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 import Cookies from "js-cookie";
 
+interface Kategori {
+  id_kategori: string;
+  nama: string;
+}
+
 interface Produk {
   id_produk: string;
   nama_produk: string;
   harga_produk: number;
   gambar_produk: string;
+  status_produk: string;
+  satuan_produk: string;
+  kode_produk: string;
   stok: number;
   quantity: number;
-  kategori: {
-    nama: string;
-  };
+  kategori: Kategori; // Menggunakan objek Kategori
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const MenuPage = () => {
@@ -45,11 +53,24 @@ const MenuPage = () => {
 
   useEffect(() => {
     const fetchProducts = async () => {
+      const id_toko = localStorage.getItem("id_toko");
+      if (!id_toko) {
+        console.error("ID Toko tidak ditemukan di localStorage");
+        return;
+      }
+
       try {
         setLoading(true);
-        const response = await fetch("http://localhost:3222/produk/all");
+        const response = await fetch(`http://localhost:3222/produk/toko/${id_toko}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
-        setProducts(data.data);
+        console.log("Data produk:", data); // Menampilkan data di konsol
+        // Pastikan untuk mengambil array produk dengan benar
+        setProducts(data); // Jika data adalah array langsung, gunakan ini
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {
@@ -66,7 +87,6 @@ const MenuPage = () => {
         const response = await fetch("http://localhost:3222/metode-transaksi");
         const data = await response.json();
         setPaymentMethods(data);
-        // Set default payment method to the first method
         if (data.length > 0) {
           setPaymentMethod(data[0].id_metode_transaksi);
         }
@@ -82,7 +102,7 @@ const MenuPage = () => {
     setActiveButton(value);
   };
 
-  const cashMethod = paymentMethods.find((method) => method.nama === "Cash");
+  const tunaiMethod = paymentMethods.find((method) => method.nama === "Tunai");
   const qrisMethod = paymentMethods.find((method) => method.nama === "QRIS");
 
   const formatCurrency = (amount: number): string => {
@@ -100,10 +120,9 @@ const MenuPage = () => {
         (item) => item.id_produk === produk.id_produk
       );
 
-      // Cek apakah stok mencukupi
       if (existingProduct && existingProduct.quantity + 1 > produk.stok) {
         message.error(`Stok tidak mencukupi untuk ${produk.nama_produk}`);
-        return prevCart; // Tidak menambah ke keranjang
+        return prevCart;
       }
 
       if (existingProduct) {
@@ -114,10 +133,9 @@ const MenuPage = () => {
         );
       }
 
-      // Cek stok saat pertama kali ditambahkan ke keranjang
       if (produk.stok < 1) {
         message.error(`Stok tidak mencukupi untuk ${produk.nama_produk}`);
-        return prevCart; // Tidak menambah ke keranjang
+        return prevCart;
       }
 
       return [...prevCart, { ...produk, quantity: 1 }];
@@ -143,8 +161,8 @@ const MenuPage = () => {
                     Metode Transaksi: ${
                       result.metode_transaksi || paymentMethod
                     } 
-                    Total Harga: Rp ${formatCurrency(totalHarga)}`, // Menggunakan total harga dari state cart
-      placement: "bottomRight", // Menentukan posisi notifikasi
+                    Total Harga: Rp ${formatCurrency(totalHarga)}`, 
+      placement: "bottomRight", 
     });
   };
 
@@ -155,13 +173,29 @@ const MenuPage = () => {
   };
 
   const updateQuantity = (id_produk: string, change: number) => {
-    setCart((prevCart) =>
-      prevCart.map((item) =>
-        item.id_produk === id_produk
-          ? { ...item, quantity: Math.max(item.quantity + change, 1) }
-          : item
-      )
-    );
+    setCart((prevCart) => {
+      const updatedCart = prevCart.map((item) => {
+        if (item.id_produk === id_produk) {
+          const newQuantity = item.quantity + change;
+
+          // Update stok produk
+          setProducts((prevProducts) => {
+            return prevProducts.map((product) => {
+              if (product.id_produk === id_produk) {
+                return { ...product, stok: product.stok - change }; // Perbarui stok
+              }
+              return product;
+            });
+          });
+
+          return { ...item, quantity: newQuantity >= 0 ? newQuantity : 0 }; // Jangan biarkan jumlah kurang dari 0
+        }
+        return item;
+      });
+
+      // Hapus item dari keranjang jika jumlahnya 0
+      return updatedCart.filter((item) => item.quantity > 0);
+    });
   };
 
   const handleClearCart = () => {
@@ -169,40 +203,36 @@ const MenuPage = () => {
   };
 
   const handleSubmit = async () => {
-    const token = Cookies.get("access_token"); // Ambil token dari cookie
-    console.log("Token found:", token); // Log token
-  
-    // Ambil userNama dari localStorage
+    const token = Cookies.get("access_token");
     const userNama = localStorage.getItem("userName");
-  
+
     const pesananData = {
       detil_produk_pesanan: cart.map((item) => ({
         id_produk: item.id_produk,
         jumlah_produk: item.quantity,
       })),
-      metode_transaksi_id: paymentMethod, // UUID dari metode pembayaran
-      token, // Ganti dengan token valid
-      userNama, // Sertakan userNama di sini
+      metode_transaksi_id: paymentMethod,
+      token,
+      userNama,
     };
-  
+
     try {
       const response = await fetch("http://localhost:3222/pesanan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Sertakan token di header
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(pesananData),
       });
-  
+
       if (!response.ok) {
         throw new Error("Gagal menyimpan pesanan");
       }
-  
+
       const result = await response.json();
-      openSuccessNotification(result); // Panggil notifikasi sukses di sini
-  
-      // Update stok produk setelah transaksi berhasil
+      openSuccessNotification(result);
+
       setProducts((prevProducts) =>
         prevProducts.map((product) => {
           const cartItem = cart.find(
@@ -211,19 +241,18 @@ const MenuPage = () => {
           if (cartItem) {
             return {
               ...product,
-              stok: product.stok - cartItem.quantity, // Kurangi stok produk
+              stok: product.stok - cartItem.quantity,
             };
           }
           return product;
         })
       );
-  
-      setCart([]); // Bersihkan keranjang setelah pesanan berhasil
+
+      setCart([]);
     } catch (error) {
       console.error("Error submitting pesanan:", error);
     }
   };
-  
 
   const totalHarga = cart.reduce(
     (total, item) => total + item.harga_produk * item.quantity,
@@ -231,10 +260,9 @@ const MenuPage = () => {
   );
 
   return (
-    <div className="flex w-full h-full gap-4 max-w-screen overflow-hidden">
-      {/* Mengurangi margin kiri */}
-      <div className="w-[75%] h-[calc(100vh-200px)] mr-0 p-0">
-        {/* Menghilangkan margin di sisi kanan dan padding */}
+    <div className="flex w-full h-full gap-3 max-w-screen overflow-hidden">
+      {/* Bagian untuk daftar produk */}
+      <div className="w-[70%] h-[calc(100vh-200px)] mr-0 p-0">
         <div className="mb-4">
           <Select
             defaultValue="Semua"
@@ -266,7 +294,7 @@ const MenuPage = () => {
             `}</style>
 
             <div className="grid grid-cols-3 gap-2">
-              {filteredProducts.map((produk: Produk) => (
+              {products.map((produk) => (
                 <Card
                   key={produk.id_produk}
                   className={`shadow-lg hover:shadow-2xl transition-transform duration-300 cursor-pointer ${
@@ -279,8 +307,9 @@ const MenuPage = () => {
                       alt={produk.nama_produk}
                       src={`http://localhost:3222/produk/image/${produk.gambar_produk}`}
                       style={{
-                        width: "350px",
-                        height: "250px",
+                        width: "100%",
+                        height: "200px",
+                        objectFit: "cover",
                       }}
                       preview={false}
                     />
@@ -292,30 +321,35 @@ const MenuPage = () => {
                       <div
                         style={{
                           display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
+                          flexDirection: "column",
+                          justifyContent: "flex-start",
                         }}
                       >
-                        <span>{produk.nama_produk}</span>
                         <span
                           style={{
-                            color:
-                              produk.stok > 5
-                                ? "green"
-                                : produk.stok > 0
-                                ? "orange"
-                                : "red",
-                            fontWeight: "medium",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "normal",
+                            maxWidth: "70%",
                           }}
                         >
-                          Stok: {produk.stok}
+                          {produk.nama_produk}
                         </span>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            marginTop: "10px",
+                          }}
+                        >
+                          <span className="text-gray-400">
+                            Stok: {produk.stok}
+                          </span>
+                          <span style={{ color: "black" }}>
+                            Rp {formatCurrency(produk.harga_produk)}
+                          </span>
+                        </div>
                       </div>
-                    }
-                    description={
-                      <span style={{ color: "black" }}>
-                        Rp {formatCurrency(produk.harga_produk)}
-                      </span>
                     }
                   />
                 </Card>
@@ -324,9 +358,8 @@ const MenuPage = () => {
           </div>
         </div>
       </div>
-
       {/* Keranjang */}
-      <div className="w-[25%] h-[calc(100vh-175px)] p-4 flex flex-col justify-between">
+      <div className="w-[30%] h-[calc(100vh-175px)] p-4 flex flex-col justify-between">
         <h2 className="text-lg font-bold mb-4">Pesanan ({cart.length})</h2>
         <div className="flex-grow overflow-auto scrollbar-hidden touch-scroll">
           <style jsx>{`
@@ -358,7 +391,7 @@ const MenuPage = () => {
                       <Image
                         alt={item.nama_produk}
                         src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
-                        style={{ width: "100px", height: "100px" }}
+                        style={{ width: "100px", height: "100px", objectFit: "cover" }}
                         preview={false}
                       />
                     </div>
@@ -419,14 +452,12 @@ const MenuPage = () => {
             <button
               className="w-1/6 px-2 py-1 bg-red-500 text-white rounded-md"
               onClick={handleClearCart}
-              disabled={cart.length === 0}
             >
-              <DeleteOutlined />
+              Kosongkan
             </button>
             <button
-              className="w-5/6 px-4 py-2 bg-green-500 text-white rounded-md"
+              className="w-5/6 px-2 py-1 bg-green-500 text-white rounded-md"
               onClick={handleSubmit}
-              disabled={cart.length === 0}
             >
               Bayar
             </button>

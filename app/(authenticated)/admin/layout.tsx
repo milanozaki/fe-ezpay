@@ -8,15 +8,17 @@ import {
 } from "@ant-design/icons";
 import { IoBagHandleOutline } from "react-icons/io5";
 import { AiOutlineProfile } from "react-icons/ai";
-import { Avatar, Dropdown, Button, Divider, notification } from "antd"; // Mengimpor notification dari Ant Design
+import { Avatar, Dropdown, Button, Divider, notification,Tooltip } from "antd"; // Mengimpor notification dari Ant Design
 import { useRouter, usePathname } from "next/navigation";
-import Image from "next/image";
 import Cookies from "js-cookie";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [selectedMenu, setSelectedMenu] = useState<string>("");
+
+  // Ganti default email dan nama pengguna
   const [userEmail, setUserEmail] = useState<string>("user@example.com");
+  const [userName, setUserName] = useState<string>("User Name");
 
   const pathname = usePathname();
   const router = useRouter();
@@ -26,8 +28,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     notification.warning({
       message: "Akses Ditolak",
       description: "Anda tidak memiliki token. Silakan login kembali.",
-      placement: "topRight", // Posisi notifikasi
-      duration: 2, // Notifikasi akan hilang dalam 2 detik
+      placement: "topRight",
+      duration: 2,
     });
   };
 
@@ -35,16 +37,19 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     const token = Cookies.get("accessToken");
 
     if (!token) {
-      openNotification(); // Panggil fungsi notifikasi jika token tidak ada
+      openNotification();
 
-      // Redirect ke halaman login setelah notifikasi muncul
       setTimeout(() => {
         router.push("/login_admin");
-      }, 2500); // Tunggu 2.5 detik sebelum redirect
+      }, 2500);
     } else {
       const storedEmail = localStorage.getItem("userEmail");
+      const storedName = localStorage.getItem("nama");
       if (storedEmail) {
         setUserEmail(storedEmail);
+      }
+      if (storedName) {
+        setUserName(storedName);
       }
 
       const activeMenuItem = authenticatedMenu.find((item) =>
@@ -68,31 +73,53 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     { name: "Kasir", path: "/admin/kasir_admin", icon: <SettingOutlined /> },
   ];
 
-  const avatarUrl =
-    "https://mir-s3-cdn-cf.behance.net/project_modules/disp/414d9011889067.5625411b2afd2.png";
   const userRole = "Admin";
 
-  const avatarMenu = (
-    <div className="p-4 w-64 bg-white shadow-lg rounded-lg">
-      <div className="flex justify-center">
-        <Avatar size={64} src={avatarUrl} />
-      </div>
-      <div className="mt-2 font-bold text-center">{userEmail}</div>
-      <div className="text-gray-500 text-center">{userRole}</div>
+  // Ambil huruf pertama dari nama
+  const userInitial = userName.charAt(0).toUpperCase();
 
-      <Divider className="mt-3" />
+  const avatarMenu = (
+    <div className="p-6 w-64 bg-white shadow-xl rounded-lg border border-gray-200">
+      {/* Peran Pengguna */}
+      <div className="text-sm text-gray-500 text-center mb-4">{userRole}</div>
+
+      {/* Avatar dengan bayangan halus */}
+      <div className="flex justify-center mb-4">
+        <Avatar
+          size={80}
+          className="bg-[#3b98b7] shadow-lg"
+          style={{ boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)" }}
+        >
+          {userInitial}
+        </Avatar>
+      </div>
+
+      {/* Nama Pengguna */}
+      <div className="text-lg font-bold text-center text-gray-900 mb-2">{userName}</div>
+
+      {/* Email Pengguna */}
+      <div className="text-sm text-gray-500 text-center mb-6">{userEmail}</div>
+
+      {/* Garis Pembatas */}
+      <Divider className="mb-4" />
+
+      {/* Tombol Keluar dengan desain lebih halus */}
       <Button
         type="primary"
         danger
-        className="w-full -mt-4"
+        className="w-full rounded-full h-10 font-semibold"
+        style={{
+          backgroundColor: "#f5222d",
+          border: "none",
+          boxShadow: "0 4px 6px rgba(245, 34, 45, 0.2)",
+        }}
         onClick={() => {
           localStorage.removeItem("userEmail");
-          localStorage.removeItem("authToken");
-          localStorage.removeItem("pemilikToko");
-          localStorage.removeItem("tokoDto");
+          localStorage.removeItem("userName");
+          localStorage.removeItem("id_toko");
           sessionStorage.clear();
           Cookies.remove("accessToken");
-
+          Cookies.remove("id_user");
           router.push("/login_admin");
         }}
       >
@@ -111,12 +138,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         fixed h-full z-50`}
       >
         <div className="flex justify-center items-center mb-6 mt-4">
-          <Image
+          <img
             src="/images/logoEzpay.png"
             alt="Sidebar Image"
             width={80}
             height={80}
-            priority
           />
         </div>
         <ul className="w-full">
@@ -155,12 +181,20 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             ☰
           </button>
           <h1 className="text-xl font-semibold ml-72 mb-0">{selectedMenu}</h1>
-          <Dropdown
-            overlay={avatarMenu}
-            trigger={["click"]}
-            placement="bottomRight"
-          >
-            <Avatar size="large" style={{ cursor: "pointer" }} src={avatarUrl} />
+          <Dropdown overlay={avatarMenu} trigger={["click"]} placement="bottomRight">
+            {/* Avatar dengan efek hover */}
+            <Tooltip title={userName}>
+              <Avatar
+                size="large"
+                style={{
+                  cursor: "pointer",
+                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                }}
+                className="bg-[#3b98b7] hover:shadow-xl hover:scale-110"
+              >
+                {userInitial}
+              </Avatar>
+            </Tooltip>
           </Dropdown>
         </header>
 
@@ -171,3 +205,4 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default Layout;
+

@@ -66,7 +66,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
     // Check if in browser before accessing localStorage
     if (typeof window !== "undefined") {
-      const token = Cookies.get("access_token"); // Ambil access_token dari cookies
+      const token = Cookies.get("accessToken"); // Ambil access_token dari cookies
       if (!token) {
         router.push("/login_kasir"); // Redirect ke halaman login jika tidak ada token
       } else {

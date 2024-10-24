@@ -73,6 +73,7 @@ const LoginPage = () => {
 
         // Simpan email dan id_toko ke localStorage
         localStorage.setItem("userEmail", data.email);
+        localStorage.setItem("nama", data.nama);
         localStorage.setItem("id_toko", data.id_toko);
 
         // Redirect ke halaman dashboard atau URL yang ditentukan
