@@ -18,7 +18,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   // Ganti default email dan nama pengguna
   const [userEmail, setUserEmail] = useState<string>("user@example.com");
-  const [userName, setUserName] = useState<string>("User Name");
+  const [userName, setUserName] = useState<string>("UserName");
 
   const pathname = usePathname();
   const router = useRouter();

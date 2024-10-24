@@ -203,36 +203,40 @@ const MenuPage = () => {
   };
 
   const handleSubmit = async () => {
-    const token = Cookies.get("access_token");
+    const token = Cookies.get("accessToken"); // Ambil token dari cookie
+    console.log("Token found:", token); // Log token
+  
+    // Ambil userNama dari localStorage
     const userNama = localStorage.getItem("userName");
-
+  
     const pesananData = {
       detil_produk_pesanan: cart.map((item) => ({
         id_produk: item.id_produk,
         jumlah_produk: item.quantity,
       })),
-      metode_transaksi_id: paymentMethod,
-      token,
-      userNama,
+      metode_transaksi_id: paymentMethod, // UUID dari metode pembayaran
+      token, // Ganti dengan token valid
+      userNama, // Sertakan userNama di sini
     };
-
+  
     try {
       const response = await fetch("http://localhost:3222/pesanan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`, // Sertakan token di header
         },
         body: JSON.stringify(pesananData),
       });
-
+  
       if (!response.ok) {
         throw new Error("Gagal menyimpan pesanan");
       }
-
+  
       const result = await response.json();
-      openSuccessNotification(result);
-
+      openSuccessNotification(result); // Panggil notifikasi sukses di sini
+  
+      // Update stok produk setelah transaksi berhasil
       setProducts((prevProducts) =>
         prevProducts.map((product) => {
           const cartItem = cart.find(
@@ -241,14 +245,14 @@ const MenuPage = () => {
           if (cartItem) {
             return {
               ...product,
-              stok: product.stok - cartItem.quantity,
+              stok: product.stok - cartItem.quantity, // Kurangi stok produk
             };
           }
           return product;
         })
       );
-
-      setCart([]);
+  
+      setCart([]); // Bersihkan keranjang setelah pesanan berhasil
     } catch (error) {
       console.error("Error submitting pesanan:", error);
     }
@@ -449,15 +453,17 @@ const MenuPage = () => {
           </div>
 
           <div className="flex justify-between gap-2">
-            <button
+          <button
               className="w-1/6 px-2 py-1 bg-red-500 text-white rounded-md"
               onClick={handleClearCart}
+              disabled={cart.length === 0}
             >
-              Kosongkan
+              <DeleteOutlined />
             </button>
             <button
-              className="w-5/6 px-2 py-1 bg-green-500 text-white rounded-md"
+              className="w-5/6 px-4 py-2 bg-green-500 text-white rounded-md"
               onClick={handleSubmit}
+              disabled={cart.length === 0}
             >
               Bayar
             </button>
