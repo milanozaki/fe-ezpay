@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import React, { useState, useEffect } from "react";
 import {
   DatePicker,
@@ -24,18 +24,22 @@ const RiwayatTransaksiPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState<any[]>([]);
   const [total, setTotal] = useState(0); // Total data
-  const [startDate, setStartDate] = useState<string>(""); // State untuk tanggal mulai
-  const [endDate, setEndDate] = useState<string>(""); // State untuk tanggal akhir
   const pageSize = 10;
 
-  const fetchData = async (startDate = "", endDate = "", page = 1) => {
+  const fetchData = async (
+    id_toko: string,
+    startDate = "",
+    endDate = "",
+    page = 1
+  ) => {
     try {
       const response = await axios.get("http://localhost:3222/transaksi/all", {
         params: {
+          id_toko, // Sertakan id_toko di parameter
           startDate,
           endDate,
           page,
-          limit: pageSize, // Kirim limit ke backend
+          limit: pageSize,
         },
       });
       if (Array.isArray(response.data.data)) {
@@ -55,8 +59,16 @@ const RiwayatTransaksiPage = () => {
   };
 
   useEffect(() => {
-    fetchData(startDate, endDate, currentPage); // Panggil fetchData dengan tanggal saat pertama kali
-  }, [startDate, endDate, currentPage]); // Tambahkan startDate dan endDate ke dependencies
+    const id_toko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
+
+    // Pastikan id_toko tidak null sebelum memanggil fetchData
+    if (id_toko) {
+      fetchData(id_toko, "", "", currentPage); // Panggil fetchData saat pertama kali
+    } else {
+      console.error("ID Toko tidak ditemukan di localStorage");
+      // Anda dapat menambahkan penanganan lain jika id_toko tidak ditemukan
+    }
+  }, [currentPage]); // Tambahkan currentPage ke dependencies
 
   const showModal = (transaction: any) => {
     setSelectedTransaction(transaction);
@@ -72,9 +84,15 @@ const RiwayatTransaksiPage = () => {
   };
 
   const handleDateChange = (dates: any, dateStrings: [string, string]) => {
-    setStartDate(dateStrings[0]);
-    setEndDate(dateStrings[1]);
-    fetchData(dateStrings[0], dateStrings[1], currentPage); // Fetch data based on date range
+    const id_toko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
+
+    // Pastikan id_toko tidak null sebelum memanggil fetchData
+    if (id_toko) {
+      fetchData(id_toko, dateStrings[0], dateStrings[1], currentPage); // Fetch data berdasarkan rentang tanggal
+    } else {
+      console.error("ID Toko tidak ditemukan di localStorage");
+      // Anda dapat menambahkan penanganan lain jika id_toko tidak ditemukan
+    }
   };
 
   const columns = [
@@ -126,7 +144,15 @@ const RiwayatTransaksiPage = () => {
   // Handle pagination
   const onPageChange = (page: number) => {
     setCurrentPage(page);
-    fetchData(startDate, endDate, page); // Fetch data for the new page
+    const id_toko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
+
+    // Pastikan id_toko tidak null sebelum memanggil fetchData
+    if (id_toko) {
+      fetchData(id_toko, "", "", page); // Fetch data untuk halaman baru
+    } else {
+      console.error("ID Toko tidak ditemukan di localStorage");
+      // Anda dapat menambahkan penanganan lain jika id_toko tidak ditemukan
+    }
   };
 
   const exportToExcel = () => {
