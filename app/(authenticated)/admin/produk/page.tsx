@@ -79,21 +79,23 @@ const ProdukPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const idToko = localStorage.getItem('id_toko'); // Ambil id_toko dari localStorage
+        const idToko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
         if (!idToko) {
           throw new Error("ID Toko tidak ditemukan di localStorage.");
         }
 
         // Fetch kategori
         const categoryResponse = await axios.get(
-          `http://localhost:3222/kategori/kategori-by-toko?id_toko=${encodeURIComponent(idToko)}`
+          `http://localhost:3222/kategori/kategori-by-toko?id_toko=${encodeURIComponent(
+            idToko
+          )}`
         );
 
         const categoryData = categoryResponse.data.data;
         if (Array.isArray(categoryData)) {
           const categoriesWithIds = categoryData.map((item: any) => ({
             id_kategori: item.idKategori, // Ubah sesuai dengan struktur data JSON
-            nama: item.kategori,           // Ubah sesuai dengan struktur data JSON
+            nama: item.kategori, // Ubah sesuai dengan struktur data JSON
           }));
           setCategories(categoriesWithIds); // Set data kategori
         }
@@ -237,29 +239,31 @@ const ProdukPage: React.FC = () => {
   };
 
   const handleFilterByCategory = async (idKategori: any) => {
-    const idToko = localStorage.getItem('id_toko');
-  
+    const idToko = localStorage.getItem("id_toko");
+
     if (idKategori === "semua") {
       // Reset selected category
       setSelectedCategory(null);
-      
+
       // Set all products to be displayed
       setFilteredProduk(produk); // Ambil semua produk dari state produk
-      
+
       // Set total number of products
       setTotalProduk(produk.length);
-      
+
       return;
     }
-  
+
     try {
-      const response = await axios.get(`http://localhost:3222/kategori/by-kategori?id_kategori=${idKategori}&id_toko=${idToko}`);
+      const response = await axios.get(
+        `http://localhost:3222/kategori/by-kategori?id_kategori=${idKategori}&id_toko=${idToko}`
+      );
       const filteredData = response.data; // Pastikan data yang diterima benar
-  
+
       if (filteredData.length === 0) {
         message.warning("Tidak ada produk dalam kategori ini");
       }
-  
+
       setFilteredProduk(filteredData);
     } catch (error) {
       console.error("Error filtering products by category:", error);
@@ -270,8 +274,14 @@ const ProdukPage: React.FC = () => {
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-      console.log("Nilai yang diterima dari form:", values); // Debugging
-      console.log("Kategori yang dipilih:", values.id_kategori); // Log id_kategori yang dipilih
+      console.log("Nilai yang diterima dari form:", values);
+
+      const id_toko = localStorage.getItem("id_toko"); // Ambil id_toko dari local storage
+
+      if (!id_toko) {
+        message.error("ID toko tidak ditemukan. Pastikan Anda sudah login.");
+        return; // Hentikan eksekusi jika id_toko tidak ada
+      }
 
       // Membuat FormData untuk upload file gambar dan data lainnya
       const formData = new FormData();
@@ -280,22 +290,27 @@ const ProdukPage: React.FC = () => {
       formData.append("stok", values.stok);
       formData.append("id_kategori", values.id_kategori);
       formData.append("satuan_produk", values.satuan_produk);
+      formData.append("id_toko", id_toko); // Tambahkan id_toko ke FormData
 
       // Pastikan gambar dipilih dan tambahkan ke formData
-      const file = values.gambar_produk[0]?.originFileObj; // Get the actual file object
+      const file = values.gambar_produk[0]?.originFileObj; // Dapatkan objek file yang sebenarnya
       if (file) {
-        formData.append("gambar_produk", file); // Append the image to FormData
+        formData.append("gambar_produk", file); // Tambahkan gambar ke FormData
       } else {
-        message.error("Silakan pilih gambar produk."); // Optional error message if no image is selected
+        message.error("Silakan pilih gambar produk.");
         return;
       }
 
       // Mengirim request POST ke backend untuk menambahkan produk
-      await axios.post("http://localhost:3222/produk", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      await axios.post(
+        `http://localhost:3222/produk/tambah-produk?id_toko=${id_toko}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       message.success("Produk berhasil ditambahkan");
       setIsAddModalVisible(false);
@@ -487,21 +502,21 @@ const ProdukPage: React.FC = () => {
             value={searchQuery}
             onChange={handleSearchChange}
           />
-    <Select
-      defaultValue="semua"
-      onChange={handleFilterByCategory}
-      style={{ width: 150 }}
-    >
-      <Select.Option value="semua">Semua</Select.Option>
-      {categories.map((category) => (
-        <Select.Option
-          key={category.id_kategori}
-          value={category.id_kategori}
-        >
-          {category.nama} {/* Pastikan menggunakan category.nama */}
-        </Select.Option>
-      ))}
-    </Select>
+          <Select
+            defaultValue="semua"
+            onChange={handleFilterByCategory}
+            style={{ width: 150 }}
+          >
+            <Select.Option value="semua">Semua</Select.Option>
+            {categories.map((category) => (
+              <Select.Option
+                key={category.id_kategori}
+                value={category.id_kategori}
+              >
+                {category.nama} {/* Pastikan menggunakan category.nama */}
+              </Select.Option>
+            ))}
+          </Select>
         </div>
       </div>
 
