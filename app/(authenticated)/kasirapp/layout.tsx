@@ -4,8 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { HistoryOutlined } from "@ant-design/icons";
 import { IoFastFoodOutline } from "react-icons/io5";
-import { Avatar, Dropdown, Button, Divider } from "antd";
-import Image from "next/image";
+import { Avatar, Dropdown, Button, Divider, Tooltip } from "antd";
 import { usePathname, useRouter } from "next/navigation";
 import Cookies from "js-cookie"; // Import Cookies
 
@@ -13,8 +12,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [selectedMenu, setSelectedMenu] = useState<string>("");
   const [userEmail, setUserEmail] = useState<string>("guest@example.com"); // Set default email
+  const [userName, setUserName] = useState<string>("Nama Pengguna"); // Set default name
   const pathname = usePathname();
   const router = useRouter();
+
   const authenticatedMenu = [
     {
       name: "Menu",
@@ -28,27 +29,56 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     },
   ];
 
-  const userRole = "Kasir";
-  const avatarUrl =
-    "https://mir-s3-cdn-cf.behance.net/project_modules/disp/414d9011889067.5625411b2afd2.png";
+  const userRole = "Kasir"; // Misalkan role pengguna tetap sama
+
+  const getInitials = (name: string) => {
+    const names = name.split(" ");
+    return names.map((n) => n[0]).join("").toUpperCase(); // Mengambil inisial dari nama
+  };
 
   const avatarMenu = (
-    <div className="p-4 w-64 bg-white shadow-lg rounded-lg">
-      <div className="flex justify-center">
-        <Avatar size={64} src={avatarUrl} />
+    <div className="p-6 w-64 bg-white shadow-xl rounded-lg border border-gray-200">
+      {/* Peran Pengguna */}
+      <div className="text-sm text-gray-500 text-center mb-4">{userRole}</div>
+
+      {/* Avatar dengan bayangan halus */}
+      <div className="flex justify-center mb-4">
+        <Avatar
+          size={80}
+          className="bg-[#3b98b7] shadow-lg"
+          style={{ boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)" }}
+        >
+          {getInitials(userName)}
+        </Avatar>
       </div>
-      <div className="mt-2 font-bold text-center">{userEmail}</div>
-      <div className="text-gray-500 text-center">{userRole}</div>
-      <Divider className="mt-3" />
+
+      {/* Nama Pengguna */}
+      <div className="text-lg font-bold text-center text-gray-900 mb-2">{userName}</div>
+
+      {/* Email Pengguna */}
+      <div className="text-sm text-gray-500 text-center mb-6">{userEmail}</div>
+
+      {/* Garis Pembatas */}
+      <Divider className="mb-4" />
+
+      {/* Tombol Keluar dengan desain lebih halus */}
       <Button
         type="primary"
         danger
-        className="w-full -mt-4"
+        className="w-full rounded-full h-10 font-semibold"
+        style={{
+          backgroundColor: "#f5222d",
+          border: "none",
+          boxShadow: "0 4px 6px rgba(245, 34, 45, 0.2)",
+        }}
         onClick={() => {
-          console.log("Logout button clicked");
-          localStorage.removeItem("userEmail"); // Hapus email dari localStorage
-          Cookies.remove("access_token"); // Hapus accessToken dari cookies
-          router.push("/login_kasir"); // Redirect ke halaman login
+          localStorage.removeItem("userEmail");
+          localStorage.removeItem("nama");
+          localStorage.removeItem("id_toko");
+          sessionStorage.clear();
+          Cookies.remove("accessToken");
+          Cookies.remove("id_user");
+          router.push("/login_kasir");
         }}
       >
         Keluar
@@ -70,10 +100,14 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       if (!token) {
         router.push("/login_kasir"); // Redirect ke halaman login jika tidak ada token
       } else {
-        // Mengambil email dari localStorage atau cookies jika token ada
+        // Mengambil email dan nama dari localStorage jika token ada
         const storedEmail = localStorage.getItem("userEmail");
+        const storedName = localStorage.getItem("nama");
         if (storedEmail) {
           setUserEmail(storedEmail);
+        }
+        if (storedName) {
+          setUserName(storedName);
         }
       }
     }
@@ -87,12 +121,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         } md:translate-x-0 transition-transform duration-300 md:block shadow-lg flex flex-col justify-between items-center z-50`}
       >
         <div className="flex justify-center items-center mb-6 mt-4">
-          <Image
+          <img
             src="/images/logoEzpay.png"
             alt="Sidebar Image"
-            width={80}
-            height={80}
-            priority
+            className="w-20 h-20"
           />
         </div>
         <ul className="w-full flex flex-col">
@@ -118,34 +150,38 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           ))}
         </ul>
       </div>
-
+  
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black opacity-50 md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         ></div>
       )}
-
+  
       <div className="flex-1 flex flex-col ml-20 ">
         <header className="bg-[#257691] shadow-md top-0 flex justify-between items-center text-white z-50 md:px-8 md:py-6">
           <h1 className="text-xl font-semibold ml-4">{selectedMenu}</h1>
-          <Dropdown
-            overlay={avatarMenu}
-            trigger={["click"]}
-            placement="bottomRight"
-          >
-            <Avatar
-              size="large"
-              style={{ cursor: "pointer" }}
-              src={avatarUrl}
-            />
+          <Dropdown overlay={avatarMenu} trigger={["click"]} placement="bottomRight">
+            {/* Avatar dengan efek hover */}
+            <Tooltip title={userName}>
+              <Avatar
+                size="large"
+                style={{
+                  cursor: "pointer",
+                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                }}
+                className="bg-[#3b98b7] hover:shadow-xl hover:scale-110"
+              >
+                {getInitials(userName)}
+              </Avatar>
+            </Tooltip>
           </Dropdown>
         </header>
-        <main className="flex-1 p-6 bg-gray-100 md:p-10">{children}</main>
+        <div className="flex-1 p-6 bg-gray-100 md:p-10">{children}</div>
       </div>
     </div>
   );
+  
 };
 
 export default Layout;
-  
