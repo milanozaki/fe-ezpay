@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation'; // Impor useRouter dari Next.js
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import Cookies from 'js-cookie';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -32,6 +33,7 @@ const LoginPage = () => {
 
       const data = await response.json();
 
+      Cookies.set('access_token', data.access_token, { expires: 1 });
       // Menyimpan email ke localStorage setelah login berhasil
       localStorage.setItem('userEmail', email);
       

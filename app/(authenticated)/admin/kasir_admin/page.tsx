@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect } from "react";
 import { Button, message, Form, Input, Modal, Select } from "antd";
@@ -11,7 +11,7 @@ enum StatusEnum {
 }
 
 interface Kasir {
-  id_user: string;
+  id_kasir: string;
   nama_kasir: string;
   status: StatusEnum;
   email_kasir: string;
@@ -35,10 +35,8 @@ const KasirPage: React.FC = () => {
           const response = await axios.get(
             `http://localhost:3222/users/kasir?id_toko=${idToko}`
           );
-          console.log(response.data.data); // Cek apa yang diterima
           setKasirList(response.data.data);
         } catch (error) {
-          console.error("Error fetching kasir data:", error);
           message.error("Terjadi kesalahan saat mengambil data kasir");
         } finally {
           setLoading(false);
@@ -50,17 +48,15 @@ const KasirPage: React.FC = () => {
     };
 
     fetchKasir();
-  }, []); // Kosongkan dependency array untuk hanya dieksekusi sekali saat mount
+  }, []); // Run once on mount
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  if (loading) return <div>Loading...</div>;
 
+  // Handle add kasir
   const handleAddKasir = async (values: any) => {
     try {
-      const idToko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
+      const idToko = localStorage.getItem("id_toko");
 
-      // Menggunakan URL dengan query parameter
       const response = await axios.post(
         `http://localhost:3222/users/tambah-kasir?id_toko=${idToko}`,
         values
@@ -70,11 +66,11 @@ const KasirPage: React.FC = () => {
       setIsModalVisible(false);
       form.resetFields();
 
-      // Update daftar kasir
+      // Update kasir list
       setKasirList((prevKasirList) => [
         ...prevKasirList,
         {
-          id_user: response.data.id_kasir,
+          id_kasir: response.data.id_kasir,
           nama_kasir: values.nama,
           email_kasir: values.email,
           status: values.status,
@@ -82,84 +78,57 @@ const KasirPage: React.FC = () => {
         },
       ]);
     } catch (error: unknown) {
-      console.error("Error adding kasir:", error);
-
-      if (axios.isAxiosError(error) && error.response) {
-        message.error(
-          error.response.data.message ||
-            "Terjadi kesalahan saat menambahkan kasir."
-        );
-      } else {
-        message.error("Terjadi kesalahan yang tidak terduga.");
-      }
+      message.error("Terjadi kesalahan saat menambahkan kasir.");
     }
   };
 
-  const handleEditKasir = async (values: any) => {
-    if (!editKasirId) return;
-    try {
-      await axios.put(`http://localhost:3222/users/edit-kasir/${editKasirId}`, {
-        status: values.status,
-      });
-      message.success("Status kasir berhasil diubah!");
-      setIsModalVisible(false);
-      form.resetFields();
+// Open edit modal and capture id_kasir
+const openEditModal = (kasir: Kasir) => {
+  setIsEditMode(true); // Set mode to edit
+  setIsModalVisible(true);
+  setEditKasirId(kasir.id_kasir); // Capture and set the id_kasir
+  form.setFieldsValue({
+    nama: kasir.nama_kasir,
+    email: kasir.email_kasir,
+    status: kasir.status,
+  });
+};
 
-      // Update kasir list without refetching
-      setKasirList((prevKasirList) =>
-        prevKasirList.map((kasir) =>
-          kasir.id_user === editKasirId
-            ? { ...kasir, status: values.status }
-            : kasir
-        )
-      );
-    } catch (error: any) {
-      console.error("Error editing kasir:", error);
-      message.error(
-        error.response?.data?.message ||
-          "Terjadi kesalahan saat mengedit status kasir."
-      );
-    }
-  };
+// Handle edit kasir by using editKasirId in the PUT request URL
+const handleEditKasir = async (values: any) => {
+  if (!editKasirId) {
+    message.error("ID kasir tidak ditemukan!");
+    return;
+  }
 
-  const openEditModal = (kasir: Kasir) => {
-    setIsEditMode(true); // Set mode to edit
-    setIsModalVisible(true);
-    setEditKasirId(kasir.id_user);
-    form.setFieldsValue({
-      status: kasir.status,
-    });
-  };
-
-  const timeAgo = (
-    lastLogin: string | null
-  ): { status: string; isOnline: boolean } => {
-    if (!lastLogin) return { status: "Belum login", isOnline: false }; // Handle null case
-
-    const lastLoginDate = new Date(lastLogin);
-    const now = new Date();
-    const diffInSeconds = Math.floor(
-      (now.getTime() - lastLoginDate.getTime()) / 1000
+  try {
+    // Send PUT request with captured editKasirId
+    await axios.put(
+      `http://localhost:3222/users/edit-kasir/${editKasirId}`, 
+      values
     );
 
-    // Check if the kasir is online (logged in within the last 10 minutes)
-    if (diffInSeconds <= 600) {
-      return { status: "Online", isOnline: true }; // Display "Online" if within the last 10 minutes
-    }
+    message.success("Status kasir berhasil diubah!");
+    setIsModalVisible(false);
+    form.resetFields();
 
-    let timeString = "";
+    // Update kasir list without refreshing the page
+    setKasirList((prevKasirList) =>
+      prevKasirList.map((kasir) =>
+        kasir.id_kasir === editKasirId ? { ...kasir, status: values.status } : kasir
+      )
+    );
+  } catch (error) {
+    message.error("Terjadi kesalahan saat mengedit status kasir.");
+  }
+};
 
-    if (diffInSeconds < 60) {
-      timeString = `${diffInSeconds} detik yang lalu`;
-    } else if (diffInSeconds < 3600) {
-      const minutes = Math.floor(diffInSeconds / 60);
-      timeString = `${minutes} menit yang lalu`;
-    } else {
-      const hours = Math.floor(diffInSeconds / 3600);
-      timeString = `${hours} jam yang lalu`;
-    }
 
-    return { status: timeString, isOnline: false };
+  // Open add modal
+  const openAddModal = () => {
+    setIsEditMode(false); // Set mode to add
+    setIsModalVisible(true);
+    form.resetFields(); // Reset form for adding a new kasir
   };
 
   return (
@@ -167,17 +136,8 @@ const KasirPage: React.FC = () => {
       <div className="flex justify-between items-center mb-4">
         <Button
           type="primary"
-          onClick={() => {
-            setEditKasirId(null); // Clear edit mode
-            setIsEditMode(false); // Set mode to add
-            setIsModalVisible(true);
-            form.resetFields(); // Reset form for adding a new kasir
-          }}
-          style={{
-            backgroundColor: "#3B8394",
-            color: "#fff",
-            borderRadius: "12px",
-          }}
+          onClick={openAddModal}  // Open the add modal
+          className="bg-blue-500 text-white"
         >
           + Tambah Kasir
         </Button>
@@ -187,142 +147,134 @@ const KasirPage: React.FC = () => {
         <thead>
           <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
             <th className="py-3 px-6 text-left font-semibold">No</th>
-            <th className="py-3 px-16 text-left font-semibold">Nama</th>
-            <th className="py-3 px-10 text-left font-semibold">Email</th>
-            <th className="py-3 px-10 text-left font-semibold">Status</th>
-            <th className="py-3 px-20 text-left font-semibold">
-              Terakhir Login
-            </th>
-            <th className="py-3 px-12 text-left font-semibold">Aksi</th>
+            <th className="py-3 px-20 text-left font-semibold">Nama</th>
+            <th className="py-3 px-24 text-left font-semibold">Email</th>
+            <th className="py-3 px-16 text-left font-semibold">Status</th>
+            <th className="py-3 px-6 text-left font-semibold">Aksi</th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {Array.isArray(kasirList) && kasirList.length > 0 ? (
-            kasirList.map((kasir, index) => {
-              const { status, isOnline } = timeAgo(kasir.lastLogin); // Get status and online check
-              return (
-                <tr key={kasir.id_user}>
-                  <td className="py-3 px-7 text-left w-16">{index + 1}</td>
-                  <td className="py-3 px-16 text-left">
-                    {kasir.nama_kasir}
-                  </td>{" "}
-                  {/* Ganti nama dengan nama_kasir */}
-                  <td className="py-3 px-2 text-left">
-                    {kasir.email_kasir}
-                  </td>{" "}
-                  {/* Ganti email dengan email_kasir */}
-                  <td
-                    className={`py-2 px-8 text-left flex items-center gap-2 mt-2 mb-2 ${
-                      kasir.status === StatusEnum.ACTIVE
-                        ? "text-green-600"
-                        : "text-red-600"
-                    }`}
-                    style={{
-                      borderRadius: "8px", // Tambahkan border radius agar tampilan lebih halus
-                    }}
-                  >
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        kasir.status === StatusEnum.ACTIVE
-                          ? "bg-green-600"
-                          : "bg-red-600"
-                      }`}
-                    ></span>
-                    {kasir.status}
-                  </td>
-                  <td
-                    className={`py-3 px-24 text-left ${
-                      isOnline ? "text-green-600" : "text-black"
-                    }`}
-                  >
-                    {status}
-                  </td>
-                  <td className="py-3 px-6 text-left">
-                    <Button type="primary" onClick={() => openEditModal(kasir)}>
-                      Edit Status
-                    </Button>
-                  </td>
-                </tr>
-              );
-            })
-          ) : (
-            <tr>
-              <td colSpan={6} className="py-3 px-6 text-center">
-                Tidak ada kasir ditemukan
+          {kasirList.map((kasir, index) => (
+            <tr key={kasir.id_kasir}>
+              <td className="py-3 px-6 text-left w-16">{index + 1}</td>
+              <td className="py-3 px-20 text-left">{kasir.nama_kasir}</td>
+              <td className="py-3 px-24 text-left">{kasir.email_kasir}</td>
+              <td
+                className={`py-3 px-16 text-left ${kasir.status === StatusEnum.ACTIVE ? "text-green-600" : "text-red-600"}`}
+              >
+                {kasir.status}
+              </td>
+              <td className="py-3 px-6 text-left">
+                <Button
+                  type="primary"
+                  onClick={() => openEditModal(kasir)}  // Open the edit modal
+                >
+                  Edit Status
+                </Button>
               </td>
             </tr>
-          )}
+          ))}
         </tbody>
       </table>
 
-     {/* Modal for Adding or Editing Kasir */}
+      {/* Modal for Adding Kasir */}
       <Modal
-        title={editKasirId ? "Edit Status Kasir" : "Tambah Kasir"}
-        visible={isModalVisible}
+        title="Tambah Kasir"
+        visible={!isEditMode && isModalVisible} // Show this modal when adding kasir
         onCancel={() => setIsModalVisible(false)}
         footer={null}
       >
         <Form
           form={form}
           layout="vertical"
-          onFinish={editKasirId ? handleEditKasir : handleAddKasir}
+          onFinish={handleAddKasir}  // Handle add kasir
         >
-          <div className="flex justify-between">
-            {/* Nama Kasir - hanya ditampilkan saat tambah kasir */}
-            {!isEditMode && (
-              <Form.Item
-                name="nama"
-                label="Nama"
-                rules={[{ required: true, message: "Nama kasir harus diisi!" }]}
-                style={{ width: "48%" }} // Atur lebar untuk box pertama
-              >
-                <Input />
-              </Form.Item>
-            )}
+          {/* Nama Kasir */}
+          <Form.Item
+            name="nama"
+            label="Nama"
+            rules={[{ required: true, message: "Nama kasir harus diisi!" }]}
 
-            {/* Email Kasir */}
-            {!isEditMode && (
-              <Form.Item
-                name="email"
-                label="Email"
-                rules={[
-                  {
-                    required: true,
-                    type: "email",
-                    message: "Email kasir harus valid!",
-                  },
-                ]}
-                style={{ width: "48%" }} // Atur lebar untuk box kedua
-              >
-                <Input />
-              </Form.Item>
-            )}
-          </div>
+          >
+            <Input />
+          </Form.Item>
 
-          <div className="flex justify-between">
-            {/* Status Kasir */}
-            <Form.Item
-              name="status"
-              label="Status"
-              rules={[{ required: true, message: "Status kasir harus diisi!" }]}
-              style={{ width: "48%" }} // Atur lebar untuk box ketiga
-            >
-              <Select>
-                {Object.entries(StatusEnum).map(([key, value]) => (
-                  <Select.Option key={key} value={value}>
-                    {key}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
+          {/* Email Kasir */}
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[{ required: true, type: "email", message: "Email kasir harus valid!" }]}
+          >
+            <Input />
+          </Form.Item>
 
-            {/* Kosongkan sebelahnya untuk simetri */}
-            <div style={{ width: "48%" }}></div>
-          </div>
+          {/* Status Kasir */}
+          <Form.Item
+            name="status"
+            label="Status"
+            rules={[{ required: true, message: "Status harus dipilih!" }]}
+          >
+            <Select>
+              <Select.Option value={StatusEnum.ACTIVE}>Aktif</Select.Option>
+              <Select.Option value={StatusEnum.INACTIVE}>Tidak Aktif</Select.Option>
+            </Select>
+          </Form.Item>
 
+          {/* Submit Button */}
           <Form.Item>
             <Button type="primary" htmlType="submit">
-              {editKasirId ? "Simpan Perubahan" : "Tambah"}
+              Tambah Kasir
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Modal for Editing Kasir */}
+      <Modal
+        title="Edit Status Kasir"
+        visible={isEditMode && isModalVisible} // Tampilkan modal hanya jika mode edit
+        onCancel={() => setIsModalVisible(false)}
+        footer={null}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleEditKasir}  // Handle edit kasir
+        >
+          {/* Nama Kasir */}
+          <Form.Item
+            name="nama"
+            label="Nama"
+            rules={[{ required: true, message: "Nama kasir harus diisi!" }]}
+          >
+            <Input />
+          </Form.Item>
+
+          {/* Email Kasir */}
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[{ required: true, type: "email", message: "Email kasir harus valid!" }]}
+          >
+            <Input />
+          </Form.Item>
+
+          {/* Status Kasir */}
+          <Form.Item
+            name="status"
+            label="Status"
+            rules={[{ required: true, message: "Status harus dipilih!" }]}
+          >
+            <Select>
+              <Select.Option value={StatusEnum.ACTIVE}>Aktif</Select.Option>
+              <Select.Option value={StatusEnum.INACTIVE}>Tidak Aktif</Select.Option>
+            </Select>
+          </Form.Item>
+
+          {/* Submit Button */}
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Simpan
             </Button>
           </Form.Item>
         </Form>

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Select, Card, Image, Button, message, notification } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 import Cookies from "js-cookie";
+import axios from "axios";
 
 interface Kategori {
   id_kategori: string;
@@ -35,53 +36,6 @@ const MenuPage = () => {
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch("http://localhost:3222/kategori");
-        const data = await response.json();
-        setCategories(data.data);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCategories();
-  }, []);
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      const id_toko = localStorage.getItem("id_toko");
-      if (!id_toko) {
-        console.error("ID Toko tidak ditemukan di localStorage");
-        return;
-      }
-
-      try {
-        setLoading(true);
-        const response = await fetch(`http://localhost:3222/produk/toko/${id_toko}`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log("Data produk:", data); // Menampilkan data di konsol
-        // Pastikan untuk mengambil array produk dengan benar
-        setProducts(data); // Jika data adalah array langsung, gunakan ini
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
-
-  useEffect(() => {
     const fetchPaymentMethods = async () => {
       try {
         const response = await fetch("http://localhost:3222/metode-transaksi");
@@ -98,21 +52,78 @@ const MenuPage = () => {
     fetchPaymentMethods();
   }, []);
 
-  const handleCategoryChange = (value: string) => {
-    setActiveButton(value);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        const idToko = localStorage.getItem("id_toko");
+
+        if (!idToko) throw new Error("ID Toko tidak ditemukan di localStorage.");
+
+        const response = await axios.get(
+          `http://localhost:3222/kategori/kategori-by-toko?id_toko=${encodeURIComponent(idToko)}`
+        );
+
+        const data = response.data.data;
+        if (Array.isArray(data)) {
+          const formattedCategories = data.map((item: any) => ({
+            id_kategori: item.idKategori,
+            nama: item.kategori,
+          }));
+          setCategories(formattedCategories);
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // Fetch products based on category
+  const fetchProducts = async (categoryName = "Semua") => {
+    try {
+      setLoading(true);
+      const id_toko = localStorage.getItem("id_toko");
+      if (!id_toko) throw new Error("ID Toko tidak ditemukan di localStorage");
+
+      const url =
+        categoryName === "Semua"
+          ? `http://localhost:3222/produk/toko/${id_toko}`
+          : `http://localhost:3222/produk/toko/${id_toko}?category=${encodeURIComponent(categoryName)}`;
+
+      const response = await axios.get(url);
+      setProducts(response.data);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const tunaiMethod = paymentMethods.find((method) => method.nama === "Tunai");
-  const qrisMethod = paymentMethods.find((method) => method.nama === "QRIS");
+  // Fetch all products initially
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("id-ID").format(amount);
+  const handleCategoryChange = (value: string) => {
+    setActiveButton(value);
+    fetchProducts(value);
   };
 
   const filteredProducts =
     activeButton === "Semua"
       ? products
       : products.filter((produk) => produk.kategori.nama === activeButton);
+
+
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat("id-ID").format(amount);
+  };
+
 
   const addToCart = (produk: Produk) => {
     setCart((prevCart) => {
@@ -267,38 +278,45 @@ const MenuPage = () => {
     <div className="flex w-full h-full gap-3 max-w-screen overflow-hidden">
       {/* Bagian untuk daftar produk */}
       <div className="w-[70%] h-[calc(100vh-200px)] mr-0 p-0">
-        <div className="mb-4">
-          <Select
-            defaultValue="Semua"
-            style={{ width: 200 }}
-            onChange={handleCategoryChange}
-          >
-            <Select.Option value="Semua">Semua</Select.Option>
-            {categories.map((category) => (
-              <Select.Option key={category.id} value={category.nama}>
-                {category.nama}
-              </Select.Option>
-            ))}
-          </Select>
-        </div>
-        <div className="h-[calc(100vh-200px)] overflow-hidden">
-          <div className="h-full overflow-auto scrollbar-hidden touch-scroll">
-            <style jsx>{`
-              .scrollbar-hidden {
-                -ms-overflow-style: none; /* IE and Edge */
-                scrollbar-width: none; /* Firefox */
-              }
-              .scrollbar-hidden::-webkit-scrollbar {
-                display: none; /* Chrome, Safari, and Opera */
-              }
-              .touch-scroll {
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch; /* iOS for smooth scrolling */
-              }
-            `}</style>
+      <div className="mb-4">
+        <Select
+          defaultValue="Semua"
+          style={{ width: 200 }}
+          onChange={handleCategoryChange}
+        >
+          <Select.Option value="Semua">Semua</Select.Option>
+          {categories.map((category) => (
+            <Select.Option key={category.id_kategori} value={category.nama}>
+              {category.nama}
+            </Select.Option>
+          ))}
+        </Select>
+      </div>
 
+      <div className="h-[calc(100vh-200px)] overflow-hidden">
+        <div className="h-full overflow-auto scrollbar-hidden touch-scroll">
+          <style jsx>{`
+            .scrollbar-hidden {
+              -ms-overflow-style: none; /* IE and Edge */
+              scrollbar-width: none; /* Firefox */
+            }
+            .scrollbar-hidden::-webkit-scrollbar {
+              display: none; /* Chrome, Safari, and Opera */
+            }
+            .touch-scroll {
+              overflow-y: auto;
+              -webkit-overflow-scrolling: touch; /* iOS for smooth scrolling */
+            }
+          `}</style>
+
+          {/* Check if there are no products and display a message */}
+          {filteredProducts.length === 0 ? (
+            <div className="text-center text-gray-500">
+              Produk pada kategori "{activeButton}" kosong
+            </div>
+          ) : (
             <div className="grid grid-cols-3 gap-2">
-              {products.map((produk) => (
+              {filteredProducts.map((produk) => (
                 <Card
                   key={produk.id_produk}
                   className={`shadow-lg hover:shadow-2xl transition-transform duration-300 cursor-pointer ${
@@ -359,9 +377,10 @@ const MenuPage = () => {
                 </Card>
               ))}
             </div>
-          </div>
+          )}
         </div>
       </div>
+    </div>
       {/* Keranjang */}
       <div className="w-[30%] h-[calc(100vh-175px)] p-4 flex flex-col justify-between">
         <h2 className="text-lg font-bold mb-4">Pesanan ({cart.length})</h2>

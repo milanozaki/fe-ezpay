@@ -23,93 +23,94 @@ const LoginPage = () => {
     }
   }, []);
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
-  setError("");
-
-  try {
-    const response = await fetch("http://localhost:3222/auth/login/kasir", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      if (data.message) {
-        if (data.message === "Password salah") {
-          notification.error({
-            message: "Login Gagal",
-            description: "Password salah. Periksa kembali kredensial Anda.",
-            placement: "topRight",
-          });
-        } else if (data.message === "Akun Anda sedang tidak aktif") {
-          notification.warning({
-            message: "Akun Tidak Aktif",
-            description: "Akun Anda sedang tidak aktif. Hubungi admin.",
-            placement: "topRight",
-          });
-        } else {
-          notification.error({
-            message: "Login Gagal",
-            description: data.message || "Terjadi kesalahan saat login.",
-            placement: "topRight",
-          });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+  
+    try {
+      const response = await fetch("http://localhost:3222/auth/login/kasir", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        // Menangani error respon dari server
+        if (data.message) {
+          if (data.message === "Password salah") {
+            notification.error({
+              message: "Login Gagal",
+              description: "Password salah. Periksa kembali kredensial Anda.",
+              placement: "topRight",
+            });
+          } else if (data.message === "Akun Anda sedang tidak aktif") {
+            notification.warning({
+              message: "Akun Tidak Aktif",
+              description: "Akun Anda sedang tidak aktif. Hubungi admin.",
+              placement: "topRight",
+            });
+          } else {
+            notification.error({
+              message: "Login Gagal",
+              description: data.message || "Terjadi kesalahan saat login.",
+              placement: "topRight",
+            });
+          }
         }
-      }
-    } else {
-      const expiresIn = 1; // Hari
-      const date = new Date();
-      date.setTime(date.getTime() + expiresIn * 24 * 60 * 60 * 1000);
-        // Simpan accessToken dan email ke cookie
+      } else {
+        // Menyimpan data ke cookies dan localStorage
+        const expiresIn = 1; // Hari
+        const date = new Date();
+        date.setTime(date.getTime() + expiresIn * 24 * 60 * 60 * 1000);
+        
+        // Simpan access token, id_user ke cookie
         document.cookie = `accessToken=${data.access_token}; expires=${date.toUTCString()}; path=/`;
         document.cookie = `id_user=${data.id_user}; expires=${date.toUTCString()}; path=/`;
-
+        
         // Simpan email dan id_toko ke localStorage
         localStorage.setItem("userEmail", data.email);
         localStorage.setItem("nama", data.nama);
         localStorage.setItem("id_toko", data.id_toko);
-
-      // Cek jika password default dan ada redirect URL
-      if (data.redirectUrl) {
-        // Tampilkan notifikasi perubahan password
-        notification.warning({
-          message: "Perubahan Password Diperlukan",
-          description:
-            "Anda login dengan password default. Harap ubah password Anda.",
-          placement: "topRight",
-        });
-
-        // Redirect ke halaman edit password
-        router.push(data.redirectUrl);
-      } else {
-        // Hanya tampilkan notifikasi login berhasil jika bukan password default
-        notification.success({
-          message: "Login Berhasil",
-          description: "Anda berhasil login.",
-          placement: "topRight",
-        });
-
-        // Redirect ke halaman menu kasir
-        router.push("/kasirapp/menu");
+  
+        // Jika password default, arahkan ke halaman ubah password
+        if (password === '123456') {
+          notification.warning({
+            message: "Perubahan Password Diperlukan",
+            description: "Anda login dengan password default. Harap ubah password Anda.",
+            placement: "topRight",
+          });
+  
+          // Redirection ke halaman edit password
+          router.push(`/edit_password_kasir?id=${data.id_user}`);
+        } else {
+          // Jika bukan password default, login berhasil
+          notification.success({
+            message: "Login Berhasil",
+            description: "Anda berhasil login.",
+            placement: "topRight",
+          });
+  
+          // Redirection ke halaman menu kasir setelah login berhasil
+          router.push("/kasirapp/menu");
+        }
       }
+    } catch (err) {
+      setError("Login gagal. Periksa kredensial Anda dan coba lagi.");
+      notification.error({
+        message: "Login Gagal",
+        description: "Terjadi kesalahan saat login.",
+        placement: "topRight",
+      });
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    setError("Login gagal. Periksa kredensial Anda dan coba lagi.");
-    notification.error({
-      message: "Login Gagal",
-      description: "Terjadi kesalahan saat login.",
-      placement: "topRight",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
+  
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
