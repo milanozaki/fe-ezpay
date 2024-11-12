@@ -124,94 +124,134 @@ const MenuPage = () => {
     return new Intl.NumberFormat("id-ID").format(amount);
   };
 
-
-  const addToCart = (produk: Produk) => {
+  const addToCart = (produk: any) => {
+    // Pastikan stok adalah angka dan tidak NaN
+    const stock = parseInt(produk.stok, 10);
+    if (isNaN(stock) || stock <= 0) {
+      message.error(`Stok tidak tersedia untuk ${produk.nama_produk}`);
+      return;
+    }
+  
     setCart((prevCart) => {
-      const existingProduct = prevCart.find(
+      // Temukan produk yang sudah ada di keranjang
+      const existingProductInCart = prevCart.find(
         (item) => item.id_produk === produk.id_produk
       );
-
-      if (existingProduct && existingProduct.quantity + 1 > produk.stok) {
-        message.error(`Stok tidak mencukupi untuk ${produk.nama_produk}`);
-        return prevCart;
-      }
-
-      if (existingProduct) {
+  
+      // Jika produk sudah ada di keranjang, cek apakah stok mencukupi
+      if (existingProductInCart) {
+        const totalQuantityInCart = existingProductInCart.quantity + 1;
+  
+        // Perbarui kuantitas produk di keranjang jika stok mencukupi
+        setProducts((prevProducts) =>
+          prevProducts.map((product) =>
+            product.id_produk === produk.id_produk
+              ? { ...product, stok: product.stok - 1 }
+              : product
+          )
+        );
+  
         return prevCart.map((item) =>
           item.id_produk === produk.id_produk
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: totalQuantityInCart }
             : item
         );
+      } else {
+        // Tambah produk ke keranjang jika stok cukup
+        if (stock > 0) {
+          setProducts((prevProducts) =>
+            prevProducts.map((product) =>
+              product.id_produk === produk.id_produk
+                ? { ...product, stok: product.stok - 1 }
+                : product
+            )
+          );
+          return [...prevCart, { ...produk, quantity: 1 }];
+        } else {
+          message.error(`Stok tidak mencukupi untuk ${produk.nama_produk}`);
+          return prevCart;
+        }
       }
-
-      if (produk.stok < 1) {
-        message.error(`Stok tidak mencukupi untuk ${produk.nama_produk}`);
-        return prevCart;
-      }
-
-      return [...prevCart, { ...produk, quantity: 1 }];
     });
   };
-
-  const handleProductClick = (produk: Produk) => {
+  
+  
+  
+  const updateQuantity = (id_produk: any, newQuantity: number) => {
+    setCart((prevCart) => {
+      return prevCart.map((item) => {
+        if (item.id_produk === id_produk) {
+          // Jika jumlah baru lebih kecil atau sama dengan 0, kembalikan ke stok awal
+          if (newQuantity <= 0) {
+            newQuantity = item.stok; // Kembalikan kuantitas ke stok awal jika kurang dari 1
+          }
+  
+          // Pastikan kuantitas tidak melebihi stok yang tersedia
+          const availableStock = item.stok + item.quantity;
+          if (newQuantity > availableStock) {
+            message.error(`Stok tidak mencukupi untuk ${item.nama_produk}`);
+            return item;
+          }
+  
+          // Update stok produk dan kuantitas produk di keranjang
+          setProducts((prevProducts) =>
+            prevProducts.map((product) =>
+              product.id_produk === id_produk
+                ? { ...product, stok: product.stok - (newQuantity - item.quantity) }
+                : product
+            )
+          );
+  
+          return { ...item, quantity: newQuantity };
+        }
+        return item;
+      });
+    });
+  };
+  
+  
+  const handleProductClick = (produk:any) => {
     setSelectedProduct(produk.id_produk);
     addToCart(produk);
     setTimeout(() => setSelectedProduct(null), 300);
   };
 
-  const openSuccessNotification = (result: any) => {
-    const totalHarga = cart.reduce(
-      (total, item) => total + item.harga_produk * item.quantity,
-      0
-    );
-
-    notification.success({
-      message: "Pesanan Berhasil",
-      description: `Pesanan Anda telah berhasil dibuat. 
-                    ID Pesanan: ${result.id_pesanan} 
-                    Metode Transaksi: ${
-                      result.metode_transaksi || paymentMethod
-                    } 
-                    Total Harga: Rp ${formatCurrency(totalHarga)}`, 
-      placement: "bottomRight", 
-    });
-  };
-
-  const removeFromCart = (id_produk: string) => {
-    setCart((prevCart) =>
-      prevCart.filter((item) => item.id_produk !== id_produk)
-    );
-  };
-
-  const updateQuantity = (id_produk: string, change: number) => {
+  const removeFromCart = (id_produk:any) => {
     setCart((prevCart) => {
-      const updatedCart = prevCart.map((item) => {
-        if (item.id_produk === id_produk) {
-          const newQuantity = item.quantity + change;
-
-          // Update stok produk
-          setProducts((prevProducts) => {
-            return prevProducts.map((product) => {
-              if (product.id_produk === id_produk) {
-                return { ...product, stok: product.stok - change }; // Perbarui stok
-              }
-              return product;
-            });
-          });
-
-          return { ...item, quantity: newQuantity >= 0 ? newQuantity : 0 }; // Jangan biarkan jumlah kurang dari 0
-        }
-        return item;
-      });
-
-      // Hapus item dari keranjang jika jumlahnya 0
-      return updatedCart.filter((item) => item.quantity > 0);
+      const productToRemove = prevCart.find((item) => item.id_produk === id_produk);
+  
+      // Kembalikan stok saat produk dihapus dari keranjang
+      if (productToRemove) {
+        setProducts((prevProducts) =>
+          prevProducts.map((product) =>
+            product.id_produk === id_produk
+              ? { ...product, stok: product.stok + productToRemove.quantity }
+              : product
+          )
+        );
+      }
+  
+      // Hapus produk dari keranjang
+      return prevCart.filter((item) => item.id_produk !== id_produk);
     });
   };
 
   const handleClearCart = () => {
-    setCart([]);
+    setCart((prevCart) => {
+      // Kembalikan stok untuk setiap item di keranjang
+      prevCart.forEach((item) => {
+        setProducts((prevProducts) =>
+          prevProducts.map((product) =>
+            product.id_produk === item.id_produk
+              ? { ...product, stok: product.stok + item.quantity }
+              : product
+          )
+        );
+      });
+      return []; // Kosongkan keranjang
+    });
   };
+  
 
   const handleSubmit = async () => {
     const token = Cookies.get("accessToken"); // Ambil token dari cookie
@@ -273,6 +313,24 @@ const MenuPage = () => {
     (total, item) => total + item.harga_produk * item.quantity,
     0
   );
+
+  const openSuccessNotification = (result: any) => {
+    const totalHarga = cart.reduce(
+      (total, item) => total + item.harga_produk * item.quantity,
+      0
+    );
+
+    notification.success({
+      message: "Pesanan Berhasil",
+      description: `Pesanan Anda telah berhasil dibuat. 
+                    ID Pesanan: ${result.id_pesanan} 
+                    Metode Transaksi: ${
+                      result.metode_transaksi || paymentMethod
+                    } 
+                    Total Harga: Rp ${formatCurrency(totalHarga)}`, 
+      placement: "bottomRight", 
+    });
+  };
 
   return (
     <div className="flex w-full h-full gap-3 max-w-screen overflow-hidden">
@@ -365,7 +423,7 @@ const MenuPage = () => {
                           }}
                         >
                           <span className="text-gray-400">
-                            Stok: {produk.stok}
+                            Stok: {isNaN(produk.stok) || produk.stok == null ? produk.stok : produk.stok}
                           </span>
                           <span style={{ color: "black" }}>
                             Rp {formatCurrency(produk.harga_produk)}
@@ -380,115 +438,97 @@ const MenuPage = () => {
           )}
         </div>
       </div>
-    </div>
+      </div>
       {/* Keranjang */}
       <div className="w-[30%] h-[calc(100vh-175px)] p-4 flex flex-col justify-between">
-        <h2 className="text-lg font-bold mb-4">Pesanan ({cart.length})</h2>
-        <div className="flex-grow overflow-auto scrollbar-hidden touch-scroll">
-          <style jsx>{`
-            .scrollbar-hidden {
-              -ms-overflow-style: none; /* IE and Edge */
-              scrollbar-width: none; /* Firefox */
-            }
-            .scrollbar-hidden::-webkit-scrollbar {
-              display: none; /* Chrome, Safari, and Opera */
-            }
-            .touch-scroll {
-              overflow-y: auto;
-              -webkit-overflow-scrolling: touch; /* iOS for smooth scrolling */
-            }
-          `}</style>
-          {cart.length === 0 ? (
-            <p>Keranjang Anda kosong</p>
-          ) : (
-            <ul>
-              {cart.map((item, index) => (
-                <li key={index} className="mb-4">
-                  <div className="border rounded-lg p-4 shadow-md">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="font-bold">{item.nama_produk}</h3>
-                        <p>Harga: Rp {formatCurrency(item.harga_produk)}</p>
-                        <p>Jumlah: {item.quantity}</p>
-                      </div>
-                      <Image
-                        alt={item.nama_produk}
-                        src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
-                        style={{ width: "100px", height: "100px", objectFit: "cover" }}
-                        preview={false}
-                      />
-                    </div>
-                    <div className="flex justify-between items-center mt-4">
-                      <div>
-                        <button
-                          onClick={() => updateQuantity(item.id_produk, -1)}
-                          className="px-2 py-1 bg-blue-500 text-white rounded-md mr-2"
-                        >
-                          -
-                        </button>
-                        <button
-                          onClick={() => updateQuantity(item.id_produk, 1)}
-                          className="px-2 py-1 bg-blue-500 text-white rounded-md"
-                        >
-                          +
-                        </button>
-                      </div>
-                      <Button
-                        type="primary"
-                        danger
-                        onClick={() => removeFromCart(item.id_produk)}
-                      >
-                        <DeleteOutlined />
-                      </Button>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-        <div className="mt-4">
-          <h3 className="font-bold mb-2">
-            Total: Rp {formatCurrency(totalHarga)}
-          </h3>
+  <h2 className="text-lg font-bold mb-4">Pesanan ({cart.length})</h2>
+  <div className="flex-grow overflow-auto scrollbar-hidden touch-scroll">
+    {cart.length === 0 ? (
+      <p>Keranjang Anda kosong</p>
+    ) : (
+      <ul>
+        {cart.map((item, index) => (
+          <li key={index} className="mb-4">
+            <div className="border rounded-lg p-4 shadow-md">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-bold">{item.nama_produk}</h3>
+                  <p>Harga: Rp {formatCurrency(item.harga_produk)}</p>
+                  <p>Jumlah: {item.quantity}</p>
+                </div>
+                <Image
+                  alt={item.nama_produk}
+                  src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
+                  style={{ width: "100px", height: "100px", objectFit: "cover" }}
+                  preview={false}
+                />
+              </div>
 
-          {/* Metode Pembayaran */}
-          <div className="mb-4">
-            <Select
-              value={paymentMethod}
-              onChange={setPaymentMethod}
-              style={{ width: "100%" }}
-              placeholder="Pilih metode pembayaran"
-            >
-              {paymentMethods.map((method) => (
-                <Select.Option
-                  key={method.id_metode_transaksi}
-                  value={method.id_metode_transaksi}
+              <div className="flex justify-between items-center mt-4">
+                <div>
+                  {/* Input untuk mengubah jumlah */}
+                  <input
+                    type="number"
+                    min="1"
+                    max={item.stok + item.quantity} // Pastikan stok cukup
+                    value={item.quantity}
+                    onChange={(e) => updateQuantity(item.id_produk, parseInt(e.target.value))}
+                    className="w-16 px-2 py-1 border rounded-md text-center"
+                  />
+                </div>
+                <Button
+                  type="primary"
+                  danger
+                  onClick={() => removeFromCart(item.id_produk)}
                 >
-                  {method.nama}
-                </Select.Option>
-              ))}
-            </Select>
-          </div>
+                  <DeleteOutlined />
+                </Button>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+  <div className="mt-4">
+    <h3 className="font-bold mb-2">Total: Rp {formatCurrency(totalHarga)}</h3>
+    <div className="mb-4">
+      <Select
+        value={paymentMethod}
+        onChange={setPaymentMethod}
+        style={{ width: "100%" }}
+        placeholder="Pilih metode pembayaran"
+      >
+        {paymentMethods.map((method) => (
+          <Select.Option
+            key={method.id_metode_transaksi}
+            value={method.id_metode_transaksi}
+          >
+            {method.nama}
+          </Select.Option>
+        ))}
+      </Select>
+    </div>
 
-          <div className="flex justify-between gap-2">
-          <button
-              className="w-1/6 px-2 py-1 bg-red-500 text-white rounded-md"
-              onClick={handleClearCart}
-              disabled={cart.length === 0}
-            >
-              <DeleteOutlined />
-            </button>
-            <button
-              className="w-5/6 px-4 py-2 bg-green-500 text-white rounded-md"
-              onClick={handleSubmit}
-              disabled={cart.length === 0}
-            >
-              Bayar
-            </button>
-          </div>
-        </div>
-      </div>
+    <div className="flex justify-between gap-2">
+      <button
+        className="w-1/6 px-2 py-1 bg-red-500 text-white rounded-md"
+        onClick={handleClearCart}
+        disabled={cart.length === 0}
+      >
+        <DeleteOutlined />
+      </button>
+      <button
+        className="w-5/6 px-4 py-2 bg-green-500 text-white rounded-md"
+        onClick={handleSubmit}
+        disabled={cart.length === 0}
+      >
+        Bayar
+      </button>
+    </div>
+  </div>
+</div>
+
     </div>
   );
 };

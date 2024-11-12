@@ -480,15 +480,6 @@ const ProdukPage: React.FC = () => {
         </Button>
 
         <div className="flex items-center">
-          {/* <Dropdown overlay={menu} trigger={["click"]}>
-            <Button icon={<FilterOutlined />} style={{ marginRight: 5 }}>
-              {sortOrder === null
-                ? "Filter"
-                : sortOrder === "ASC"
-                ? "Harga Terendah"
-                : "Harga Tertinggi"}
-            </Button>
-          </Dropdown> */}
           <Dropdown overlay={menu} trigger={["click"]}>
             <Button icon={<FilterOutlined />} style={{ marginRight: 5 }}>
               Filter
