@@ -229,30 +229,6 @@ const KasirPage: React.FC = () => {
           layout="vertical"
           onFinish={handleEditKasir} // Handle edit kasir
         >
-          {/* Nama Kasir */}
-          <Form.Item
-            name="nama"
-            label="Nama"
-            rules={[{ required: true, message: "Nama kasir harus diisi!" }]}
-          >
-            <Input />
-          </Form.Item>
-
-          {/* Email Kasir */}
-          <Form.Item
-            name="email"
-            label="Email"
-            rules={[
-              {
-                required: true,
-                type: "email",
-                message: "Email kasir harus valid!",
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-
           {/* Status Kasir */}
           <Form.Item
             name="status"
