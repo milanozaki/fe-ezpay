@@ -11,6 +11,7 @@ import {
 import "antd/dist/reset.css";
 import * as XLSX from "xlsx";
 import axios from "axios";
+import Cookies from "js-cookie";
 
 const { RangePicker } = DatePicker;
 
@@ -26,32 +27,41 @@ const RiwayatTransaksiPage = () => {
   const [total, setTotal] = useState(0); // Total data
   const pageSize = 10;
 
-  const fetchData = async (
-    id_toko: string,
-    startDate = "",
-    endDate = "",
-    page = 1
-  ) => {
+  const fetchData = async (startDate = "", endDate = "", page = 1) => {
     try {
-      const response = await axios.get("http://localhost:3222/transaksi/all", {
-        params: {
-          id_toko, // Sertakan id_toko di parameter
-          startDate,
-          endDate,
-          page,
-          limit: pageSize,
-        },
-      });
-      if (Array.isArray(response.data.data)) {
+      const id_user = Cookies.get("id_user");
+      if (!id_user) {
+        console.error("ID User tidak ditemukan di cookies");
+        return;
+      }
+  
+      const response = await axios.get(
+        `http://localhost:3222/transaksi/ser/user/${id_user}`,
+        {
+          params: {
+            startDate,
+            endDate,
+            page,
+            limit: pageSize,
+          },
+        }
+      );
+  
+      console.log("Response data:", response.data); // Tambahkan log ini
+  
+      // Cek apakah response.data adalah array
+      if (Array.isArray(response.data)) {
         setData(
-          response.data.data.map((item: any, index: number) => ({
+          response.data.map((item: any, index: any) => ({
             ...item,
             key: index,
           }))
         );
-        setTotal(response.data.total); // Set total data dari response
+        setTotal(response.data.length); // Total data sesuai dengan panjang array
       } else {
         console.error("Data is not in array format:", response.data);
+        setData([]); // Atur data ke array kosong
+        setTotal(0); // Atur total ke 0
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -59,19 +69,16 @@ const RiwayatTransaksiPage = () => {
   };
 
   useEffect(() => {
-    const id_toko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
-
-    // Pastikan id_toko tidak null sebelum memanggil fetchData
-    if (id_toko) {
-      fetchData(id_toko, "", "", currentPage); // Panggil fetchData saat pertama kali
-    } else {
-      console.error("ID Toko tidak ditemukan di localStorage");
-      // Anda dapat menambahkan penanganan lain jika id_toko tidak ditemukan
-    }
+    fetchData("", "", currentPage); // Panggil fetchData saat pertama kali
   }, [currentPage]); // Tambahkan currentPage ke dependencies
 
   const showModal = (transaction: any) => {
-    setSelectedTransaction(transaction);
+    /*************  ✨ Codeium Command ⭐  *************/
+    /**
+
+/******  c307285a-69cf-48d1-b436-3e666379b4c3  *******/ setSelectedTransaction(
+      transaction
+    );
     setIsModalVisible(true);
   };
 
@@ -83,16 +90,8 @@ const RiwayatTransaksiPage = () => {
     setIsModalVisible(false);
   };
 
-  const handleDateChange = (dates: any, dateStrings: [string, string]) => {
-    const id_toko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
-
-    // Pastikan id_toko tidak null sebelum memanggil fetchData
-    if (id_toko) {
-      fetchData(id_toko, dateStrings[0], dateStrings[1], currentPage); // Fetch data berdasarkan rentang tanggal
-    } else {
-      console.error("ID Toko tidak ditemukan di localStorage");
-      // Anda dapat menambahkan penanganan lain jika id_toko tidak ditemukan
-    }
+  const handleDateChange = (dates: any, dateStrings: any) => {
+    fetchData(dateStrings[0], dateStrings[1], currentPage); // Fetch data berdasarkan rentang tanggal
   };
 
   const columns = [
@@ -142,17 +141,9 @@ const RiwayatTransaksiPage = () => {
   ];
 
   // Handle pagination
-  const onPageChange = (page: number) => {
+  const onPageChange = (page: any) => {
     setCurrentPage(page);
-    const id_toko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
-
-    // Pastikan id_toko tidak null sebelum memanggil fetchData
-    if (id_toko) {
-      fetchData(id_toko, "", "", page); // Fetch data untuk halaman baru
-    } else {
-      console.error("ID Toko tidak ditemukan di localStorage");
-      // Anda dapat menambahkan penanganan lain jika id_toko tidak ditemukan
-    }
+    fetchData("", "", page); // Fetch data untuk halaman baru berdasarkan id_user dari cookies
   };
 
   return (

@@ -7,12 +7,14 @@ import {
   FloatButton,
   Modal,
   Popconfirm,
+  Select,
 } from "antd";
 import "antd/dist/reset.css";
 import * as XLSX from "xlsx";
 import axios from "axios";
 
 const { RangePicker } = DatePicker;
+const { Option } = Select;
 
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat("id-ID").format(amount);
@@ -24,20 +26,36 @@ const RiwayatTransaksiPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState<any[]>([]);
   const [total, setTotal] = useState(0); // Total data
+  const [kasirList, setKasirList] = useState<any[]>([]); // State untuk kasir
+  const [selectedKasir, setSelectedKasir] = useState<string | undefined>(
+    undefined
+  ); // State untuk kasir yang dipilih
   const pageSize = 10;
+
+  const fetchKasir = async (id_toko: any) => {
+    try {
+      const response = await axios.get(`http://localhost:3222/users/kasir?id_toko=${id_toko}`);
+      console.log("Data kasir:", response.data); // Memeriksa data kasir
+      setKasirList(response.data); // Memperbarui state kasirList
+    } catch (error) {
+      console.error("Error fetching kasir:", error);
+    }
+  };
 
   const fetchData = async (
     id_toko: string,
     startDate = "",
     endDate = "",
+    kasirId = "",
     page = 1
   ) => {
     try {
       const response = await axios.get("http://localhost:3222/transaksi/all", {
         params: {
-          id_toko, // Sertakan id_toko di parameter
+          id_toko,
           startDate,
           endDate,
+          kasirId, // Tambahkan kasirId ke parameter
           page,
           limit: pageSize,
         },
@@ -61,14 +79,21 @@ const RiwayatTransaksiPage = () => {
   useEffect(() => {
     const id_toko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
 
-    // Pastikan id_toko tidak null sebelum memanggil fetchData
     if (id_toko) {
-      fetchData(id_toko, "", "", currentPage); // Panggil fetchData saat pertama kali
+      fetchKasir(id_toko); // Ambil daftar kasir
+      fetchData(id_toko, "", "", "", currentPage); // Panggil fetchData saat pertama kali
     } else {
       console.error("ID Toko tidak ditemukan di localStorage");
-      // Anda dapat menambahkan penanganan lain jika id_toko tidak ditemukan
     }
   }, [currentPage]); // Tambahkan currentPage ke dependencies
+
+  const handleKasirChange = (value: string) => {
+    setSelectedKasir(value);
+    const id_toko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
+    if (id_toko) {
+      fetchData(id_toko, "", "", value, currentPage); // Fetch data berdasarkan kasir yang dipilih
+    }
+  };
 
   const showModal = (transaction: any) => {
     setSelectedTransaction(transaction);
@@ -86,12 +111,16 @@ const RiwayatTransaksiPage = () => {
   const handleDateChange = (dates: any, dateStrings: [string, string]) => {
     const id_toko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
 
-    // Pastikan id_toko tidak null sebelum memanggil fetchData
     if (id_toko) {
-      fetchData(id_toko, dateStrings[0], dateStrings[1], currentPage); // Fetch data berdasarkan rentang tanggal
+      fetchData(
+        id_toko,
+        dateStrings[0],
+        dateStrings[1],
+        selectedKasir,
+        currentPage
+      ); // Fetch data berdasarkan rentang tanggal dan kasir yang dipilih
     } else {
       console.error("ID Toko tidak ditemukan di localStorage");
-      // Anda dapat menambahkan penanganan lain jika id_toko tidak ditemukan
     }
   };
 
@@ -141,17 +170,14 @@ const RiwayatTransaksiPage = () => {
     },
   ];
 
-  // Handle pagination
   const onPageChange = (page: number) => {
     setCurrentPage(page);
     const id_toko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
 
-    // Pastikan id_toko tidak null sebelum memanggil fetchData
     if (id_toko) {
-      fetchData(id_toko, "", "", page); // Fetch data untuk halaman baru
+      fetchData(id_toko, "", "", selectedKasir, page); // Fetch data untuk halaman baru
     } else {
       console.error("ID Toko tidak ditemukan di localStorage");
-      // Anda dapat menambahkan penanganan lain jika id_toko tidak ditemukan
     }
   };
 
@@ -169,17 +195,34 @@ const RiwayatTransaksiPage = () => {
           <h3 className="text-sm mb-4">Pilih Tanggal</h3>
           <RangePicker onChange={handleDateChange} className="mb-4" />
         </div>
-        <Popconfirm
-          title="Apakah Anda yakin ingin mengekspor data ke Excel?"
-          onConfirm={exportToExcel}
-          okText="Ya"
-          cancelText="Batal"
-        >
-          <FloatButton
-            tooltip={<div>Export to Excel</div>}
-            style={{ position: "relative", top: 0, right: 0 }}
-          />
-        </Popconfirm>
+        <div className="flex items-center">
+        <Select
+        placeholder="Pilih Kasir"
+        onChange={handleKasirChange}
+        style={{ width: 200, marginRight: 16 }}
+      >
+        {kasirList.length > 0 ? (
+          kasirList.map(kasir => (
+            <Option key={kasir.id_kasir} value={kasir.id_kasir}>
+              {kasir.nama_kasir}
+            </Option>
+          ))
+        ) : (
+          <Option disabled>No kasir available</Option>
+        )}
+      </Select>
+          <Popconfirm
+            title="Apakah Anda yakin ingin mengekspor data ke Excel?"
+            onConfirm={exportToExcel}
+            okText="Ya"
+            cancelText="Batal"
+          >
+            <FloatButton
+              tooltip={<div>Export to Excel</div>}
+              style={{ position: "relative", top: 0, right: 0 }}
+            />
+          </Popconfirm>
+        </div>
       </div>
       <div className="relative w-full h-auto bg-white p-6 shadow-lg rounded-lg">
         <Table
