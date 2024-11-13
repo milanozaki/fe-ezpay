@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect } from "react";
 import { Button, message, Form, Input, Modal, Select } from "antd";
@@ -82,47 +82,48 @@ const KasirPage: React.FC = () => {
     }
   };
 
-// Open edit modal and capture id_kasir
-const openEditModal = (kasir: Kasir) => {
-  setIsEditMode(true); // Set mode to edit
-  setIsModalVisible(true);
-  setEditKasirId(kasir.id_kasir); // Capture and set the id_kasir
-  form.setFieldsValue({
-    nama: kasir.nama_kasir,
-    email: kasir.email_kasir,
-    status: kasir.status,
-  });
-};
+  // Open edit modal and capture id_kasir
+  const openEditModal = (kasir: Kasir) => {
+    setIsEditMode(true); // Set mode to edit
+    setIsModalVisible(true);
+    setEditKasirId(kasir.id_kasir); // Capture and set the id_kasir
+    form.setFieldsValue({
+      nama: kasir.nama_kasir,
+      email: kasir.email_kasir,
+      status: kasir.status,
+    });
+  };
 
-// Handle edit kasir by using editKasirId in the PUT request URL
-const handleEditKasir = async (values: any) => {
-  if (!editKasirId) {
-    message.error("ID kasir tidak ditemukan!");
-    return;
-  }
+  // Handle edit kasir by using editKasirId in the PUT request URL
+  const handleEditKasir = async (values: any) => {
+    if (!editKasirId) {
+      message.error("ID kasir tidak ditemukan!");
+      return;
+    }
 
-  try {
-    // Send PUT request with captured editKasirId
-    await axios.put(
-      `http://localhost:3222/users/edit-kasir/${editKasirId}`, 
-      values
-    );
+    try {
+      // Send PUT request with captured editKasirId
+      await axios.put(
+        `http://localhost:3222/users/edit-kasir/${editKasirId}`,
+        values
+      );
 
-    message.success("Status kasir berhasil diubah!");
-    setIsModalVisible(false);
-    form.resetFields();
+      message.success("Status kasir berhasil diubah!");
+      setIsModalVisible(false);
+      form.resetFields();
 
-    // Update kasir list without refreshing the page
-    setKasirList((prevKasirList) =>
-      prevKasirList.map((kasir) =>
-        kasir.id_kasir === editKasirId ? { ...kasir, status: values.status } : kasir
-      )
-    );
-  } catch (error) {
-    message.error("Terjadi kesalahan saat mengedit status kasir.");
-  }
-};
-
+      // Update kasir list without refreshing the page
+      setKasirList((prevKasirList) =>
+        prevKasirList.map((kasir) =>
+          kasir.id_kasir === editKasirId
+            ? { ...kasir, status: values.status }
+            : kasir
+        )
+      );
+    } catch (error) {
+      message.error("Terjadi kesalahan saat mengedit status kasir.");
+    }
+  };
 
   // Open add modal
   const openAddModal = () => {
@@ -136,7 +137,7 @@ const handleEditKasir = async (values: any) => {
       <div className="flex justify-between items-center mb-4">
         <Button
           type="primary"
-          onClick={openAddModal}  // Open the add modal
+          onClick={openAddModal} // Open the add modal
           className="bg-blue-500 text-white"
         >
           + Tambah Kasir
@@ -160,14 +161,18 @@ const handleEditKasir = async (values: any) => {
               <td className="py-3 px-20 text-left">{kasir.nama_kasir}</td>
               <td className="py-3 px-24 text-left">{kasir.email_kasir}</td>
               <td
-                className={`py-3 px-16 text-left ${kasir.status === StatusEnum.ACTIVE ? "text-green-600" : "text-red-600"}`}
+                className={`py-3 px-16 text-left ${
+                  kasir.status === StatusEnum.ACTIVE
+                    ? "text-green-600"
+                    : "text-red-600"
+                }`}
               >
                 {kasir.status}
               </td>
               <td className="py-3 px-6 text-left">
                 <Button
                   type="primary"
-                  onClick={() => openEditModal(kasir)}  // Open the edit modal
+                  onClick={() => openEditModal(kasir)} // Open the edit modal
                 >
                   Edit Status
                 </Button>
@@ -187,27 +192,8 @@ const handleEditKasir = async (values: any) => {
         <Form
           form={form}
           layout="vertical"
-          onFinish={handleAddKasir}  // Handle add kasir
+          onFinish={handleAddKasir} // Handle add kasir
         >
-          {/* Nama Kasir */}
-          <Form.Item
-            name="nama"
-            label="Nama"
-            rules={[{ required: true, message: "Nama kasir harus diisi!" }]}
-
-          >
-            <Input />
-          </Form.Item>
-
-          {/* Email Kasir */}
-          <Form.Item
-            name="email"
-            label="Email"
-            rules={[{ required: true, type: "email", message: "Email kasir harus valid!" }]}
-          >
-            <Input />
-          </Form.Item>
-
           {/* Status Kasir */}
           <Form.Item
             name="status"
@@ -216,7 +202,9 @@ const handleEditKasir = async (values: any) => {
           >
             <Select>
               <Select.Option value={StatusEnum.ACTIVE}>Aktif</Select.Option>
-              <Select.Option value={StatusEnum.INACTIVE}>Tidak Aktif</Select.Option>
+              <Select.Option value={StatusEnum.INACTIVE}>
+                Tidak Aktif
+              </Select.Option>
             </Select>
           </Form.Item>
 
@@ -239,7 +227,7 @@ const handleEditKasir = async (values: any) => {
         <Form
           form={form}
           layout="vertical"
-          onFinish={handleEditKasir}  // Handle edit kasir
+          onFinish={handleEditKasir} // Handle edit kasir
         >
           {/* Nama Kasir */}
           <Form.Item
@@ -254,7 +242,13 @@ const handleEditKasir = async (values: any) => {
           <Form.Item
             name="email"
             label="Email"
-            rules={[{ required: true, type: "email", message: "Email kasir harus valid!" }]}
+            rules={[
+              {
+                required: true,
+                type: "email",
+                message: "Email kasir harus valid!",
+              },
+            ]}
           >
             <Input />
           </Form.Item>
@@ -267,7 +261,9 @@ const handleEditKasir = async (values: any) => {
           >
             <Select>
               <Select.Option value={StatusEnum.ACTIVE}>Aktif</Select.Option>
-              <Select.Option value={StatusEnum.INACTIVE}>Tidak Aktif</Select.Option>
+              <Select.Option value={StatusEnum.INACTIVE}>
+                Tidak Aktif
+              </Select.Option>
             </Select>
           </Form.Item>
 

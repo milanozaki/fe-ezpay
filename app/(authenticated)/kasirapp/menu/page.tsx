@@ -254,10 +254,25 @@ const MenuPage = () => {
   
 
   const handleSubmit = async () => {
-    const token = Cookies.get("accessToken"); // Ambil token dari cookie
-    console.log("Token found:", token); // Log token
+    const token = Cookies.get("accessToken");
+    if (!token) {
+      console.error("Token tidak ditemukan");
+      return;
+    }
+    console.log("Token found:", token);
   
-    // Ambil userNama dari localStorage
+    const idUser = Cookies.get("id_user");
+    if (!idUser) {
+      console.error("ID User tidak ditemukan di cookies");
+      return;
+    }
+  
+    const idToko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
+    if (!idToko) {
+      console.error("ID Toko tidak ditemukan di localStorage");
+      return;
+    }
+  
     const userNama = localStorage.getItem("userName");
   
     const pesananData = {
@@ -265,29 +280,34 @@ const MenuPage = () => {
         id_produk: item.id_produk,
         jumlah_produk: item.quantity,
       })),
-      metode_transaksi_id: paymentMethod, // UUID dari metode pembayaran
-      token, // Ganti dengan token valid
-      userNama, // Sertakan userNama di sini
+      metode_transaksi_id: paymentMethod,
+      id_user: idUser, // Sertakan id_user dari cookies
+      id_toko: idToko, // Sertakan id_toko dari localStorage
     };
+  
+    console.log("Pesanan data yang akan dikirim:", pesananData); // Log data pesanan
   
     try {
       const response = await fetch("http://localhost:3222/pesanan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Sertakan token di header
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(pesananData),
       });
   
+      console.log("Response dari server:", response); // Log respons dari server
+  
       if (!response.ok) {
-        throw new Error("Gagal menyimpan pesanan");
+        const errorData = await response.json();
+        console.error("Error response data:", errorData); // Log data kesalahan
+        throw new Error(errorData.message || "Gagal menyimpan pesanan");
       }
   
       const result = await response.json();
-      openSuccessNotification(result); // Panggil notifikasi sukses di sini
+      openSuccessNotification(result);
   
-      // Update stok produk setelah transaksi berhasil
       setProducts((prevProducts) =>
         prevProducts.map((product) => {
           const cartItem = cart.find(
@@ -296,18 +316,25 @@ const MenuPage = () => {
           if (cartItem) {
             return {
               ...product,
-              stok: product.stok - cartItem.quantity, // Kurangi stok produk
+              stok: product.stok - cartItem.quantity,
             };
           }
           return product;
         })
       );
   
-      setCart([]); // Bersihkan keranjang setelah pesanan berhasil
+      setCart([]);
     } catch (error) {
-      console.error("Error submitting pesanan:", error);
+      if (error instanceof Error) {
+        console.error("Error submitting pesanan:", error.message);
+        alert(error.message);
+      } else {
+        console.error("Error submitting pesanan:", error);
+        alert("Terjadi kesalahan pada saat mengirim pesanan.");
+      }
     }
   };
+  
 
   const totalHarga = cart.reduce(
     (total, item) => total + item.harga_produk * item.quantity,
