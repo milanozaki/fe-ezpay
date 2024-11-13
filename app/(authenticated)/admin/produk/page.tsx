@@ -797,10 +797,10 @@ const ProdukPage: React.FC = () => {
               alt={selectedProductInfo.nama_produk}
               src={`http://localhost:3222/produk/image/${selectedProductInfo.gambar_produk}`}
               style={{
-                width: "200px",
-                height: "150px",
-                // objectFit: "cover",
-              }} // Adjusted className for size
+                width: "100%",
+                height: "270px",
+                objectFit: "cover",
+              }}
               preview={false}
             />
             <table className="min-w-full border border-gray-300">

@@ -415,7 +415,7 @@ const MenuPage = () => {
                       src={`http://localhost:3222/produk/image/${produk.gambar_produk}`}
                       style={{
                         width: "100%",
-                        height: "200px",
+                        height: "270px",
                         objectFit: "cover",
                       }}
                       preview={false}
