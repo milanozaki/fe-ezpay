@@ -1,14 +1,19 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
-import { DatePicker, Table, Button, FloatButton, Modal } from "antd";
+import {
+  DatePicker,
+  Table,
+  Button,
+  FloatButton,
+  Modal,
+  Popconfirm,
+} from "antd";
 import "antd/dist/reset.css";
 import * as XLSX from "xlsx";
 import axios from "axios";
 
 const { RangePicker } = DatePicker;
 
-// Fungsi untuk memformat angka menjadi mata uang
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat("id-ID").format(amount);
 };
@@ -18,28 +23,33 @@ const RiwayatTransaksiPage = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState<any[]>([]);
-  const [totalItems, setTotalItems] = useState(0); // Tambahkan state untuk total item
+  const [total, setTotal] = useState(0); // Total data
   const pageSize = 10;
 
-  // Fungsi untuk mengambil data transaksi
-  const fetchData = async (startDate = "", endDate = "", page = currentPage, limit = pageSize) => {
+  const fetchData = async (
+    id_toko: string,
+    startDate = "",
+    endDate = "",
+    page = 1
+  ) => {
     try {
       const response = await axios.get("http://localhost:3222/transaksi/all", {
         params: {
+          id_toko, // Sertakan id_toko di parameter
           startDate,
           endDate,
           page,
-          limit, // Kirimkan limit ke backend
+          limit: pageSize,
         },
       });
-      if (response.data) {
+      if (Array.isArray(response.data.data)) {
         setData(
           response.data.data.map((item: any, index: number) => ({
             ...item,
             key: index,
           }))
         );
-        setTotalItems(response.data.total); // Set total items dari response
+        setTotal(response.data.total); // Set total data dari response
       } else {
         console.error("Data is not in array format:", response.data);
       }
@@ -49,10 +59,17 @@ const RiwayatTransaksiPage = () => {
   };
 
   useEffect(() => {
-    fetchData(); // Mengambil data saat komponen dimuat
-  }, []);
+    const id_toko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
 
-  // Menampilkan modal untuk detail transaksi
+    // Pastikan id_toko tidak null sebelum memanggil fetchData
+    if (id_toko) {
+      fetchData(id_toko, "", "", currentPage); // Panggil fetchData saat pertama kali
+    } else {
+      console.error("ID Toko tidak ditemukan di localStorage");
+      // Anda dapat menambahkan penanganan lain jika id_toko tidak ditemukan
+    }
+  }, [currentPage]); // Tambahkan currentPage ke dependencies
+
   const showModal = (transaction: any) => {
     setSelectedTransaction(transaction);
     setIsModalVisible(true);
@@ -66,22 +83,36 @@ const RiwayatTransaksiPage = () => {
     setIsModalVisible(false);
   };
 
-  // Mengatur tanggal dari RangePicker
   const handleDateChange = (dates: any, dateStrings: [string, string]) => {
-    if (dateStrings[0] && dateStrings[1]) {
-      fetchData(dateStrings[0], dateStrings[1], 1); // Reset ke halaman 1 saat filter tanggal
+    const id_toko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
+
+    // Pastikan id_toko tidak null sebelum memanggil fetchData
+    if (id_toko) {
+      fetchData(id_toko, dateStrings[0], dateStrings[1], currentPage); // Fetch data berdasarkan rentang tanggal
     } else {
-      fetchData(); // Mengambil data tanpa filter tanggal
+      console.error("ID Toko tidak ditemukan di localStorage");
+      // Anda dapat menambahkan penanganan lain jika id_toko tidak ditemukan
     }
   };
 
-  // Definisi kolom tabel
   const columns = [
     {
       title: "Tanggal & Waktu",
       dataIndex: "createdAt",
       key: "createdAt",
-      render: (text: string) => (text ? new Date(text).toLocaleString() : "N/A"),
+      render: (text: string) =>
+        text
+          ? `${new Date(text).toLocaleDateString("id-ID", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}, ${new Date(text).toLocaleTimeString("id-ID", {
+              hour: "2-digit",
+              minute: "2-digit",
+              timeZone: "Asia/Jakarta",
+              timeZoneName: "short",
+            })}`
+          : "N/A",
     },
     {
       title: "Jumlah Item",
@@ -110,48 +141,38 @@ const RiwayatTransaksiPage = () => {
     },
   ];
 
+  // Handle pagination
   const onPageChange = (page: number) => {
     setCurrentPage(page);
-    fetchData("", "", page); // Ambil data untuk halaman yang dipilih
-  };
+    const id_toko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
 
-  // Fungsi untuk mengekspor data ke Excel
-  const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Riwayat Transaksi");
-    XLSX.writeFile(wb, "Riwayat_Transaksi.xlsx");
+    // Pastikan id_toko tidak null sebelum memanggil fetchData
+    if (id_toko) {
+      fetchData(id_toko, "", "", page); // Fetch data untuk halaman baru
+    } else {
+      console.error("ID Toko tidak ditemukan di localStorage");
+      // Anda dapat menambahkan penanganan lain jika id_toko tidak ditemukan
+    }
   };
 
   return (
-    <div
-      className="pt-0 pb-6 px-8 relative"
-      style={{ overflowY: "auto", maxHeight: "90vh", overflowX: "hidden" }}
-    >
+    <div className="pt-1 pl-5 pb-5 mr-16 ml-8">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm mb-4">Pilih Tanggal</h3>
           <RangePicker onChange={handleDateChange} className="mb-4" />
         </div>
-        <div className="relative">
-          <FloatButton
-            tooltip={<div>Export to Excel</div>}
-            style={{ position: "absolute", top: 0, right: 0 }}
-            onClick={exportToExcel}
-          />
-        </div>
       </div>
-      <div className="relative w-full bg-white p-4 shadow-lg rounded-lg">
+      <div className="relative w-full h-auto bg-white p-6 shadow-lg rounded-lg">
         <Table
           columns={columns}
           dataSource={data}
           pagination={{
             current: currentPage,
             pageSize,
-            total: totalItems, // Total item yang diterima dari backend
+            total: total,
             onChange: onPageChange,
           }}
-          scroll={{ x: "max-content" }} 
         />
       </div>
 
@@ -229,4 +250,3 @@ const RiwayatTransaksiPage = () => {
 };
 
 export default RiwayatTransaksiPage;
-
