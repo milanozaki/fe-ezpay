@@ -1,16 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import {
-  DatePicker,
-  Table,
-  Button,
-  FloatButton,
-  Modal,
-  Popconfirm,
-} from "antd";
+import { DatePicker, Table, Button, Modal, message, Spin } from "antd";
 import "antd/dist/reset.css";
 import * as XLSX from "xlsx";
 import axios from "axios";
+import Cookies from "js-cookie";
 
 const { RangePicker } = DatePicker;
 
@@ -23,76 +17,59 @@ const RiwayatTransaksiPage = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState<any[]>([]);
-  const [total, setTotal] = useState(0); // Total data
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false); // State untuk loading
   const pageSize = 10;
 
-  const fetchData = async (
-    id_toko: string,
-    startDate = "",
-    endDate = "",
-    page = 1
-  ) => {
+  const fetchData = async (startDate = "", endDate = "", page = 1) => {
     try {
-      const response = await axios.get("http://localhost:3222/transaksi/all", {
-        params: {
-          id_toko, // Sertakan id_toko di parameter
-          startDate,
-          endDate,
-          page,
-          limit: pageSize,
-        },
-      });
-      if (Array.isArray(response.data.data)) {
-        setData(
-          response.data.data.map((item: any, index: number) => ({
-            ...item,
-            key: index,
-          }))
-        );
-        setTotal(response.data.total); // Set total data dari response
+      setLoading(true); // Mulai loading
+      const id_user = Cookies.get("id_user");
+      if (!id_user) {
+        message.error("ID User tidak ditemukan di cookies");
+        return;
+      }
+
+      const response = await axios.get(
+        `http://localhost:3222/transaksi/${id_user}`,
+        {
+          params: { startDate, endDate, page, limit: pageSize },
+        }
+      );
+
+      const { data: responseData, total: responseTotal } = response.data;
+
+      if (Array.isArray(responseData)) {
+        setData(responseData.map((item: any, index: any) => ({ ...item, key: index })));
+        setTotal(responseTotal || responseData.length);
       } else {
-        console.error("Data is not in array format:", response.data);
+        console.error("Data is not in array format:", responseData);
+        setData([]);
+        setTotal(0);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
+      message.error("Gagal memuat data transaksi");
+    } finally {
+      setLoading(false); // Akhiri loading
     }
   };
 
   useEffect(() => {
-    const id_toko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
-
-    // Pastikan id_toko tidak null sebelum memanggil fetchData
-    if (id_toko) {
-      fetchData(id_toko, "", "", currentPage); // Panggil fetchData saat pertama kali
-    } else {
-      console.error("ID Toko tidak ditemukan di localStorage");
-      // Anda dapat menambahkan penanganan lain jika id_toko tidak ditemukan
-    }
-  }, [currentPage]); // Tambahkan currentPage ke dependencies
+    fetchData("", "", currentPage);
+  }, [currentPage]);
 
   const showModal = (transaction: any) => {
     setSelectedTransaction(transaction);
     setIsModalVisible(true);
   };
 
-  const handleOk = () => {
-    setIsModalVisible(false);
-  };
+  const handleOk = () => setIsModalVisible(false);
+  const handleCancel = () => setIsModalVisible(false);
 
-  const handleCancel = () => {
-    setIsModalVisible(false);
-  };
-
-  const handleDateChange = (dates: any, dateStrings: [string, string]) => {
-    const id_toko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
-
-    // Pastikan id_toko tidak null sebelum memanggil fetchData
-    if (id_toko) {
-      fetchData(id_toko, dateStrings[0], dateStrings[1], currentPage); // Fetch data berdasarkan rentang tanggal
-    } else {
-      console.error("ID Toko tidak ditemukan di localStorage");
-      // Anda dapat menambahkan penanganan lain jika id_toko tidak ditemukan
-    }
+  const handleDateChange = (dates: any, dateStrings: any) => {
+    setCurrentPage(1); // Reset halaman saat filter tanggal diubah
+    fetchData(dateStrings[0], dateStrings[1], 1);
   };
 
   const columns = [
@@ -141,19 +118,7 @@ const RiwayatTransaksiPage = () => {
     },
   ];
 
-  // Handle pagination
-  const onPageChange = (page: number) => {
-    setCurrentPage(page);
-    const id_toko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
-
-    // Pastikan id_toko tidak null sebelum memanggil fetchData
-    if (id_toko) {
-      fetchData(id_toko, "", "", page); // Fetch data untuk halaman baru
-    } else {
-      console.error("ID Toko tidak ditemukan di localStorage");
-      // Anda dapat menambahkan penanganan lain jika id_toko tidak ditemukan
-    }
-  };
+  const onPageChange = (page: any) => setCurrentPage(page);
 
   return (
     <div className="pt-1 pl-5 pb-5 mr-16 ml-8">
@@ -164,16 +129,20 @@ const RiwayatTransaksiPage = () => {
         </div>
       </div>
       <div className="relative w-full h-auto bg-white p-6 shadow-lg rounded-lg">
-        <Table
-          columns={columns}
-          dataSource={data}
-          pagination={{
-            current: currentPage,
-            pageSize,
-            total: total,
-            onChange: onPageChange,
-          }}
-        />
+        {loading ? (
+          <Spin size="large" />
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={data}
+            pagination={{
+              current: currentPage,
+              pageSize,
+              total: total,
+              onChange: onPageChange,
+            }}
+          />
+        )}
       </div>
 
       <Modal
@@ -209,7 +178,6 @@ const RiwayatTransaksiPage = () => {
                 ? formatCurrency(selectedTransaction.totalHarga)
                 : "N/A"}
             </p>
-
             <Table
               dataSource={selectedTransaction.produkDetail}
               columns={[
