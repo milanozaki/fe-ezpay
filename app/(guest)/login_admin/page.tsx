@@ -75,6 +75,7 @@ const LoginPage = () => {
         localStorage.setItem("userEmail", data.email);
         localStorage.setItem("nama", data.nama);
         localStorage.setItem("id_toko", data.id_toko);
+        localStorage.setItem("nama_role", data.nama_role); 
 
         // Redirect ke halaman dashboard atau URL yang ditentukan
         const redirectUrl = data.redirect || "/admin/dashboard";
@@ -87,7 +88,6 @@ const LoginPage = () => {
     }
 };
 
-  
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };

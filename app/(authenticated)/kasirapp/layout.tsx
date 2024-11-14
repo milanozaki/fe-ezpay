@@ -1,10 +1,9 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { HistoryOutlined } from "@ant-design/icons";
 import { IoFastFoodOutline } from "react-icons/io5";
-import { Avatar, Dropdown, Button, Divider, Tooltip } from "antd";
+import { Avatar, Dropdown, Button, Divider, Tooltip, notification } from "antd"; // Import notification
 import { usePathname, useRouter } from "next/navigation";
 import Cookies from "js-cookie"; // Import Cookies
 
@@ -75,6 +74,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           localStorage.removeItem("userEmail");
           localStorage.removeItem("nama");
           localStorage.removeItem("id_toko");
+          localStorage.removeItem("nama_role");
           sessionStorage.clear();
           Cookies.remove("accessToken");
           Cookies.remove("id_user");
@@ -98,16 +98,39 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     if (typeof window !== "undefined") {
       const token = Cookies.get("accessToken"); // Ambil access_token dari cookies
       if (!token) {
-        router.push("/login_kasir"); // Redirect ke halaman login jika tidak ada token
+        // Tampilkan notifikasi sebelum redirect ke login_kasir
+        notification.error({
+          message: 'Akses Ditolak',
+          description: 'Token akses tidak ditemukan. Anda akan diarahkan ke halaman login.',
+          placement: 'topRight',
+        });
+        setTimeout(() => {
+          router.push("/login_kasir"); // Redirect ke halaman login jika tidak ada token
+        }, 2000); // Delay 2 detik sebelum redirect
       } else {
-        // Mengambil email dan nama dari localStorage jika token ada
+        // Mengambil email, nama, dan nama_role dari localStorage jika token ada
         const storedEmail = localStorage.getItem("userEmail");
         const storedName = localStorage.getItem("nama");
+        const storedRole = localStorage.getItem("nama_role");
+
         if (storedEmail) {
           setUserEmail(storedEmail);
         }
         if (storedName) {
           setUserName(storedName);
+        }
+
+        // Mengecek role pengguna, jika bukan Kasir, arahkan ke login_kasir
+        if (storedRole !== "Kasir") {
+          // Tampilkan notifikasi sebelum redirect ke login_kasir
+          notification.error({
+            message: 'Akses Ditolak',
+            description: 'Peran Anda tidak sesuai. Anda akan diarahkan ke halaman login.',
+            placement: 'topRight',
+          });
+          setTimeout(() => {
+            router.push("/login_kasir");
+          }, 2000); // Delay 2 detik sebelum redirect
         }
       }
     }
@@ -150,14 +173,14 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           ))}
         </ul>
       </div>
-  
+
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black opacity-50 md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         ></div>
       )}
-  
+
       <div className="flex-1 flex flex-col ml-20 ">
         <header className="bg-[#257691] shadow-md top-0 flex justify-between items-center text-white z-50 md:px-8 md:py-6">
           <h1 className="text-xl font-semibold ml-4">{selectedMenu}</h1>
@@ -181,7 +204,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       </div>
     </div>
   );
-  
 };
 
 export default Layout;
