@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Select, Card, Image, Button, message, notification } from "antd";
+import { Select, Card, Image, Button, message, notification, Modal } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 import Cookies from "js-cookie";
 import axios from "axios";
@@ -34,6 +34,8 @@ const MenuPage = () => {
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [printReceipt, setPrintReceipt] = useState(false);
 
   useEffect(() => {
     const fetchPaymentMethods = async () => {
@@ -256,88 +258,105 @@ const MenuPage = () => {
   };
   
 
-  const handleSubmit = async () => {
-    const token = Cookies.get("accessToken");
-    if (!token) {
-      console.error("Token tidak ditemukan");
-      return;
-    }
-    console.log("Token found:", token);
-  
-    const idUser = Cookies.get("id_user");
-    if (!idUser) {
-      console.error("ID User tidak ditemukan di cookies");
-      return;
-    }
-  
-    const idToko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
-    if (!idToko) {
-      console.error("ID Toko tidak ditemukan di localStorage");
-      return;
-    }
-  
-    const userNama = localStorage.getItem("userName");
-  
-    const pesananData = {
-      detil_produk_pesanan: cart.map((item) => ({
-        id_produk: item.id_produk,
-        jumlah_produk: item.quantity,
-      })),
-      metode_transaksi_id: paymentMethod,
-      id_user: idUser, // Sertakan id_user dari cookies
-      id_toko: idToko, // Sertakan id_toko dari localStorage
-    };
-  
-    console.log("Pesanan data yang akan dikirim:", pesananData); // Log data pesanan
-  
-    try {
-      const response = await fetch("http://localhost:3222/pesanan", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(pesananData),
-      });
-  
-      console.log("Response dari server:", response); // Log respons dari server
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Error response data:", errorData); // Log data kesalahan
-        throw new Error(errorData.message || "Gagal menyimpan pesanan");
-      }
-  
-      const result = await response.json();
-      openSuccessNotification(result);
-  
-      setProducts((prevProducts) =>
-        prevProducts.map((product) => {
-          const cartItem = cart.find(
-            (item) => item.id_produk === product.id_produk
-          );
-          if (cartItem) {
-            return {
-              ...product,
-              stok: product.stok - cartItem.quantity,
-            };
-          }
-          return product;
-        })
-      );
-  
-      setCart([]);
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error("Error submitting pesanan:", error.message);
-        alert(error.message);
-      } else {
-        console.error("Error submitting pesanan:", error);
-        alert("Terjadi kesalahan pada saat mengirim pesanan.");
-      }
-    }
+  const handleSubmit = () => {
+    setIsModalVisible(true); // Tampilkan modal konfirmasi cetak struk
   };
-  
+
+  // Fungsi umum untuk memproses pembayaran
+const processPayment = async () => {
+  const token = Cookies.get("accessToken");
+  if (!token) {
+    console.error("Token tidak ditemukan");
+    return null; // Return null if token is not found
+  }
+
+  const idUser = Cookies.get("id_user");
+  if (!idUser) {
+    console.error("ID User tidak ditemukan di cookies");
+    return null; // Return null if ID User is not found
+  }
+
+  const idToko = localStorage.getItem("id_toko");
+  if (!idToko) {
+    console.error("ID Toko tidak ditemukan di localStorage");
+    return null; // Return null if ID Toko is not found
+  }
+
+  const pesananData = {
+    detil_produk_pesanan: cart.map((item) => ({
+      id_produk: item.id_produk,
+      jumlah_produk: item.quantity,
+    })),
+    metode_transaksi_id: paymentMethod,
+    id_user: idUser,
+    id_toko: idToko,
+  };
+
+  try {
+    const response = await fetch("http://localhost:3222/pesanan", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(pesananData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Gagal menyimpan pesanan");
+    }
+
+    const result = await response.json();
+    openSuccessNotification(result);
+
+    // Update stok produk
+    setProducts((prevProducts) =>
+      prevProducts.map((product) => {
+        const cartItem = cart.find(
+          (item) => item.id_produk === product.id_produk
+        );
+        if (cartItem) {
+          return {
+            ...product,
+            stok: product.stok - cartItem.quantity,
+          };
+        }
+        return product;
+      })
+    );
+
+    setCart([]);
+    setIsModalVisible(false); // Tutup modal setelah pembayaran berhasil
+
+    return result; // Return result to indicate success
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Error submitting pesanan:", error.message);
+      alert(error.message);
+    } else {
+      console.error("Error submitting pesanan:", error);
+      alert("Terjadi kesalahan pada saat mengirim pesanan.");
+    }
+    return null; // Return null if an error occurs
+  }
+};
+// Fungsi bayar dengan struk
+const bayarDenganStruk = async () => {
+  const result = await processPayment(); // Memanggil processPayment untuk memproses pembayaran
+  if (result) {
+    generateStruk(result); // Cetak struk hanya jika pembayaran berhasil
+  }
+};
+  // Fungsi untuk pembayaran tanpa struk
+  const bayarTanpaStruk = async () => {
+    await processPayment(); // Lakukan pembayaran tanpa cetak struk
+  };
+
+  // Fungsi untuk generate struk
+  const generateStruk = (pesanan:any) => {
+    console.log("Mencetak struk untuk pesanan:", pesanan);
+  };
 
   const totalHarga = cart.reduce(
     (total, item) => total + item.harga_produk * item.quantity,
@@ -361,6 +380,11 @@ const MenuPage = () => {
       placement: "bottomRight", 
     });
   };
+
+  const showModal = () => { setIsModalVisible(true) };
+  const handleOk = () => { setPrintReceipt(true); 
+    setIsModalVisible(false); handleSubmit()}; 
+  const handleCancel = () => { setIsModalVisible(false); };
 
   return (
     <div className="flex w-full h-full gap-3 max-w-screen overflow-hidden">
@@ -471,74 +495,72 @@ const MenuPage = () => {
   
       {/* Keranjang */}
       <div className="w-[30%] h-[calc(100vh-175px)] p-4 flex flex-col justify-between">
-        <h2 className="text-lg font-bold mb-4">Pesanan ({cart.length})</h2>
-        <div className="flex-grow overflow-auto scrollbar-hidden touch-scroll">
-          {cart.length === 0 ? (
-            <p>Keranjang Anda kosong</p>
-          ) : (
-            <ul>
-              {cart.map((item, index) => (
-                <li key={index} className="mb-4">
-                  <div className="border rounded-lg p-4 shadow-md">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="font-bold">{item.nama_produk}</h3>
-                        <p>Harga: Rp {formatCurrency(item.harga_produk)}</p>
-                        <p>Jumlah: {item.quantity}</p>
-                      </div>
-                      <Image
-                        alt={item.nama_produk}
-                        src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
-                        style={{ width: "100px", height: "100px" }}
-                        preview={false}
+      <h2 className="text-lg font-bold mb-4">Pesanan ({cart.length})</h2>
+      <div className="flex-grow overflow-auto scrollbar-hidden touch-scroll">
+        {cart.length === 0 ? (
+          <p>Keranjang Anda kosong</p>
+        ) : (
+          <ul>
+            {cart.map((item, index) => (
+              <li key={index} className="mb-4">
+                <div className="border rounded-lg p-4 shadow-md">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-bold">{item.nama_produk}</h3>
+                      <p>Harga: Rp {formatCurrency(item.harga_produk)}</p>
+                      <p>Jumlah: {item.quantity}</p>
+                    </div>
+                    <Image
+                      alt={item.nama_produk}
+                      src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
+                      style={{ width: "100px", height: "100px" }}
+                      preview={false}
+                    />
+                  </div>
+
+                  <div className="flex justify-between items-center mt-4">
+                    <div>
+                      <input
+                        type="number"
+                        min="1"
+                        max={item.stok + item.quantity}
+                        value={item.quantity}
+                        onChange={(e) => updateQuantity(item.id_produk, parseInt(e.target.value))}
+                        className="w-16 px-2 py-1 border rounded-md text-center"
                       />
                     </div>
-  
-                    <div className="flex justify-between items-center mt-4">
-                      <div>
-                        {/* Input untuk mengubah jumlah */}
-                        <input
-                          type="number"
-                          min="1"
-                          max={item.stok + item.quantity} // Pastikan stok cukup
-                          value={item.quantity}
-                          onChange={(e) => updateQuantity(item.id_produk, parseInt(e.target.value))}
-                          className="w-16 px-2 py-1 border rounded-md text-center"
-                        />
-                      </div>
-                      <Button
-                        type="primary"
-                        danger
-                        onClick={() => removeFromCart(item.id_produk)}
-                      >
-                        <DeleteOutlined />
-                      </Button>
-                    </div>
+                    <Button
+                      type="primary"
+                      danger
+                      onClick={() => removeFromCart(item.id_produk)}
+                    >
+                      <DeleteOutlined />
+                    </Button>
                   </div>
-                </li>
-              ))}
-            </ul>
-          )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <div className="mt-4">
+        <h3 className="font-bold mb-2">Total: Rp {formatCurrency(totalHarga)}</h3>
+        <div className="mb-4">
+          <Select
+            value={paymentMethod}
+            onChange={setPaymentMethod}
+            style={{ width: "100%" }}
+            placeholder="Pilih metode pembayaran"
+          >
+            {paymentMethods.map((method) => (
+              <Select.Option key={method.id_metode_transaksi} value={method.id_metode_transaksi}>
+                {method.nama}
+              </Select.Option>
+            ))}
+          </Select>
         </div>
-        <div className="mt-4">
-          <h3 className="font-bold mb-2">Total: Rp {formatCurrency(totalHarga)}</h3>
-          <div className="mb-4">
-            <Select
-              value={paymentMethod}
-              onChange={setPaymentMethod}
-              style={{ width: "100%" }}
-              placeholder="Pilih metode pembayaran"
-            >
-              {paymentMethods.map((method) => (
-                <Select.Option
-                  key={method.id_metode_transaksi}
-                  value={method.id_metode_transaksi}
-                >
-                  {method.nama}
-                </Select.Option>
-              ))}
-            </Select>
-          </div>
+        <div>
+          {/* Buttons */}
           <div className="flex justify-between gap-2">
             <button
               className="w-1/6 px-2 py-1 bg-red-500 text-white rounded-md"
@@ -555,8 +577,38 @@ const MenuPage = () => {
               Bayar
             </button>
           </div>
+          {/* Modal for receipt confirmation */}
+          {isModalVisible && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+              <div className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-[300px] relative">
+                {/* Close Button */}
+                <button
+                  className="absolute top-4 right-4 text-2xl text-gray-600 hover:text-gray-800"
+                  onClick={() => setIsModalVisible(false)} // Close modal
+                >
+                x
+                </button>
+                <h2 className="text-2xl font-semibold text-center mb-6">Ingin cetak struk?</h2>
+                <div className="flex justify-center gap-4">
+                <button
+                    className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
+                    onClick={bayarTanpaStruk}
+                  >
+                    Tidak
+                  </button>
+                  <button
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                    onClick={bayarDenganStruk}
+                  >
+                    Ya
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+    </div>
     </div>
   );
 };
