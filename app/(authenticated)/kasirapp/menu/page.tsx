@@ -175,41 +175,44 @@ const MenuPage = () => {
     });
   };
   
-  
-  
-  const updateQuantity = (id_produk: any, newQuantity: number) => {
+  const updateQuantity = (id_produk:any, newQuantity:any) => {
+    if (newQuantity === "" || isNaN(newQuantity)) {
+        newQuantity = 0;
+    } else {
+        newQuantity = parseInt(newQuantity, 10); // Convert to integer to remove leading zeros
+    }
+
     setCart((prevCart) => {
-      return prevCart.map((item) => {
-        if (item.id_produk === id_produk) {
-          // Jika jumlah baru lebih kecil atau sama dengan 0, kembalikan ke stok awal
-          if (newQuantity <= 0) {
-            newQuantity = item.stok; // Kembalikan kuantitas ke stok awal jika kurang dari 1
-          }
-  
-          // Pastikan kuantitas tidak melebihi stok yang tersedia
-          const availableStock = item.stok + item.quantity;
-          if (newQuantity > availableStock) {
-            message.error(`Stok tidak mencukupi untuk ${item.nama_produk}`);
+        return prevCart.map((item) => {
+            if (item.id_produk === id_produk) {
+                // Ensure the quantity is valid
+                if (newQuantity < 0) {
+                    newQuantity = 0;
+                }
+
+                // Calculate available stock
+                const availableStock = item.stok + item.quantity;
+                if (newQuantity > availableStock) {
+                    message.error(`Stok tidak mencukupi untuk ${item.nama_produk}`);
+                    return item;
+                }
+
+                // Update stock and quantity
+                setProducts((prevProducts) =>
+                    prevProducts.map((product) =>
+                        product.id_produk === id_produk
+                            ? { ...product, stok: product.stok - (newQuantity - item.quantity) }
+                            : product
+                    )
+                );
+
+                return { ...item, quantity: newQuantity };
+            }
             return item;
-          }
-  
-          // Update stok produk dan kuantitas produk di keranjang
-          setProducts((prevProducts) =>
-            prevProducts.map((product) =>
-              product.id_produk === id_produk
-                ? { ...product, stok: product.stok - (newQuantity - item.quantity) }
-                : product
-            )
-          );
-  
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      });
+        });
     });
   };
-  
-  
+
   const handleProductClick = (produk:any) => {
     setSelectedProduct(produk.id_produk);
     addToCart(produk);
@@ -363,199 +366,197 @@ const MenuPage = () => {
     <div className="flex w-full h-full gap-3 max-w-screen overflow-hidden">
       {/* Bagian untuk daftar produk */}
       <div className="w-[70%] h-[calc(100vh-200px)] mr-0 p-0">
-      <div className="mb-4">
-        <Select
-          defaultValue="Semua"
-          style={{ width: 200 }}
-          onChange={handleCategoryChange}
-        >
-          <Select.Option value="Semua">Semua</Select.Option>
-          {categories.map((category) => (
-            <Select.Option key={category.id_kategori} value={category.nama}>
-              {category.nama}
-            </Select.Option>
-          ))}
-        </Select>
-      </div>
-
-      <div className="h-[calc(100vh-200px)] overflow-hidden">
-        <div className="h-full overflow-auto scrollbar-hidden touch-scroll">
-          <style jsx>{`
-            .scrollbar-hidden {
-              -ms-overflow-style: none; /* IE and Edge */
-              scrollbar-width: none; /* Firefox */
-            }
-            .scrollbar-hidden::-webkit-scrollbar {
-              display: none; /* Chrome, Safari, and Opera */
-            }
-            .touch-scroll {
-              overflow-y: auto;
-              -webkit-overflow-scrolling: touch; /* iOS for smooth scrolling */
-            }
-          `}</style>
-
-          {/* Check if there are no products and display a message */}
-          {filteredProducts.length === 0 ? (
-            <div className="text-center text-gray-500">
-              Produk pada kategori "{activeButton}" kosong
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-2">
-              {filteredProducts.map((produk) => (
-                <Card
-                  key={produk.id_produk}
-                  className={`shadow-lg hover:shadow-2xl transition-transform duration-300 cursor-pointer ${
-                    selectedProduct === produk.id_produk
-                      ? "transform scale-105"
-                      : ""
-                  }`}
-                  cover={
-                    <Image
-                      alt={produk.nama_produk}
-                      src={`http://localhost:3222/produk/image/${produk.gambar_produk}`}
-                      style={{
-                        width: "100%",
-                        height: "270px",
-                        objectFit: "cover",
-                      }}
-                      preview={false}
-                    />
-                  }
-                  onClick={() => handleProductClick(produk)}
-                >
-                  <Card.Meta
-                    title={
-                      <div
+        <div className="mb-4">
+          <Select
+            defaultValue="Semua"
+            style={{ width: 200 }}
+            onChange={handleCategoryChange}
+          >
+            <Select.Option value="Semua">Semua</Select.Option>
+            {categories.map((category) => (
+              <Select.Option key={category.id_kategori} value={category.nama}>
+                {category.nama}
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
+  
+        <div className="h-[calc(100vh-200px)] overflow-hidden">
+          <div className="h-full overflow-auto scrollbar-hidden touch-scroll">
+            <style jsx>{`
+              .scrollbar-hidden {
+                -ms-overflow-style: none; /* IE and Edge */
+                scrollbar-width: none; /* Firefox */
+              }
+              .scrollbar-hidden::-webkit-scrollbar {
+                display: none; /* Chrome, Safari, and Opera */
+              }
+              .touch-scroll {
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch; /* iOS for smooth scrolling */
+              }
+            `}</style>
+  
+            {/* Cek jika produk tidak ada */}
+            {filteredProducts.length === 0 ? (
+              <div className="text-center text-gray-500">
+                Produk pada kategori "{activeButton}" kosong
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {filteredProducts.map((produk) => (
+                  <Card
+                    key={produk.id_produk}
+                    className={`shadow-lg hover:shadow-2xl transition-transform duration-300 cursor-pointer ${
+                      selectedProduct === produk.id_produk
+                        ? "transform scale-105"
+                        : ""
+                    }`}
+                    cover={
+                      <Image
+                        alt={produk.nama_produk}
+                        src={`http://localhost:3222/produk/image/${produk.gambar_produk}`}
                         style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "flex-start",
+                          width: "100%",
+                          height: "250px",
                         }}
-                      >
-                        <span
-                          style={{
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "normal",
-                            maxWidth: "70%",
-                          }}
-                        >
-                          {produk.nama_produk}
-                        </span>
+                        preview={false}
+                      />
+                    }
+                    onClick={() => handleProductClick(produk)}
+                  >
+                    <Card.Meta
+                      title={
                         <div
                           style={{
                             display: "flex",
-                            justifyContent: "space-between",
-                            marginTop: "10px",
+                            flexDirection: "column",
+                            justifyContent: "flex-start",
                           }}
                         >
-                          <span className="text-gray-400">
-                            Stok: {isNaN(produk.stok) || produk.stok == null ? produk.stok : produk.stok}
+                          <span
+                            style={{
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "normal",
+                              maxWidth: "70%",
+                            }}
+                          >
+                            {produk.nama_produk}
                           </span>
-                          <span style={{ color: "black" }}>
-                            Rp {formatCurrency(produk.harga_produk)}
-                          </span>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              marginTop: "10px",
+                            }}
+                          >
+                            <span className="text-gray-400">
+                              Stok: {isNaN(produk.stok) || produk.stok === null ? "0" : produk.stok}
+                            </span>
+                            <span style={{ color: "black" }}>
+                              Rp {formatCurrency(produk.harga_produk)}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    }
-                  />
-                </Card>
-              ))}
-            </div>
-          )}
+                      }
+                    />
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-      </div>
+  
       {/* Keranjang */}
       <div className="w-[30%] h-[calc(100vh-175px)] p-4 flex flex-col justify-between">
-  <h2 className="text-lg font-bold mb-4">Pesanan ({cart.length})</h2>
-  <div className="flex-grow overflow-auto scrollbar-hidden touch-scroll">
-    {cart.length === 0 ? (
-      <p>Keranjang Anda kosong</p>
-    ) : (
-      <ul>
-        {cart.map((item, index) => (
-          <li key={index} className="mb-4">
-            <div className="border rounded-lg p-4 shadow-md">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-bold">{item.nama_produk}</h3>
-                  <p>Harga: Rp {formatCurrency(item.harga_produk)}</p>
-                  <p>Jumlah: {item.quantity}</p>
-                </div>
-                <Image
-                  alt={item.nama_produk}
-                  src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
-                  style={{ width: "100px", height: "100px", objectFit: "cover" }}
-                  preview={false}
-                />
-              </div>
-
-              <div className="flex justify-between items-center mt-4">
-                <div>
-                  {/* Input untuk mengubah jumlah */}
-                  <input
-                    type="number"
-                    min="1"
-                    max={item.stok + item.quantity} // Pastikan stok cukup
-                    value={item.quantity}
-                    onChange={(e) => updateQuantity(item.id_produk, parseInt(e.target.value))}
-                    className="w-16 px-2 py-1 border rounded-md text-center"
-                  />
-                </div>
-                <Button
-                  type="primary"
-                  danger
-                  onClick={() => removeFromCart(item.id_produk)}
+        <h2 className="text-lg font-bold mb-4">Pesanan ({cart.length})</h2>
+        <div className="flex-grow overflow-auto scrollbar-hidden touch-scroll">
+          {cart.length === 0 ? (
+            <p>Keranjang Anda kosong</p>
+          ) : (
+            <ul>
+              {cart.map((item, index) => (
+                <li key={index} className="mb-4">
+                  <div className="border rounded-lg p-4 shadow-md">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-bold">{item.nama_produk}</h3>
+                        <p>Harga: Rp {formatCurrency(item.harga_produk)}</p>
+                        <p>Jumlah: {item.quantity}</p>
+                      </div>
+                      <Image
+                        alt={item.nama_produk}
+                        src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
+                        style={{ width: "100px", height: "100px" }}
+                        preview={false}
+                      />
+                    </div>
+  
+                    <div className="flex justify-between items-center mt-4">
+                      <div>
+                        {/* Input untuk mengubah jumlah */}
+                        <input
+                          type="number"
+                          min="1"
+                          max={item.stok + item.quantity} // Pastikan stok cukup
+                          value={item.quantity}
+                          onChange={(e) => updateQuantity(item.id_produk, parseInt(e.target.value))}
+                          className="w-16 px-2 py-1 border rounded-md text-center"
+                        />
+                      </div>
+                      <Button
+                        type="primary"
+                        danger
+                        onClick={() => removeFromCart(item.id_produk)}
+                      >
+                        <DeleteOutlined />
+                      </Button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="mt-4">
+          <h3 className="font-bold mb-2">Total: Rp {formatCurrency(totalHarga)}</h3>
+          <div className="mb-4">
+            <Select
+              value={paymentMethod}
+              onChange={setPaymentMethod}
+              style={{ width: "100%" }}
+              placeholder="Pilih metode pembayaran"
+            >
+              {paymentMethods.map((method) => (
+                <Select.Option
+                  key={method.id_metode_transaksi}
+                  value={method.id_metode_transaksi}
                 >
-                  <DeleteOutlined />
-                </Button>
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
-    )}
-  </div>
-  <div className="mt-4">
-    <h3 className="font-bold mb-2">Total: Rp {formatCurrency(totalHarga)}</h3>
-    <div className="mb-4">
-      <Select
-        value={paymentMethod}
-        onChange={setPaymentMethod}
-        style={{ width: "100%" }}
-        placeholder="Pilih metode pembayaran"
-      >
-        {paymentMethods.map((method) => (
-          <Select.Option
-            key={method.id_metode_transaksi}
-            value={method.id_metode_transaksi}
-          >
-            {method.nama}
-          </Select.Option>
-        ))}
-      </Select>
-    </div>
-
-    <div className="flex justify-between gap-2">
-      <button
-        className="w-1/6 px-2 py-1 bg-red-500 text-white rounded-md"
-        onClick={handleClearCart}
-        disabled={cart.length === 0}
-      >
-        <DeleteOutlined />
-      </button>
-      <button
-        className="w-5/6 px-4 py-2 bg-green-500 text-white rounded-md"
-        onClick={handleSubmit}
-        disabled={cart.length === 0}
-      >
-        Bayar
-      </button>
-    </div>
-  </div>
-</div>
-
+                  {method.nama}
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
+          <div className="flex justify-between gap-2">
+            <button
+              className="w-1/6 px-2 py-1 bg-red-500 text-white rounded-md"
+              onClick={handleClearCart}
+              disabled={cart.length === 0}
+            >
+              <DeleteOutlined />
+            </button>
+            <button
+              className="w-5/6 px-4 py-2 bg-green-500 text-white rounded-md"
+              onClick={handleSubmit}
+              disabled={cart.length === 0}
+            >
+              Bayar
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
