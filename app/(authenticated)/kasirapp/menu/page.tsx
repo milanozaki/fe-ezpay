@@ -271,29 +271,28 @@ const MenuPage = () => {
   };
   
   const handleSubmit = () => {
-    setIsModalVisible(true); // Tampilkan modal konfirmasi cetak struk
+    setIsModalVisible(true);
   };
-
-  // Fungsi umum untuk memproses pembayaran
+  
   const processPayment = async () => {
     const token = Cookies.get("accessToken");
     if (!token) {
       console.error("Token tidak ditemukan");
-      return null; // Return null if token is not found
+      return null;
     }
-
+  
     const idUser = Cookies.get("id_user");
     if (!idUser) {
       console.error("ID User tidak ditemukan di cookies");
-      return null; // Return null if ID User is not found
+      return null;
     }
-
+  
     const idToko = localStorage.getItem("id_toko");
     if (!idToko) {
       console.error("ID Toko tidak ditemukan di localStorage");
-      return null; // Return null if ID Toko is not found
+      return null;
     }
-
+  
     const pesananData = {
       detil_produk_pesanan: cart.map((item) => ({
         id_produk: item.id_produk,
@@ -303,7 +302,7 @@ const MenuPage = () => {
       id_user: idUser,
       id_toko: idToko,
     };
-
+  
     try {
       const response = await fetch("http://localhost:3222/pesanan", {
         method: "POST",
@@ -313,21 +312,19 @@ const MenuPage = () => {
         },
         body: JSON.stringify(pesananData),
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Gagal menyimpan pesanan");
       }
-
+  
       const result = await response.json();
-      openSuccessNotification(result);
-
-      // Update stok produk
+      openSuccessNotification();
+  
+      // Update stok dan kosongkan keranjang setelah pesanan berhasil
       setProducts((prevProducts) =>
         prevProducts.map((product) => {
-          const cartItem = cart.find(
-            (item) => item.id_produk === product.id_produk
-          );
+          const cartItem = cart.find((item) => item.id_produk === product.id_produk);
           if (cartItem) {
             return {
               ...product,
@@ -337,162 +334,36 @@ const MenuPage = () => {
           return product;
         })
       );
-
+  
       setCart([]);
-      setIsModalVisible(false); // Tutup modal setelah pembayaran berhasil
-
-      return result; // Return result to indicate success
-    } catch (error) {
+      setIsModalVisible(false);
+      return result;
+    } catch (error: unknown) {
+      // Penanganan error dengan pengecekan tipe
       if (error instanceof Error) {
         console.error("Error submitting pesanan:", error.message);
         alert(error.message);
       } else {
-        console.error("Error submitting pesanan:", error);
-        alert("Terjadi kesalahan pada saat mengirim pesanan.");
+        console.error("Terjadi kesalahan yang tidak terduga:", error);
+        alert("Terjadi kesalahan yang tidak terduga.");
       }
-      return null; // Return null if an error occurs
+      return null;
     }
   };
-
-  // Fungsi bayar dengan struk
-  const bayarDenganStruk = async () => {
-    const result = await processPayment(); // Memanggil processPayment untuk memproses pembayaran
-    if (result) {
-      generateStruk(result); // Cetak struk hanya jika pembayaran berhasil
-    }
-  };
-
-  // Fungsi untuk generate struk
-  const generateStruk = (produkDetail: Produk[]) => {
-    // Pastikan data produkDetail berupa array
-    if (!Array.isArray(produkDetail)) {
-      console.error("produkDetail bukan array:", produkDetail);
-      return;
-    }
   
-    // Membuat instance jsPDF
-    const doc = new jsPDF();
-  
-    // Judul Struk
-    doc.setFontSize(16);
-    doc.text("Struk Pembayaran", 10, 10);
-  
-    // Informasi Transaksi
-    doc.setFontSize(12);
-    doc.text(`Tanggal: ${new Date().toLocaleString()}`, 10, 20);
-  
-    // Informasi Toko
-    doc.text("Nama Toko: Toko Anda", 10, 30);
-    doc.text("Alamat: Jl. Contoh Alamat No.123", 10, 40);
-    doc.text("Telp: 0123456789", 10, 50);
-  
-    // Kolom dan Data Tabel
-    const columns = ["Kode Produk", "Nama Produk", "Jumlah", "Harga", "Total"];
-    const rows = produkDetail.map((item) => [
-      item.kode_produk || "-",
-      item.nama_produk || "-",
-      item.quantity || 0,
-      `Rp ${formatCurrency(item.harga_produk || 0)}`,
-      `Rp ${formatCurrency((item.quantity || 0) * (item.harga_produk || 0))}`,
-    ]);
-  
-    // Tabel AutoTable
-    autoTable(doc, {
-      startY: 60,
-      head: [columns],
-      body: rows,
-      styles: { fontSize: 10 },
-      didDrawPage: (data) => {
-        if (data.cursor) {
-          // Total Pembayaran
-          const totalPembayaran = produkDetail.reduce(
-            (acc, item) => acc + (item.quantity || 0) * (item.harga_produk || 0),
-            0
-          );
-          doc.text(`Total: Rp ${formatCurrency(totalPembayaran)}`, 10, data.cursor.y + 10);
-          doc.text(
-            "Terima kasih telah berbelanja di Toko Anda!",
-            10,
-            data.cursor.y + 20
-          );
-        }
-      },
+  const openSuccessNotification = () => {
+    notification.success({
+      message: "Transaksi Berhasil", // Judul notifikasi
+      description: "Pesanan Anda telah berhasil dibuat.", // Pesan sederhana
+      placement: "top",
+      duration: 1.5,
     });
-  
-    // Unduh File PDF
-    const pdfBlob = doc.output("blob");
-    const url = URL.createObjectURL(pdfBlob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "struk_pembayaran.pdf"; // Nama file
-    document.body.appendChild(link); // Tambahkan ke DOM
-    link.click(); // Trigger download
-    document.body.removeChild(link); // Hapus elemen setelah download
-    URL.revokeObjectURL(url); // Bersihkan URL blob
-  };
-  
-  // Mengambil data produk detail dari state atau props (misalnya dari tabel)
-  const produkDetail: Produk[] = [
-    {
-      id_produk: "P001",
-      nama_produk: "Produk 1",
-      harga_produk: 10000,
-      gambar_produk: "gambar_produk_1.jpg",
-      status_produk: "Tersedia",
-      satuan_produk: "pcs",
-      kode_produk: "K001",
-      stok: 100,
-      quantity: 2,
-      kategori: { id_kategori: "K01", nama: "Kategori 1" },
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id_produk: "P002",
-      nama_produk: "Produk 2",
-      harga_produk: 15000,
-      gambar_produk: "gambar_produk_2.jpg",
-      status_produk: "Tersedia",
-      satuan_produk: "pcs",
-      kode_produk: "K002",
-      stok: 50,
-      quantity: 1,
-      kategori: { id_kategori: "K02", nama: "Kategori 2" },
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ];
-  
-  // Memanggil fungsi generateStruk untuk mengunduh struk
-  generateStruk(produkDetail);
-  // Fungsi untuk pembayaran tanpa struk
-  const bayarTanpaStruk = async () => {
-    await processPayment(); // Lakukan pembayaran tanpa cetak struk
   };
 
   const totalHarga = cart.reduce(
     (total, item) => total + item.harga_produk * item.quantity,
     0
   );
-
-  const openSuccessNotification = (result: any) => {
-    const totalHarga = cart.reduce(
-      (total, item) => total + item.harga_produk * item.quantity,
-      0
-    );
-
-    notification.success({
-      message: "Pesanan Berhasil",
-      description: `Pesanan Anda telah berhasil dibuat. 
-                    ID Pesanan: ${result.id_pesanan} 
-                    Metode Transaksi: ${
-                      result.metode_transaksi || paymentMethod
-                    } 
-                    Total Harga: Rp ${formatCurrency(totalHarga)}`, 
-      placement: "bottomRight", 
-    });
-  };
-
   const showModal = () => { setIsModalVisible(true) };
   const handleOk = () => { setPrintReceipt(true); 
     setIsModalVisible(false); handleSubmit()}; 
@@ -674,6 +545,7 @@ const MenuPage = () => {
         <div>
           {/* Buttons */}
           <div className="flex justify-between gap-2">
+            {/* Tombol Hapus Keranjang */}
             <button
               className="w-1/6 px-2 py-1 bg-red-500 text-white rounded-md"
               onClick={handleClearCart}
@@ -681,6 +553,8 @@ const MenuPage = () => {
             >
               <DeleteOutlined />
             </button>
+
+            {/* Tombol Bayar */}
             <button
               className="w-5/6 px-4 py-2 bg-green-500 text-white rounded-md"
               onClick={handleSubmit}
@@ -689,28 +563,35 @@ const MenuPage = () => {
               Bayar
             </button>
           </div>
-          {/* Modal for receipt confirmation */}
+
+          {/* Modal Konfirmasi */}
           {isModalVisible && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
               <div className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-[300px] relative">
-                {/* Close Button */}
+                {/* Tombol Tutup Modal */}
                 <button
                   className="absolute top-4 right-4 text-2xl text-gray-600 hover:text-gray-800"
-                  onClick={() => setIsModalVisible(false)} // Close modal
+                  onClick={() => setIsModalVisible(false)}
                 >
-                x
+                  ×
                 </button>
-                <h2 className="text-2xl font-semibold text-center mb-6">Ingin cetak struk?</h2>
+
+                {/* Judul Modal */}
+                <h2 className="text-2xl font-semibold text-center mb-6">
+                  Apakah yakin lakukan transaksi?
+                </h2>
+
+                {/* Tombol Aksi */}
                 <div className="flex justify-center gap-4">
-                <button
+                  <button
                     className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
-                    onClick={bayarTanpaStruk}
+                    onClick={() => setIsModalVisible(false)}
                   >
                     Tidak
                   </button>
                   <button
                     className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                    onClick={bayarDenganStruk}
+                    onClick={processPayment}
                   >
                     Ya
                   </button>
