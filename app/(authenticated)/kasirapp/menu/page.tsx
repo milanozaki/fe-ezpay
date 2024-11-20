@@ -96,20 +96,28 @@ const MenuPage = () => {
       setLoading(true);
       const id_toko = localStorage.getItem("id_toko");
       if (!id_toko) throw new Error("ID Toko tidak ditemukan di localStorage");
-
+  
       const url =
         categoryName === "Semua"
           ? `http://localhost:3222/produk/toko/${id_toko}`
           : `http://localhost:3222/produk/toko/${id_toko}?category=${encodeURIComponent(categoryName)}`;
-
+  
       const response = await axios.get(url);
-      setProducts(response.data);
+  
+      // Filter hanya produk dengan status_produk = 'aktif'
+      const filteredProducts = response.data.filter(
+        (product: any) => product.status_produk === 'aktif'
+      );
+  
+      setProducts(filteredProducts);
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
       setLoading(false);
     }
   };
+  
+  
 
   // Fetch all products initially
   useEffect(() => {
