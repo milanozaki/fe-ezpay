@@ -10,7 +10,7 @@ import Cookies from 'js-cookie';
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
-  const [selectedMenu, setSelectedMenu] = useState<string>('');
+  const [selectedMenu, setSelectedMenu] = useState<string>('');  
   const [userEmail, setUserEmail] = useState<string>("user@example.com");
   const [avatarBgColor, setAvatarBgColor] = useState<string>('');
   const router = useRouter();
@@ -22,13 +22,25 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   ];
 
   useEffect(() => {
+    // Cek role dan email saat komponen pertama kali dimuat
     const storedEmail = localStorage.getItem("userEmail");
+    const storedRole = localStorage.getItem("userRole");
+
     if (storedEmail) {
       setUserEmail(storedEmail);
     }
+
+    if (storedRole !== "SuperAdmin") {
+      message.warning("Anda tidak memiliki akses SuperAdmin. Anda akan diarahkan ke halaman login.");
+      setTimeout(() => {
+        router.push('/login_superadmin');
+      }, 1500); // Redirect setelah 1.5 detik
+    }
+
+    // Set random background color untuk avatar
     const randomColor = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
     setAvatarBgColor(randomColor);
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (pathname) {
@@ -40,13 +52,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   }, [pathname]);
 
   useEffect(() => {
-    const access_token = Cookies.get('access_token'); // Get token from storage
+    const access_token = Cookies.get('accessToken');
 
     if (!access_token) {
       message.warning("Access token tidak ada, Anda akan diarahkan ke halaman login.");
       setTimeout(() => {
         router.push('/login_superadmin');
-      }, 1500); // Delay to allow alert to show
+      }, 1500); 
     }
   }, []);
 
@@ -66,7 +78,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         className="w-full -mt-4"
         onClick={() => {
           localStorage.removeItem("userEmail");
-          Cookies.remove("access_token"); // Remove token on logout
+          localStorage.removeItem("userRole"); // Remove role on logout
+          Cookies.remove("accessToken"); // Remove token on logout
           router.push("/login_superadmin");
         }}
       >

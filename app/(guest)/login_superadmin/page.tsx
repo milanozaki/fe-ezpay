@@ -14,10 +14,10 @@ const LoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     setLoading(true);
     setError('');
-
+  
     try {
       const response = await fetch('http://localhost:3222/auth/login/superadmin', { // Ganti dengan URL endpoint login yang sesuai
         method: 'POST',
@@ -26,16 +26,17 @@ const LoginPage = () => {
         },
         body: JSON.stringify({ email, password }),
       });
-
+  
       if (!response.ok) {
         throw new Error('Login failed');
       }
-
+  
       const data = await response.json();
-
-      Cookies.set('access_token', data.access_token, { expires: 1 });
-      // Menyimpan email ke localStorage setelah login berhasil
+  
+      // Menyimpan token dan nama_role ke cookies dan localStorage
+      Cookies.set('accessToken', data.access_token, { expires: 1 });
       localStorage.setItem('userEmail', email);
+      localStorage.setItem('userRole', data.nama_role); // Menyimpan nama_role ke localStorage
       
       // Redirect ke halaman dashboard setelah login berhasil
       router.push('/superadmin/inbox');
@@ -45,7 +46,7 @@ const LoginPage = () => {
       setLoading(false);
     }
   };
-
+  
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };

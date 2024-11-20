@@ -40,7 +40,7 @@ const LoginPage = () => {
       const data = await response.json();
   
       if (!response.ok) {
-        // Menangani error respon dari server
+        // Handle error responses from the server
         if (data.message) {
           if (data.message === "Password salah") {
             notification.error({
@@ -63,21 +63,22 @@ const LoginPage = () => {
           }
         }
       } else {
-        // Menyimpan data ke cookies dan localStorage
-        const expiresIn = 1; // Hari
+        // Save data to cookies and localStorage
+        const expiresIn = 1; // Days
         const date = new Date();
         date.setTime(date.getTime() + expiresIn * 24 * 60 * 60 * 1000);
         
-        // Simpan access token, id_user ke cookie
+        // Save access token and id_user to cookie
         document.cookie = `accessToken=${data.access_token}; expires=${date.toUTCString()}; path=/`;
         document.cookie = `id_user=${data.id_user}; expires=${date.toUTCString()}; path=/`;
         
-        // Simpan email dan id_toko ke localStorage
+        // Save email, id_toko, nama, and nama_role to localStorage
         localStorage.setItem("userEmail", data.email);
         localStorage.setItem("nama", data.nama);
         localStorage.setItem("id_toko", data.id_toko);
+        localStorage.setItem("nama_role", data.nama_role); 
   
-        // Jika password default, arahkan ke halaman ubah password
+        // If default password, redirect to change password page
         if (password === '123456') {
           notification.warning({
             message: "Perubahan Password Diperlukan",
@@ -85,17 +86,17 @@ const LoginPage = () => {
             placement: "topRight",
           });
   
-          // Redirection ke halaman edit password
+          // Redirect to change password page
           router.push(`/edit_password_kasir?id=${data.id_user}`);
         } else {
-          // Jika bukan password default, login berhasil
+          // If not default password, login successful
           notification.success({
             message: "Login Berhasil",
             description: "Anda berhasil login.",
             placement: "topRight",
           });
   
-          // Redirection ke halaman menu kasir setelah login berhasil
+          // Redirect to cashier menu page after successful login
           router.push("/kasirapp/menu");
         }
       }
@@ -110,7 +111,7 @@ const LoginPage = () => {
       setLoading(false);
     }
   };
-  
+
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };

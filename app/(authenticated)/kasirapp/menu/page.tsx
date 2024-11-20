@@ -1,9 +1,14 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Select, Card, Image, Button, message, notification } from "antd";
+import { Select, Card, Image, Button, message, notification, Modal } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 import Cookies from "js-cookie";
 import axios from "axios";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
+
+
 
 interface Kategori {
   id_kategori: string;
@@ -34,6 +39,8 @@ const MenuPage = () => {
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [printReceipt, setPrintReceipt] = useState(false);
 
   useEffect(() => {
     const fetchPaymentMethods = async () => {
@@ -175,41 +182,44 @@ const MenuPage = () => {
     });
   };
   
-  
-  
-  const updateQuantity = (id_produk: any, newQuantity: number) => {
+  const updateQuantity = (id_produk:any, newQuantity:any) => {
+    if (newQuantity === "" || isNaN(newQuantity)) {
+        newQuantity = 0;
+    } else {
+        newQuantity = parseInt(newQuantity, 10); // Convert to integer to remove leading zeros
+    }
+
     setCart((prevCart) => {
-      return prevCart.map((item) => {
-        if (item.id_produk === id_produk) {
-          // Jika jumlah baru lebih kecil atau sama dengan 0, kembalikan ke stok awal
-          if (newQuantity <= 0) {
-            newQuantity = item.stok; // Kembalikan kuantitas ke stok awal jika kurang dari 1
-          }
-  
-          // Pastikan kuantitas tidak melebihi stok yang tersedia
-          const availableStock = item.stok + item.quantity;
-          if (newQuantity > availableStock) {
-            message.error(`Stok tidak mencukupi untuk ${item.nama_produk}`);
+        return prevCart.map((item) => {
+            if (item.id_produk === id_produk) {
+                // Ensure the quantity is valid
+                if (newQuantity < 0) {
+                    newQuantity = 0;
+                }
+
+                // Calculate available stock
+                const availableStock = item.stok + item.quantity;
+                if (newQuantity > availableStock) {
+                    message.error(`Stok tidak mencukupi untuk ${item.nama_produk}`);
+                    return item;
+                }
+
+                // Update stock and quantity
+                setProducts((prevProducts) =>
+                    prevProducts.map((product) =>
+                        product.id_produk === id_produk
+                            ? { ...product, stok: product.stok - (newQuantity - item.quantity) }
+                            : product
+                    )
+                );
+
+                return { ...item, quantity: newQuantity };
+            }
             return item;
-          }
-  
-          // Update stok produk dan kuantitas produk di keranjang
-          setProducts((prevProducts) =>
-            prevProducts.map((product) =>
-              product.id_produk === id_produk
-                ? { ...product, stok: product.stok - (newQuantity - item.quantity) }
-                : product
-            )
-          );
-  
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      });
+        });
     });
   };
-  
-  
+
   const handleProductClick = (produk:any) => {
     setSelectedProduct(produk.id_produk);
     addToCart(produk);
@@ -252,41 +262,40 @@ const MenuPage = () => {
     });
   };
   
+  const handleSubmit = () => {
+    setIsModalVisible(true); // Tampilkan modal konfirmasi cetak struk
+  };
 
-  const handleSubmit = async () => {
+  // Fungsi umum untuk memproses pembayaran
+  const processPayment = async () => {
     const token = Cookies.get("accessToken");
     if (!token) {
       console.error("Token tidak ditemukan");
-      return;
+      return null; // Return null if token is not found
     }
-    console.log("Token found:", token);
-  
+
     const idUser = Cookies.get("id_user");
     if (!idUser) {
       console.error("ID User tidak ditemukan di cookies");
-      return;
+      return null; // Return null if ID User is not found
     }
-  
-    const idToko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
+
+    const idToko = localStorage.getItem("id_toko");
     if (!idToko) {
       console.error("ID Toko tidak ditemukan di localStorage");
-      return;
+      return null; // Return null if ID Toko is not found
     }
-  
-    const userNama = localStorage.getItem("userName");
-  
+
     const pesananData = {
       detil_produk_pesanan: cart.map((item) => ({
         id_produk: item.id_produk,
         jumlah_produk: item.quantity,
       })),
       metode_transaksi_id: paymentMethod,
-      id_user: idUser, // Sertakan id_user dari cookies
-      id_toko: idToko, // Sertakan id_toko dari localStorage
+      id_user: idUser,
+      id_toko: idToko,
     };
-  
-    console.log("Pesanan data yang akan dikirim:", pesananData); // Log data pesanan
-  
+
     try {
       const response = await fetch("http://localhost:3222/pesanan", {
         method: "POST",
@@ -296,18 +305,16 @@ const MenuPage = () => {
         },
         body: JSON.stringify(pesananData),
       });
-  
-      console.log("Response dari server:", response); // Log respons dari server
-  
+
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Error response data:", errorData); // Log data kesalahan
         throw new Error(errorData.message || "Gagal menyimpan pesanan");
       }
-  
+
       const result = await response.json();
       openSuccessNotification(result);
-  
+
+      // Update stok produk
       setProducts((prevProducts) =>
         prevProducts.map((product) => {
           const cartItem = cart.find(
@@ -322,8 +329,11 @@ const MenuPage = () => {
           return product;
         })
       );
-  
+
       setCart([]);
+      setIsModalVisible(false); // Tutup modal setelah pembayaran berhasil
+
+      return result; // Return result to indicate success
     } catch (error) {
       if (error instanceof Error) {
         console.error("Error submitting pesanan:", error.message);
@@ -332,9 +342,125 @@ const MenuPage = () => {
         console.error("Error submitting pesanan:", error);
         alert("Terjadi kesalahan pada saat mengirim pesanan.");
       }
+      return null; // Return null if an error occurs
     }
   };
+
+  // Fungsi bayar dengan struk
+  const bayarDenganStruk = async () => {
+    const result = await processPayment(); // Memanggil processPayment untuk memproses pembayaran
+    if (result) {
+      generateStruk(result); // Cetak struk hanya jika pembayaran berhasil
+    }
+  };
+
+  // Fungsi untuk generate struk
+  const generateStruk = (produkDetail: Produk[]) => {
+    // Pastikan data produkDetail berupa array
+    if (!Array.isArray(produkDetail)) {
+      console.error("produkDetail bukan array:", produkDetail);
+      return;
+    }
   
+    // Membuat instance jsPDF
+    const doc = new jsPDF();
+  
+    // Judul Struk
+    doc.setFontSize(16);
+    doc.text("Struk Pembayaran", 10, 10);
+  
+    // Informasi Transaksi
+    doc.setFontSize(12);
+    doc.text(`Tanggal: ${new Date().toLocaleString()}`, 10, 20);
+  
+    // Informasi Toko
+    doc.text("Nama Toko: Toko Anda", 10, 30);
+    doc.text("Alamat: Jl. Contoh Alamat No.123", 10, 40);
+    doc.text("Telp: 0123456789", 10, 50);
+  
+    // Kolom dan Data Tabel
+    const columns = ["Kode Produk", "Nama Produk", "Jumlah", "Harga", "Total"];
+    const rows = produkDetail.map((item) => [
+      item.kode_produk || "-",
+      item.nama_produk || "-",
+      item.quantity || 0,
+      `Rp ${formatCurrency(item.harga_produk || 0)}`,
+      `Rp ${formatCurrency((item.quantity || 0) * (item.harga_produk || 0))}`,
+    ]);
+  
+    // Tabel AutoTable
+    autoTable(doc, {
+      startY: 60,
+      head: [columns],
+      body: rows,
+      styles: { fontSize: 10 },
+      didDrawPage: (data) => {
+        if (data.cursor) {
+          // Total Pembayaran
+          const totalPembayaran = produkDetail.reduce(
+            (acc, item) => acc + (item.quantity || 0) * (item.harga_produk || 0),
+            0
+          );
+          doc.text(`Total: Rp ${formatCurrency(totalPembayaran)}`, 10, data.cursor.y + 10);
+          doc.text(
+            "Terima kasih telah berbelanja di Toko Anda!",
+            10,
+            data.cursor.y + 20
+          );
+        }
+      },
+    });
+  
+    // Unduh File PDF
+    const pdfBlob = doc.output("blob");
+    const url = URL.createObjectURL(pdfBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "struk_pembayaran.pdf"; // Nama file
+    document.body.appendChild(link); // Tambahkan ke DOM
+    link.click(); // Trigger download
+    document.body.removeChild(link); // Hapus elemen setelah download
+    URL.revokeObjectURL(url); // Bersihkan URL blob
+  };
+  
+  // Mengambil data produk detail dari state atau props (misalnya dari tabel)
+  const produkDetail: Produk[] = [
+    {
+      id_produk: "P001",
+      nama_produk: "Produk 1",
+      harga_produk: 10000,
+      gambar_produk: "gambar_produk_1.jpg",
+      status_produk: "Tersedia",
+      satuan_produk: "pcs",
+      kode_produk: "K001",
+      stok: 100,
+      quantity: 2,
+      kategori: { id_kategori: "K01", nama: "Kategori 1" },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id_produk: "P002",
+      nama_produk: "Produk 2",
+      harga_produk: 15000,
+      gambar_produk: "gambar_produk_2.jpg",
+      status_produk: "Tersedia",
+      satuan_produk: "pcs",
+      kode_produk: "K002",
+      stok: 50,
+      quantity: 1,
+      kategori: { id_kategori: "K02", nama: "Kategori 2" },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+  
+  // Memanggil fungsi generateStruk untuk mengunduh struk
+  generateStruk(produkDetail);
+  // Fungsi untuk pembayaran tanpa struk
+  const bayarTanpaStruk = async () => {
+    await processPayment(); // Lakukan pembayaran tanpa cetak struk
+  };
 
   const totalHarga = cart.reduce(
     (total, item) => total + item.harga_produk * item.quantity,
@@ -359,203 +485,234 @@ const MenuPage = () => {
     });
   };
 
+  const showModal = () => { setIsModalVisible(true) };
+  const handleOk = () => { setPrintReceipt(true); 
+    setIsModalVisible(false); handleSubmit()}; 
+  const handleCancel = () => { setIsModalVisible(false); };
+
   return (
     <div className="flex w-full h-full gap-3 max-w-screen overflow-hidden">
       {/* Bagian untuk daftar produk */}
       <div className="w-[70%] h-[calc(100vh-200px)] mr-0 p-0">
-      <div className="mb-4">
-        <Select
-          defaultValue="Semua"
-          style={{ width: 200 }}
-          onChange={handleCategoryChange}
-        >
-          <Select.Option value="Semua">Semua</Select.Option>
-          {categories.map((category) => (
-            <Select.Option key={category.id_kategori} value={category.nama}>
-              {category.nama}
-            </Select.Option>
-          ))}
-        </Select>
-      </div>
-
-      <div className="h-[calc(100vh-200px)] overflow-hidden">
-        <div className="h-full overflow-auto scrollbar-hidden touch-scroll">
-          <style jsx>{`
-            .scrollbar-hidden {
-              -ms-overflow-style: none; /* IE and Edge */
-              scrollbar-width: none; /* Firefox */
-            }
-            .scrollbar-hidden::-webkit-scrollbar {
-              display: none; /* Chrome, Safari, and Opera */
-            }
-            .touch-scroll {
-              overflow-y: auto;
-              -webkit-overflow-scrolling: touch; /* iOS for smooth scrolling */
-            }
-          `}</style>
-
-          {/* Check if there are no products and display a message */}
-          {filteredProducts.length === 0 ? (
-            <div className="text-center text-gray-500">
-              Produk pada kategori "{activeButton}" kosong
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-2">
-              {filteredProducts.map((produk) => (
-                <Card
-                  key={produk.id_produk}
-                  className={`shadow-lg hover:shadow-2xl transition-transform duration-300 cursor-pointer ${
-                    selectedProduct === produk.id_produk
-                      ? "transform scale-105"
-                      : ""
-                  }`}
-                  cover={
-                    <Image
-                      alt={produk.nama_produk}
-                      src={`http://localhost:3222/produk/image/${produk.gambar_produk}`}
-                      style={{
-                        width: "100%",
-                        height: "270px",
-                        objectFit: "cover",
-                      }}
-                      preview={false}
-                    />
-                  }
-                  onClick={() => handleProductClick(produk)}
-                >
-                  <Card.Meta
-                    title={
-                      <div
+        <div className="mb-4">
+          <Select
+            defaultValue="Semua"
+            style={{ width: 200 }}
+            onChange={handleCategoryChange}
+          >
+            <Select.Option value="Semua">Semua</Select.Option>
+            {categories.map((category) => (
+              <Select.Option key={category.id_kategori} value={category.nama}>
+                {category.nama}
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
+  
+        <div className="h-[calc(100vh-200px)] overflow-hidden">
+          <div className="h-full overflow-auto scrollbar-hidden touch-scroll">
+            <style jsx>{`
+              .scrollbar-hidden {
+                -ms-overflow-style: none; /* IE and Edge */
+                scrollbar-width: none; /* Firefox */
+              }
+              .scrollbar-hidden::-webkit-scrollbar {
+                display: none; /* Chrome, Safari, and Opera */
+              }
+              .touch-scroll {
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch; /* iOS for smooth scrolling */
+              }
+            `}</style>
+  
+            {/* Cek jika produk tidak ada */}
+            {filteredProducts.length === 0 ? (
+              <div className="text-center text-gray-500">
+                Produk pada kategori "{activeButton}" kosong
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {filteredProducts.map((produk) => (
+                  <Card
+                    key={produk.id_produk}
+                    className={`shadow-lg hover:shadow-2xl transition-transform duration-300 cursor-pointer ${
+                      selectedProduct === produk.id_produk
+                        ? "transform scale-105"
+                        : ""
+                    }`}
+                    cover={
+                      <Image
+                        alt={produk.nama_produk}
+                        src={`http://localhost:3222/produk/image/${produk.gambar_produk}`}
                         style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "flex-start",
+                          width: "100%",
+                          height: "250px",
                         }}
-                      >
-                        <span
-                          style={{
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "normal",
-                            maxWidth: "70%",
-                          }}
-                        >
-                          {produk.nama_produk}
-                        </span>
+                        preview={false}
+                      />
+                    }
+                    onClick={() => handleProductClick(produk)}
+                  >
+                    <Card.Meta
+                      title={
                         <div
                           style={{
                             display: "flex",
-                            justifyContent: "space-between",
-                            marginTop: "10px",
+                            flexDirection: "column",
+                            justifyContent: "flex-start",
                           }}
                         >
-                          <span className="text-gray-400">
-                            Stok: {isNaN(produk.stok) || produk.stok == null ? produk.stok : produk.stok}
+                          <span
+                            style={{
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "normal",
+                              maxWidth: "70%",
+                            }}
+                          >
+                            {produk.nama_produk}
                           </span>
-                          <span style={{ color: "black" }}>
-                            Rp {formatCurrency(produk.harga_produk)}
-                          </span>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              marginTop: "10px",
+                            }}
+                          >
+                            <span className="text-gray-400">
+                              Stok: {isNaN(produk.stok) || produk.stok === null ? "0" : produk.stok}
+                            </span>
+                            <span style={{ color: "black" }}>
+                              Rp {formatCurrency(produk.harga_produk)}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    }
-                  />
-                </Card>
-              ))}
+                      }
+                    />
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+  
+      {/* Keranjang */}
+      <div className="w-[30%] h-[calc(100vh-175px)] p-4 flex flex-col justify-between">
+      <h2 className="text-lg font-bold mb-4">Pesanan ({cart.length})</h2>
+      <div className="flex-grow overflow-auto scrollbar-hidden touch-scroll">
+        {cart.length === 0 ? (
+          <p>Keranjang Anda kosong</p>
+        ) : (
+          <ul>
+            {cart.map((item, index) => (
+              <li key={index} className="mb-4">
+                <div className="border rounded-lg p-4 shadow-md">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-bold">{item.nama_produk}</h3>
+                      <p>Harga: Rp {formatCurrency(item.harga_produk)}</p>
+                      <p>Jumlah: {item.quantity}</p>
+                    </div>
+                    <Image
+                      alt={item.nama_produk}
+                      src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
+                      style={{ width: "100px", height: "100px" }}
+                      preview={false}
+                    />
+                  </div>
+
+                  <div className="flex justify-between items-center mt-4">
+                    <div>
+                      <input
+                        type="number"
+                        min="1"
+                        max={item.stok + item.quantity}
+                        value={item.quantity}
+                        onChange={(e) => updateQuantity(item.id_produk, parseInt(e.target.value))}
+                        className="w-16 px-2 py-1 border rounded-md text-center"
+                      />
+                    </div>
+                    <Button
+                      type="primary"
+                      danger
+                      onClick={() => removeFromCart(item.id_produk)}
+                    >
+                      <DeleteOutlined />
+                    </Button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <div className="mt-4">
+        <h3 className="font-bold mb-2">Total: Rp {formatCurrency(totalHarga)}</h3>
+        <div className="mb-4">
+          <Select
+            value={paymentMethod}
+            onChange={setPaymentMethod}
+            style={{ width: "100%" }}
+            placeholder="Pilih metode pembayaran"
+          >
+            {paymentMethods.map((method) => (
+              <Select.Option key={method.id_metode_transaksi} value={method.id_metode_transaksi}>
+                {method.nama}
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
+        <div>
+          {/* Buttons */}
+          <div className="flex justify-between gap-2">
+            <button
+              className="w-1/6 px-2 py-1 bg-red-500 text-white rounded-md"
+              onClick={handleClearCart}
+              disabled={cart.length === 0}
+            >
+              <DeleteOutlined />
+            </button>
+            <button
+              className="w-5/6 px-4 py-2 bg-green-500 text-white rounded-md"
+              onClick={handleSubmit}
+              disabled={cart.length === 0}
+            >
+              Bayar
+            </button>
+          </div>
+          {/* Modal for receipt confirmation */}
+          {isModalVisible && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+              <div className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-[300px] relative">
+                {/* Close Button */}
+                <button
+                  className="absolute top-4 right-4 text-2xl text-gray-600 hover:text-gray-800"
+                  onClick={() => setIsModalVisible(false)} // Close modal
+                >
+                x
+                </button>
+                <h2 className="text-2xl font-semibold text-center mb-6">Ingin cetak struk?</h2>
+                <div className="flex justify-center gap-4">
+                <button
+                    className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
+                    onClick={bayarTanpaStruk}
+                  >
+                    Tidak
+                  </button>
+                  <button
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                    onClick={bayarDenganStruk}
+                  >
+                    Ya
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
       </div>
-      </div>
-      {/* Keranjang */}
-      <div className="w-[30%] h-[calc(100vh-175px)] p-4 flex flex-col justify-between">
-  <h2 className="text-lg font-bold mb-4">Pesanan ({cart.length})</h2>
-  <div className="flex-grow overflow-auto scrollbar-hidden touch-scroll">
-    {cart.length === 0 ? (
-      <p>Keranjang Anda kosong</p>
-    ) : (
-      <ul>
-        {cart.map((item, index) => (
-          <li key={index} className="mb-4">
-            <div className="border rounded-lg p-4 shadow-md">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-bold">{item.nama_produk}</h3>
-                  <p>Harga: Rp {formatCurrency(item.harga_produk)}</p>
-                  <p>Jumlah: {item.quantity}</p>
-                </div>
-                <Image
-                  alt={item.nama_produk}
-                  src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
-                  style={{ width: "100px", height: "100px", objectFit: "cover" }}
-                  preview={false}
-                />
-              </div>
-
-              <div className="flex justify-between items-center mt-4">
-                <div>
-                  {/* Input untuk mengubah jumlah */}
-                  <input
-                    type="number"
-                    min="1"
-                    max={item.stok + item.quantity} // Pastikan stok cukup
-                    value={item.quantity}
-                    onChange={(e) => updateQuantity(item.id_produk, parseInt(e.target.value))}
-                    className="w-16 px-2 py-1 border rounded-md text-center"
-                  />
-                </div>
-                <Button
-                  type="primary"
-                  danger
-                  onClick={() => removeFromCart(item.id_produk)}
-                >
-                  <DeleteOutlined />
-                </Button>
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
-    )}
-  </div>
-  <div className="mt-4">
-    <h3 className="font-bold mb-2">Total: Rp {formatCurrency(totalHarga)}</h3>
-    <div className="mb-4">
-      <Select
-        value={paymentMethod}
-        onChange={setPaymentMethod}
-        style={{ width: "100%" }}
-        placeholder="Pilih metode pembayaran"
-      >
-        {paymentMethods.map((method) => (
-          <Select.Option
-            key={method.id_metode_transaksi}
-            value={method.id_metode_transaksi}
-          >
-            {method.nama}
-          </Select.Option>
-        ))}
-      </Select>
     </div>
-
-    <div className="flex justify-between gap-2">
-      <button
-        className="w-1/6 px-2 py-1 bg-red-500 text-white rounded-md"
-        onClick={handleClearCart}
-        disabled={cart.length === 0}
-      >
-        <DeleteOutlined />
-      </button>
-      <button
-        className="w-5/6 px-4 py-2 bg-green-500 text-white rounded-md"
-        onClick={handleSubmit}
-        disabled={cart.length === 0}
-      >
-        Bayar
-      </button>
-    </div>
-  </div>
-</div>
-
     </div>
   );
 };

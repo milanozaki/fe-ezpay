@@ -798,8 +798,7 @@ const ProdukPage: React.FC = () => {
               src={`http://localhost:3222/produk/image/${selectedProductInfo.gambar_produk}`}
               style={{
                 width: "100%",
-                height: "270px",
-                objectFit: "cover",
+                height: "250px",
               }}
               preview={false}
             />
