@@ -63,7 +63,7 @@ const DashboardPage = () => {
   );
   const [monthlySales, setMonthlySales] = useState<MonthlySales[]>([]);
   const [produkCount, setProdukCount] = useState(0);
-  const [idToko, setIdToko] = useState<string | null>(null);
+  const idToko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
   const router = useRouter(); // hook untuk navigasi
 
   const fetchProdukCount = async () => {
