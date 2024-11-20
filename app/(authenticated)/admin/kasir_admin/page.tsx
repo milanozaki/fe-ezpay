@@ -192,8 +192,27 @@ const KasirPage: React.FC = () => {
         <Form
           form={form}
           layout="vertical"
-          onFinish={handleAddKasir} // Handle add kasir
+          onFinish={handleAddKasir}  // Handle add kasir
         >
+          {/* Nama Kasir */}
+          <Form.Item
+            name="nama"
+            label="Nama"
+            rules={[{ required: true, message: "Nama kasir harus diisi!" }]}
+
+          >
+            <Input />
+          </Form.Item>
+
+          {/* Email Kasir */}
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[{ required: true, type: "email", message: "Email kasir harus valid!" }]}
+          >
+            <Input />
+          </Form.Item>
+
           {/* Status Kasir */}
           <Form.Item
             name="status"
@@ -202,9 +221,7 @@ const KasirPage: React.FC = () => {
           >
             <Select>
               <Select.Option value={StatusEnum.ACTIVE}>Aktif</Select.Option>
-              <Select.Option value={StatusEnum.INACTIVE}>
-                Tidak Aktif
-              </Select.Option>
+              <Select.Option value={StatusEnum.INACTIVE}>Tidak Aktif</Select.Option>
             </Select>
           </Form.Item>
 
