@@ -1,12 +1,15 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { DatePicker, Table, Button, Modal, message, Spin } from "antd";
-import "antd/dist/reset.css";
+import { DatePicker, Table, Button, Modal, message, Spin, Typography, Row, Col } from "antd";
+import "antd/dist/reset.css"
 import * as XLSX from "xlsx";
 import axios from "axios";
 import Cookies from "js-cookie";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 const { RangePicker } = DatePicker;
+const { Title, Text } = Typography;
 
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat("id-ID").format(amount);
@@ -18,40 +21,31 @@ const RiwayatTransaksiPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false); // State untuk loading
+  const [loading, setLoading] = useState(false);
   const pageSize = 10;
 
   const fetchData = async (startDate = "", endDate = "", page = 1) => {
     try {
-      setLoading(true); // Mulai loading
+      setLoading(true);
       const id_user = Cookies.get("id_user");
       if (!id_user) {
         message.error("ID User tidak ditemukan di cookies");
         return;
       }
-
       const response = await axios.get(
         `http://localhost:3222/transaksi/${id_user}`,
-        {
-          params: { startDate, endDate, page, limit: pageSize },
-        }
+        { params: { startDate, endDate, page, limit: pageSize } }
       );
-
       const { data: responseData, total: responseTotal } = response.data;
-
-      if (Array.isArray(responseData)) {
-        setData(responseData.map((item: any, index: any) => ({ ...item, key: index })));
-        setTotal(responseTotal || responseData.length);
-      } else {
-        console.error("Data is not in array format:", responseData);
-        setData([]);
-        setTotal(0);
-      }
+      setData(
+        responseData.map((item: any, index: any) => ({ ...item, key: index }))
+      );
+      setTotal(responseTotal || responseData.length);
     } catch (error) {
       console.error("Error fetching data:", error);
       message.error("Gagal memuat data transaksi");
     } finally {
-      setLoading(false); // Akhiri loading
+      setLoading(false);
     }
   };
 
@@ -64,12 +58,25 @@ const RiwayatTransaksiPage = () => {
     setIsModalVisible(true);
   };
 
-  const handleOk = () => setIsModalVisible(false);
   const handleCancel = () => setIsModalVisible(false);
 
   const handleDateChange = (dates: any, dateStrings: any) => {
-    setCurrentPage(1); // Reset halaman saat filter tanggal diubah
+    setCurrentPage(1);
     fetchData(dateStrings[0], dateStrings[1], 1);
+  };
+
+  const onPageChange = (page: any) => setCurrentPage(page);
+
+  const generatePDF = async () => {
+    const modalContent = document.getElementById("modal-content");
+    if (modalContent) {
+      const canvas = await html2canvas(modalContent);
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      pdf.addImage(imgData, "PNG", 10, 10, 190, 0);
+      pdf.save(`Struk_Transaksi_${selectedTransaction.id_transaksi}.pdf`);
+    }
   };
 
   const columns = [
@@ -86,8 +93,6 @@ const RiwayatTransaksiPage = () => {
             })}, ${new Date(text).toLocaleTimeString("id-ID", {
               hour: "2-digit",
               minute: "2-digit",
-              timeZone: "Asia/Jakarta",
-              timeZoneName: "short",
             })}`
           : "N/A",
     },
@@ -118,8 +123,6 @@ const RiwayatTransaksiPage = () => {
     },
   ];
 
-  const onPageChange = (page: any) => setCurrentPage(page);
-
   return (
     <div className="pt-1 pl-5 pb-5 mr-16 ml-8">
       <div className="flex items-center justify-between mb-4">
@@ -145,74 +148,85 @@ const RiwayatTransaksiPage = () => {
         )}
       </div>
       <Modal
-  title="Detail Transaksi"
-  open={isModalVisible}
-  onCancel={handleCancel} // Close modal when clicking on the backdrop or close button
-  footer={null} // Remove the default footer
-  width={800}
->
-  {selectedTransaction ? (
-    <div>
-      <p>
-        <strong>ID Transaksi:</strong> {selectedTransaction.id_transaksi}
-      </p>
-      <p>
-        <strong>Tanggal & Waktu:</strong>{" "}
-        {new Date(selectedTransaction.createdAt).toLocaleString()}
-      </p>
-      <p>
-        <strong>User:</strong> {selectedTransaction.user?.nama} (ID:{" "}
-        {selectedTransaction.user?.id_user})
-      </p>
-      <p>
-        <strong>Jumlah Item:</strong> {selectedTransaction.jumlah_produk}
-      </p>
-      <p>
-        <strong>Metode Pembayaran:</strong>{" "}
-        {selectedTransaction.metodeTransaksi?.join(", ")}
-      </p>
-      <p>
-        <strong>Total Pembayaran:</strong> Rp{" "}
-        {selectedTransaction.totalHarga
-          ? formatCurrency(selectedTransaction.totalHarga)
-          : "N/A"}
-      </p>
-      <Table
-        dataSource={selectedTransaction.produkDetail}
-        columns={[
-          {
-            title: "Kode Produk",
-            dataIndex: "kode_produk",
-            key: "kode_produk",
-          },
-          {
-            title: "Nama Produk",
-            dataIndex: "nama_produk",
-            key: "nama_produk",
-          },
-          { title: "Jumlah", dataIndex: "jumlah", key: "jumlah" },
-          {
-            title: "Harga",
-            dataIndex: "harga",
-            key: "harga",
-            render: (total: number) => `Rp ${formatCurrency(total)}`,
-          },
-          {
-            title: "Total",
-            dataIndex: "total",
-            key: "total",
-            render: (total: number) => `Rp ${formatCurrency(total)}`,
-          },
-        ]}
-        rowKey="id_produk"
-        pagination={false}
-      />
-    </div>
-  ) : (
-    <p>Tidak ada detail yang tersedia.</p>
-  )}
-</Modal>
+      title="Detail Transaksi"
+      open={isModalVisible}
+      onCancel={handleCancel}
+      footer={[
+        <Button key="print" type="primary" onClick={generatePDF} style={{ width: "100%" }}>
+          Cetak PDF
+        </Button>,
+      ]}
+      width={800}
+      bodyStyle={{ padding: "24px" }}
+      centered
+    >
+      <div id="modal-content">
+        {selectedTransaction ? (
+          <div>
+            {/* Informasi Transaksi */}
+            <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+              <Col span={12}>
+                <Text strong>No Transaksi:</Text>
+                <p>{selectedTransaction.id_transaksi}</p>
+              </Col>
+              <Col span={12}>
+                <Text strong>Tanggal & Waktu:</Text>
+                <p>{new Date(selectedTransaction.createdAt).toLocaleString()}</p>
+              </Col>
+            </Row>
+            <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+              <Col span={12}>
+                <Text strong>Kasir:</Text>
+                <p>{selectedTransaction.user?.nama}</p>
+              </Col>
+              <Col span={12}>
+                <Text strong>Jumlah Item:</Text>
+                <p>{selectedTransaction.jumlah_produk}</p>
+              </Col>
+            </Row>
+            <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+              <Col span={12}>
+                <Text strong>Metode Pembayaran:</Text>
+                <p>{selectedTransaction.metodeTransaksi?.join(", ")}</p>
+              </Col>
+              <Col span={12}>
+                <Text strong>Total Pembayaran:</Text>
+                <p>Rp {selectedTransaction.totalHarga ? formatCurrency(selectedTransaction.totalHarga) : "N/A"}</p>
+              </Col>
+            </Row>
 
+            {/* Tabel Produk */}
+            <Table
+              dataSource={selectedTransaction.produkDetail}
+              columns={[
+                { title: "Kode Produk", dataIndex: "kode_produk", key: "kode_produk" },
+                { title: "Nama Produk", dataIndex: "nama_produk", key: "nama_produk" },
+                { title: "Jumlah", dataIndex: "jumlah", key: "jumlah" },
+                {
+                  title: "Harga",
+                  dataIndex: "harga",
+                  key: "harga",
+                  render: (text: number) => `Rp ${formatCurrency(text)}`,
+                },
+                {
+                  title: "Total",
+                  dataIndex: "total",
+                  key: "total",
+                  render: (text: number) => `Rp ${formatCurrency(text)}`,
+                },
+              ]}
+              rowKey="id_produk"
+              pagination={false}
+              bordered
+              size="small"
+              style={{ marginTop: 20 }}
+            />
+          </div>
+        ) : (
+          <Text>Tidak ada detail yang tersedia.</Text>
+        )}
+      </div>
+    </Modal>
     </div>
   );
 };
