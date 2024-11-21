@@ -57,7 +57,6 @@ const RiwayatTransaksiPage = () => {
           endDate,
           kasirId, // Tambahkan kasirId ke parameter
           page,
-          limit: pageSize,
         },
       });
       if (Array.isArray(response.data.data)) {
@@ -181,12 +180,51 @@ const RiwayatTransaksiPage = () => {
     }
   };
 
-  const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Riwayat Transaksi");
-    XLSX.writeFile(wb, "Riwayat_Transaksi.xlsx");
+  const exportToExcel = async () => {
+    const id_toko = localStorage.getItem("id_toko"); // Ambil id_toko dari localStorage
+    if (id_toko) {
+      // Ambil data seluruhnya tanpa paging
+      const response = await axios.get("http://localhost:3222/transaksi/all", {
+        params: {
+          id_toko,
+          startDate: "", // Atau rentang tanggal yang dipilih
+          endDate: "", // Atau rentang tanggal yang dipilih
+          page: 1,
+          limit: 1000000, // Mengambil seluruh data
+        },
+      });
+  
+      const detailedData = response.data.data.map((transaction: any) => {
+        const transactionInfo = {
+          "Id Transaksi": transaction.id_transaksi,
+          "Tanggal & Waktu": new Date(transaction.createdAt).toLocaleString(),
+          "Kasir": transaction.user?.nama,
+          "Jumlah Item": transaction.jumlah_produk,
+          "Metode Pembayaran": transaction.metodeTransaksi?.join(", "),
+          "Total Pembayaran": `Rp ${formatCurrency(transaction.totalHarga)}`,
+        };
+  
+        const productDetails = transaction.produkDetail?.map((product: any) => ({
+          ...transactionInfo,
+          "Kode Produk": product.kode_produk,
+          "Nama Produk": product.nama_produk,
+          "Jumlah Produk": product.jumlah,
+          "Harga Produk": `Rp ${formatCurrency(product.harga)}`,
+          "Total Produk": `Rp ${formatCurrency(product.total)}`,
+        })) || [];
+  
+        return productDetails;
+      }).flat();
+  
+      const ws = XLSX.utils.json_to_sheet(detailedData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Riwayat Transaksi");
+      XLSX.writeFile(wb, "Riwayat_Transaksi.xlsx");
+    } else {
+      console.error("ID Toko tidak ditemukan di localStorage");
+    }
   };
+  
 
   return (
     <div className="pt-1 pl-5 pb-5 mr-16 ml-60">
@@ -240,22 +278,22 @@ const RiwayatTransaksiPage = () => {
       <Modal
         title="Detail Transaksi"
         open={isModalVisible}
-        onOk={handleOk}
-        onCancel={handleCancel}
+        onCancel={handleCancel} // Untuk menangani penutupan dengan klik X
         width={800}
+        closable={true} // Menampilkan hanya tombol X
+        footer={null} // Menghilangkan footer (OK dan Cancel button)
       >
         {selectedTransaction ? (
           <div>
             <p>
-              <strong>ID Transaksi:</strong> {selectedTransaction.id_transaksi}
+              <strong>Id Transaksi:</strong> {selectedTransaction.id_transaksi}
             </p>
             <p>
               <strong>Tanggal & Waktu:</strong>{" "}
               {new Date(selectedTransaction.createdAt).toLocaleString()}
             </p>
             <p>
-              <strong>User:</strong> {selectedTransaction.user?.nama} (ID:{" "}
-              {selectedTransaction.user?.id_user})
+              <strong>Kasir:</strong> {selectedTransaction.user?.nama}
             </p>
             <p>
               <strong>Jumlah Item:</strong> {selectedTransaction.jumlah_produk}
@@ -306,6 +344,7 @@ const RiwayatTransaksiPage = () => {
           <p>Tidak ada detail yang tersedia.</p>
         )}
       </Modal>
+
     </div>
   );
 };
