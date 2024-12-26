@@ -12,7 +12,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [selectedMenu, setSelectedMenu] = useState<string>("");
   const [userEmail, setUserEmail] = useState<string>("user@example.com");
-  const [userName, setUserName] = useState<string>("UserName");
+  const [userName, setUserName] = useState<string>("User Name");
   const [userRole, setUserRole] = useState<string>(""); // State untuk role pengguna
   const pathname = usePathname();
   const router = useRouter();
