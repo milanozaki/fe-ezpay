@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 const DataAkunToko = () => {
   const router = useRouter();
   
-  // State untuk menyimpan nilai input
+  // State untuk menyimpan nilai input dan pesan error
   const [namaLengkap, setNamaLengkap] = useState('');
   const [email, setEmail] = useState('');
   const [noHandphone, setNoHandphone] = useState('');
@@ -15,11 +15,41 @@ const DataAkunToko = () => {
   const [alamatToko, setAlamatToko] = useState('');
   const [deskripsiToko, setDeskripsiToko] = useState('');
   const [foto, setFoto] = useState<File | null>(null); // Ubah ini untuk mendukung File atau null
+  
+  const [emailError, setEmailError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  
+  // Fungsi untuk validasi format email
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      setEmailError('Email tidak valid!');
+    } else {
+      setEmailError('');
+    }
+  };
+
+  // Fungsi untuk validasi nomor handphone hanya angka
+  const validatePhoneNumber = (phone: string) => {
+    const phoneRegex = /^[0-9]+$/;
+    if (!phoneRegex.test(phone)) {
+      setPhoneError('Nomor handphone hanya boleh berisi angka!');
+    } else {
+      setPhoneError('');
+    }
+  };
 
   // Fungsi untuk mendaftar
   const handleRegister = async () => {
+    // Validasi data form
     if (!namaLengkap || !email || !noHandphone || !password || !namaToko || !alamatToko || !deskripsiToko || !foto) {
       message.error('Data Tidak Boleh Ada Yang Kosong!');
+      return;
+    }
+
+    // Validasi email dan nomor handphone sebelum submit
+    if (emailError || phoneError) {
+      message.error('Tolong perbaiki kesalahan input!');
       return;
     }
 
@@ -80,8 +110,12 @@ const DataAkunToko = () => {
           placeholder="Email" 
           size="large" 
           value={email} 
-          onChange={(e) => setEmail(e.target.value)} 
+          onChange={(e) => {
+            setEmail(e.target.value);
+            validateEmail(e.target.value);
+          }} 
         />
+        {emailError && <p className="text-red-500 text-xs mt-1">{emailError}</p>}
       </div>
 
       <div className='mb-3'>
@@ -90,8 +124,12 @@ const DataAkunToko = () => {
           placeholder="No Handphone" 
           size="large" 
           value={noHandphone} 
-          onChange={(e) => setNoHandphone(e.target.value)} 
+          onChange={(e) => {
+            setNoHandphone(e.target.value);
+            validatePhoneNumber(e.target.value);
+          }} 
         />
+        {phoneError && <p className="text-red-500 text-xs mt-1">{phoneError}</p>}
       </div>
 
       <div className='mb-3'>
