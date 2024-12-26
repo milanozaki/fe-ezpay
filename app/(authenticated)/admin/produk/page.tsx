@@ -75,6 +75,7 @@ const ProdukPage: React.FC = () => {
   const [totalProduk, setTotalProduk] = useState<number>(0);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("ASC");
+  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -350,6 +351,7 @@ const ProdukPage: React.FC = () => {
   };
 
   const handleFilterChange = ({ key }: { key: string }) => {
+    setSelectedFilter(key); // Set the selected filter
     switch (key) {
       case "harga-asc":
         fetchProdukByHarga("ASC"); // Call your existing function for ascending price
@@ -379,18 +381,71 @@ const ProdukPage: React.FC = () => {
     }
   };
 
+  const fetchAllProduk = async () => {
+    try {
+      const idToko = localStorage.getItem("id_toko"); // Get id_toko from localStorage
+      const response = await axios.get(
+        `http://localhost:3222/produk/all?id_toko=${idToko}` // Assuming this endpoint returns all products without any filters
+      );
+      const allProduk = response.data;
+      setFilteredProduk(allProduk);
+      setTotalProduk(allProduk.length);
+    } catch (error) {
+      console.error("Error fetching all products:", error);
+    }
+  };
+  
   const menu = (
     <Menu onClick={handleFilterChange}>
-      <Menu.Item key="harga-asc">Harga Terendah</Menu.Item>
-      <Menu.Item key="harga-desc">Harga Tertinggi</Menu.Item>
-      <Menu.Item key="stok-asc">Stok Terendah</Menu.Item>
-      <Menu.Item key="stok-desc">Stok Tertinggi</Menu.Item>
-      <Menu.Item key="status-active">Status Aktif</Menu.Item>
-      <Menu.Item key="status-inactive">Status Tidak Aktif</Menu.Item>
-      {/* Add more items as needed */}
+      <Menu.Item
+        key="harga-asc"
+        style={selectedFilter === "harga-asc" ? { backgroundColor: '#e0f7fa', fontWeight: 'bold' } : {}}
+      >
+        Harga Terendah
+      </Menu.Item>
+      <Menu.Item
+        key="harga-desc"
+        style={selectedFilter === "harga-desc" ? { backgroundColor: '#e0f7fa', fontWeight: 'bold' } : {}}
+      >
+        Harga Tertinggi
+      </Menu.Item>
+      <Menu.Item
+        key="stok-asc"
+        style={selectedFilter === "stok-asc" ? { backgroundColor: '#e0f7fa', fontWeight: 'bold' } : {}}
+      >
+        Stok Terendah
+      </Menu.Item>
+      <Menu.Item
+        key="stok-desc"
+        style={selectedFilter === "stok-desc" ? { backgroundColor: '#e0f7fa', fontWeight: 'bold' } : {}}
+      >
+        Stok Tertinggi
+      </Menu.Item>
+      <Menu.Item
+        key="status-active"
+        style={selectedFilter === "status-active" ? { backgroundColor: '#e0f7fa', fontWeight: 'bold' } : {}}
+      >
+        Status Aktif
+      </Menu.Item>
+      <Menu.Item
+        key="status-inactive"
+        style={selectedFilter === "status-inactive" ? { backgroundColor: '#e0f7fa', fontWeight: 'bold' } : {}}
+      >
+        Status Tidak Aktif
+      </Menu.Item>
+      <Menu.Item
+        key="reset"
+        style={{
+          color: '#f44336', // Red color for reset
+          fontWeight: 'bold',
+          backgroundColor: '#fff',
+          borderTop: '1px solid #ddd', // Add a small border for separation
+        }}
+      >
+        Reset Filter
+      </Menu.Item>
     </Menu>
   );
-
   const handleUpdateProduk = async () => {
     if (!selectedProduk) return;
     try {
