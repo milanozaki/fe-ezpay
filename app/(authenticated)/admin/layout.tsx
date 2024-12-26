@@ -99,6 +99,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           localStorage.removeItem("userName");
           localStorage.removeItem("id_toko");
           localStorage.removeItem("nama_role"); 
+          localStorage.removeItem("nama"); 
           sessionStorage.clear();
           Cookies.remove("accessToken");
           Cookies.remove("id_user");

@@ -63,7 +63,7 @@ const DataAkunToko = () => {
   return (
     <div>
       {/* Data Pemilik Toko */}
-      <h1 className='text-xl mb-3 font-semibold'>Data Pemilik Toko</h1>
+      <h1 className='text-xl mb-3 font-semibold'>Data Toko</h1>
       <div className='mb-3'>
         <label className="block mb-2 text-sm text-gray-700">Nama Lengkap</label>
         <Input 
