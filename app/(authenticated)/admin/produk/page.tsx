@@ -1,23 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  Upload,
-  Button,
-  Form,
-  Modal,
-  Input,
-  Select,
-  Card,
-  Pagination,
-  message,
-  Image,
-  Dropdown,
-  Menu,
-  Row,
-  Col,
-  Typography,
-  Table,
-} from "antd";
+import {Upload,Button,Form,Modal,Input,Select,Card,Pagination,message,Image,Dropdown,Menu,Row,Col,Typography,} from "antd";
 import {
   PlusOutlined,
   SearchOutlined,
@@ -239,6 +222,13 @@ const ProdukPage: React.FC = () => {
     setIsAddModalVisible(true);
   };
 
+  /**
+   * Mengatur produk yang ditampilkan berdasarkan kategori yang dipilih.
+   * Jika idKategori adalah "semua", maka semua produk akan ditampilkan.
+   * Jika idKategori adalah id kategori yang valid, maka hanya produk yang
+   * terkait dengan kategori tersebut yang akan ditampilkan.
+   * @param {string} idKategori ID kategori yang dipilih
+   */
   const handleFilterByCategory = async (idKategori: any) => {
     const idToko = localStorage.getItem("id_toko");
 
@@ -270,8 +260,7 @@ const ProdukPage: React.FC = () => {
       console.error("Error filtering products by category:", error);
       message.error("Terjadi kesalahan saat memfilter produk");
     }
-  };
-
+  };  
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
@@ -330,6 +319,71 @@ const ProdukPage: React.FC = () => {
       }
     }
   };
+  // Mengupdate produk dalam state produkList setelah update produk berhasil
+  const handleUpdateProduk = async () => {
+    if (!selectedProduk) return;
+
+    try {
+      const values = await form.validateFields();
+
+      // Membuat FormData untuk upload file gambar dan data lainnya
+      const formData = new FormData();
+      formData.append("nama_produk", values.nama_produk);
+      formData.append("harga_produk", values.harga_produk);
+      formData.append("stok", values.stok);
+
+      // Pastikan gambar dipilih sebelum menambahkan ke formData
+      if (values.gambar_produk && values.gambar_produk.file) {
+        formData.append("gambar_produk", values.gambar_produk.file);
+      }
+
+      if (values.status_produk) {
+        formData.append("status_produk", values.status_produk);
+      }
+
+      // Mengirim request PUT ke backend untuk update produk
+      const response = await axios.put(
+        `http://localhost:3222/produk/${selectedProduk.id_produk}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      // Mengupdate produk dalam state produkList
+      setProdukList((prevList) => {
+        return prevList.map((item) =>
+          item.id_produk === selectedProduk.id_produk ? response.data : item
+        );
+      });
+
+      // Pastikan filteredProduk juga terupdate agar UI langsung menampilkan produk yang baru
+      setFilteredProduk((prevFilteredList) => {
+        return prevFilteredList.map((item) =>
+          item.id_produk === selectedProduk.id_produk ? response.data : item
+        );
+      });
+
+      // Setelah berhasil update, menampilkan pesan sukses dan reset form
+      message.success("Produk berhasil diperbarui");
+      setIsEditModalVisible(false);
+      setSelectedProduk(null);
+      form.resetFields();
+    } catch (error) {
+      // Handling error untuk Axios
+      if (axios.isAxiosError(error) && error.response) {
+        console.error("Error updating product:", error.response.data);
+        message.error(`Gagal memperbarui produk: ${error.response.data.message}`);
+      } else {
+        // Handling error umum
+        console.error("Unknown error:", error);
+        message.error("Gagal memperbarui produk: Data harus diisi!");
+      }
+    }
+  };
+
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat("id-ID").format(amount);
@@ -381,23 +435,15 @@ const ProdukPage: React.FC = () => {
       case "status-inactive":
         fetchProdukByStatus(StatusEnum.INACTIVE); // Fetch inactive products
         break;
+      case "reset":
+        // Reset the filter to show all products
+        setSelectedFilter(null); // Clear selected filter
+        setFilteredProduk(produk); // Reset to all products
+        setTotalProduk(produk.length); // Set total products count to all
+        break;
       // Add more cases for additional filters as needed
       default:
         break;
-    }
-  };
-
-  const fetchAllProduk = async () => {
-    try {
-      const idToko = localStorage.getItem("id_toko"); // Get id_toko from localStorage
-      const response = await axios.get(
-        `http://localhost:3222/produk/all?id_toko=${idToko}` // Assuming this endpoint returns all products without any filters
-      );
-      const allProduk = response.data;
-      setFilteredProduk(allProduk);
-      setTotalProduk(allProduk.length);
-    } catch (error) {
-      console.error("Error fetching all products:", error);
     }
   };
   
@@ -452,70 +498,7 @@ const ProdukPage: React.FC = () => {
       </Menu.Item>
     </Menu>
   );
-  const handleUpdateProduk = async () => {
-    if (!selectedProduk) return;
-    try {
-      const values = await form.validateFields();
-
-      // Membuat FormData untuk upload file gambar dan data lainnya
-      const formData = new FormData();
-      formData.append("nama_produk", values.nama_produk);
-      formData.append("harga_produk", values.harga_produk);
-      formData.append("stok", values.stok);
-
-      // Pastikan gambar dipilih sebelum menambahkan ke formData
-      if (values.gambar_produk && values.gambar_produk.file) {
-        formData.append("gambar_produk", values.gambar_produk.file);
-      }
-
-      if (values.status_produk) {
-        formData.append("status_produk", values.status_produk);
-      }
-
-      // Mengirim request PUT ke backend untuk update produk
-      const response = await axios.put(
-        `http://localhost:3222/produk/${selectedProduk.id_produk}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      // Mengupdate produk dalam state produkList
-      setProdukList((prevList) =>
-        prevList.map((item) =>
-          item.id_produk === selectedProduk.id_produk ? response.data : item
-        )
-      );
-
-      // Setelah berhasil update, menampilkan pesan sukses dan reset form
-      message.success("Produk berhasil diperbarui");
-      setIsEditModalVisible(false);
-      setSelectedProduk(null);
-      form.resetFields();
-    } catch (error) {
-      // Handling error untuk Axios
-      if (axios.isAxiosError(error) && error.response) {
-        console.error("Error updating product:", error.response.data);
-        message.error(
-          `Gagal memperbarui produk: ${error.response.data.message}`
-        );
-      } else {
-        // Handling error umum
-        console.error("Unknown error:", error);
-        message.error("Gagal memperbarui produk: Data harus diisi!");
-      }
-    }
-  };
-  // const menu = (
-  //   <Menu onClick={handleSortOrderChange}>
-  //     <Menu.Item key="harga-asc">Harga Terendah</Menu.Item>
-  //     <Menu.Item key="harga-desc">Harga Tertinggi</Menu.Item>
-  //   </Menu>
-  // );
-
+  
   const { Title, Text } = Typography;
 
   const startIndex = (currentPage - 1) * pageSize;
@@ -580,15 +563,14 @@ const ProdukPage: React.FC = () => {
         ) : (
           filteredProduk.map((item) => (
             <Card
-              key={item.id_produk} // Pastikan id_produk unik
+              key={item.id_produk}
               cover={
                 <Image
                   alt={item.nama_produk}
                   src={`http://localhost:3222/produk/image/${item.gambar_produk}`}
                   style={{
                     width: "100%",
-                    height: "200px",
-                    objectFit: "cover",
+                    height: "250px",
                   }}
                   preview={false}
                 />
@@ -615,8 +597,7 @@ const ProdukPage: React.FC = () => {
                 description={
                   <div>
                     <span style={{ color: "black" }}>
-                      Rp {formatCurrency(item.harga_produk)}{" "}
-                      {/* Pastikan formatCurrency berfungsi dengan baik */}
+                      Rp {formatCurrency(item.harga_produk)}
                     </span>
                     <div
                       style={{
@@ -643,7 +624,6 @@ const ProdukPage: React.FC = () => {
           className="flex justify-end"
         />
       )}
-
       <Modal
         title="Tambah Produk"
         visible={isAddModalVisible}
@@ -723,28 +703,28 @@ const ProdukPage: React.FC = () => {
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item
+            <Form.Item
+              name="gambar_produk"
+              label="Gambar Produk"
+              valuePropName="fileList"
+              getValueFromEvent={({ fileList }: any) => Array.isArray(fileList) ? fileList : []} // Ensure fileList is an array
+              rules={[
+                { required: true, message: "Silakan unggah gambar produk!" },
+              ]}
+            >
+              <Upload
                 name="gambar_produk"
-                label="Gambar Produk"
-                valuePropName="fileList"
-                getValueFromEvent={({ fileList }: any) => fileList}
-                rules={[
-                  { required: true, message: "Silakan unggah gambar produk!" },
-                ]}
+                listType="picture"
+                beforeUpload={() => false}
+                showUploadList={{ showRemoveIcon: true }}
+                accept="image/*"
+                customRequest={({ file, onSuccess }: any) => {
+                  onSuccess && onSuccess(null, file);
+                }}
               >
-                <Upload
-                  name="gambar_produk"
-                  listType="picture"
-                  beforeUpload={() => false}
-                  showUploadList={{ showRemoveIcon: true }}
-                  accept="image/*"
-                  customRequest={({ file, onSuccess }: any) => {
-                    onSuccess && onSuccess(null, file);
-                  }}
-                >
-                  <Button icon={<UploadOutlined />}>Unggah Gambar</Button>
-                </Upload>
-              </Form.Item>
+                <Button icon={<UploadOutlined />}>Unggah Gambar</Button>
+              </Upload>
+            </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
