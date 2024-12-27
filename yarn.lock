@@ -650,6 +650,18 @@
   dependencies:
     tslib "^2.4.0"
 
+"@tanstack/query-core@5.62.9":
+  version "5.62.9"
+  resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-5.62.9.tgz#94231ffea5de086b5e6c0f1e527cda5650cb1849"
+  integrity sha512-lwePd8hNYhyQ4nM/iRQ+Wz2cDtspGeZZHFZmCzHJ7mfKXt+9S301fULiY2IR2byJYY6Z03T427E5PoVfMexHjw==
+
+"@tanstack/react-query@^5.62.10":
+  version "5.62.10"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.62.10.tgz#3ce92c29a46f2f7f1af5c2cb23f06d582f4b4495"
+  integrity sha512-1e1WpHM5oGf27nWM/NWLY62/X9pbMBWa6ErWYmeuK0OqB9/g9UzA59ogiWbxCmS2wtAFQRhOdHhfSofrkhPl2g==
+  dependencies:
+    "@tanstack/query-core" "5.62.9"
+
 "@types/cookiejar@*":
   version "2.1.5"
   resolved "https://registry.yarnpkg.com/@types/cookiejar/-/cookiejar-2.1.5.tgz#14a3e83fa641beb169a2dd8422d91c3c345a9a78"

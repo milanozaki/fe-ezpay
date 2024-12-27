@@ -34,7 +34,9 @@ const RiwayatTransaksiPage = () => {
 
   const fetchKasir = async (id_toko: any) => {
     try {
-      const response = await axios.get(`http://localhost:3222/users/kasir?id_toko=${id_toko}`);
+      const response = await axios.get(
+        `http://localhost:3222/users/kasir?id_toko=${id_toko}`
+      );
       console.log("Data kasir:", response.data); // Memeriksa data kasir
       setKasirList(response.data); // Memperbarui state kasirList
     } catch (error) {
@@ -193,29 +195,32 @@ const RiwayatTransaksiPage = () => {
           limit: 1000000, // Mengambil seluruh data
         },
       });
-  
-      const detailedData = response.data.data.map((transaction: any) => {
-        const transactionInfo = {
-          "Id Transaksi": transaction.id_transaksi,
-          "Tanggal & Waktu": new Date(transaction.createdAt).toLocaleString(),
-          "Kasir": transaction.user?.nama,
-          "Jumlah Item": transaction.jumlah_produk,
-          "Metode Pembayaran": transaction.metodeTransaksi?.join(", "),
-          "Total Pembayaran": `Rp ${formatCurrency(transaction.totalHarga)}`,
-        };
-  
-        const productDetails = transaction.produkDetail?.map((product: any) => ({
-          ...transactionInfo,
-          "Kode Produk": product.kode_produk,
-          "Nama Produk": product.nama_produk,
-          "Jumlah Produk": product.jumlah,
-          "Harga Produk": `Rp ${formatCurrency(product.harga)}`,
-          "Total Produk": `Rp ${formatCurrency(product.total)}`,
-        })) || [];
-  
-        return productDetails;
-      }).flat();
-  
+
+      const detailedData = response.data.data
+        .map((transaction: any) => {
+          const transactionInfo = {
+            "Id Transaksi": transaction.id_transaksi,
+            "Tanggal & Waktu": new Date(transaction.createdAt).toLocaleString(),
+            Kasir: transaction.user?.nama,
+            "Jumlah Item": transaction.jumlah_produk,
+            "Metode Pembayaran": transaction.metodeTransaksi?.join(", "),
+            "Total Pembayaran": `Rp ${formatCurrency(transaction.totalHarga)}`,
+          };
+
+          const productDetails =
+            transaction.produkDetail?.map((product: any) => ({
+              ...transactionInfo,
+              "Kode Produk": product.kode_produk,
+              "Nama Produk": product.nama_produk,
+              "Jumlah Produk": product.jumlah,
+              "Harga Produk": `Rp ${formatCurrency(product.harga)}`,
+              "Total Produk": `Rp ${formatCurrency(product.total)}`,
+            })) || [];
+
+          return productDetails;
+        })
+        .flat();
+
       const ws = XLSX.utils.json_to_sheet(detailedData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Riwayat Transaksi");
@@ -224,7 +229,6 @@ const RiwayatTransaksiPage = () => {
       console.error("ID Toko tidak ditemukan di localStorage");
     }
   };
-  
 
   return (
     <div className="pt-1 pl-5 pb-5 mr-16 ml-60">
@@ -234,21 +238,6 @@ const RiwayatTransaksiPage = () => {
           <RangePicker onChange={handleDateChange} className="mb-4" />
         </div>
         <div className="flex items-center">
-        <Select
-        placeholder="Pilih Kasir"
-        onChange={handleKasirChange}
-        style={{ width: 200, marginRight: 16 }}
-      >
-        {kasirList.length > 0 ? (
-          kasirList.map(kasir => (
-            <Option key={kasir.id_kasir} value={kasir.id_kasir}>
-              {kasir.nama_kasir}
-            </Option>
-          ))
-        ) : (
-          <Option disabled>No kasir available</Option>
-        )}
-      </Select>
           <Popconfirm
             title="Apakah Anda yakin ingin mengekspor data ke Excel?"
             onConfirm={exportToExcel}
@@ -344,7 +333,6 @@ const RiwayatTransaksiPage = () => {
           <p>Tidak ada detail yang tersedia.</p>
         )}
       </Modal>
-
     </div>
   );
 };
