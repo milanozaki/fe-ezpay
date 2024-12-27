@@ -118,8 +118,8 @@ const KategoriPage: React.FC = () => {
           nama: values.nama,
         })
         .then((response) => {
-          const newKategori = { ...response.data.data, jumlahProduk: 0 };
-          setKategori((prevKategori) => [...prevKategori, newKategori]);
+          const nama = { ...response.data.data, jumlahProduk: 0 };
+          setKategori((prevKategori) => [...prevKategori, nama]);
           setIsAddModalVisible(false);
           notification.success({
             message: 'Berhasil',

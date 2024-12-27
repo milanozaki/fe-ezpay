@@ -37,7 +37,7 @@ export default function Dashboard() {
           <button
             type="button"
             className="w-full bg-[#1b7c99] text-white py-3 px-4 rounded-2xl border border-transparent transition-transform transform hover:scale-105 hover:bg-[#389cb0] hover:border-[#389cb0] hover:shadow-lg hover:text-[#e0f7fa] duration-300 text-sm"
-            onClick={() => handleButtonClick('/registrasi/DataPemilikToko')}
+            onClick={() => handleButtonClick('/registrasi/DataToko')}
           >
             Buka TokoMu Sekarang
           </button>
