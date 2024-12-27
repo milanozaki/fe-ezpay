@@ -276,14 +276,14 @@ const ProdukPage: React.FC = () => {
     try {
       const values = await form.validateFields();
       console.log("Nilai yang diterima dari form:", values);
-
+  
       const id_toko = localStorage.getItem("id_toko"); // Ambil id_toko dari local storage
-
+  
       if (!id_toko) {
         message.error("ID toko tidak ditemukan. Pastikan Anda sudah login.");
         return; // Hentikan eksekusi jika id_toko tidak ada
       }
-
+  
       // Membuat FormData untuk upload file gambar dan data lainnya
       const formData = new FormData();
       formData.append("nama_produk", values.nama_produk);
@@ -292,27 +292,33 @@ const ProdukPage: React.FC = () => {
       formData.append("id_kategori", values.id_kategori);
       formData.append("satuan_produk", values.satuan_produk);
       formData.append("id_toko", id_toko); // Tambahkan id_toko ke FormData
-
+  
       // Pastikan gambar dipilih dan tambahkan ke formData
-      const file = values.gambar_produk[0]?.originFileObj; // Dapatkan objek file yang sebenarnya
+      const file = Array.isArray(values.gambar_produk)
+        ? values.gambar_produk[0]?.originFileObj
+        : values.gambar_produk?.originFileObj;
+  
       if (file) {
         formData.append("gambar_produk", file); // Tambahkan gambar ke FormData
       } else {
         message.error("Silakan pilih gambar produk.");
         return;
       }
-
+  
       // Mengirim request POST ke backend untuk menambahkan produk
-      await axios.post(
+      const response = await axios.post(
         `http://localhost:3222/produk/tambah-produk?id_toko=${id_toko}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        formData
       );
-
+  
+      // Assuming the new product data is returned in the response
+      const newProduct = response.data; // Replace with the actual structure from your API response
+      console.log("New product added:", newProduct);
+  
+      // Update the produk and filteredProduk state to immediately display the new product
+      setProduk((prevProducts) => [...prevProducts, newProduct]);
+      setFilteredProduk((prevFilteredProducts) => [...prevFilteredProducts, newProduct]);
+  
       message.success("Produk berhasil ditambahkan");
       setIsAddModalVisible(false);
       form.resetFields();
